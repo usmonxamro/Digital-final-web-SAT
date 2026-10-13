@@ -1,0 +1,939 @@
+'use client'
+
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { ExamHeader } from '@/components/exam-header'
+import { ExamFooter } from '@/components/exam-footer'
+import { QuestionView } from '@/components/question-view'
+import { CalculatorPanel, CONTENT_SHIFT, MOBILE_SHEET_HEIGHT, PANEL_LEFT_GAP } from '@/components/calculator-panel'
+import { useIsMobile } from '@/lib/use-is-mobile'
+import { ReferenceSheet, REFERENCE_DEFAULT_WIDTH, REFERENCE_GAP } from '@/components/reference-sheet'
+import { PreviewBar } from '@/components/preview-bar'
+import type { LayoutEdit } from '@/components/question-stimulus'
+import { TransitionScreen } from '@/components/transition-screen'
+import { ScoreReport, type ReviewItem } from '@/components/score-report'
+import { PracticeResultScreen, type PracticeReviewItem } from '@/components/practice-result-screen'
+import { buildSectionResult, type SectionResult } from '@/lib/scoring'
+import {
+  questionAt,
+  isCorrectAnswer,
+  type ChoiceId,
+  type Question,
+  type TestModule,
+  type SectionKind,
+} from '@/lib/test-data'
+import type { TestConfig } from '@/app/api/admin/test-config/route'
+import type { AnswerKey } from '@/app/api/exam/grade/route'
+
+type Phase = 'moduleIntro' | 'testing' | 'autoNext' | 'break' | 'report'
+type ScoringMode = 'full' | 'single' | 'practice'
+type TimerMode = 'countdown' | 'countup'
+
+const BIG_BREAK_SECONDS = 10 * 60
+const SHORT_BREAK_SECONDS = 5 * 60
+const USER_NAME = 'Usmon Xamroyev'
+
+/** Unique key for an answer/flag/eliminate entry: `${moduleId}:${questionIndex}` */
+function keyFor(moduleId: string, qIndex: number) {
+  return `${moduleId}:${qIndex}`
+}
+
+function ExamEngine({
+  modules,
+  testTitle,
+  scoringMode,
+  singleSubjectKind,
+  timerMode,
+  preview,
+  startId,
+}: {
+  /** From /api/exam/start — the grading request must present it. */
+  startId?: string | null
+  modules: TestModule[]
+  testTitle: string
+  scoringMode: ScoringMode
+  singleSubjectKind?: SectionKind
+  timerMode: TimerMode
+  /** Admin "Check it now": no timer, free module switching, block-layout editing, publish. */
+  preview?: { published: boolean }
+}) {
+  const router = useRouter()
+  const isMobile = useIsMobile()
+  const [moduleIdx, setModuleIdx] = useState(0)
+  const [phase, setPhase] = useState<Phase>(preview ? 'testing' : 'moduleIntro')
+  const [current, setCurrent] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(timerMode === 'countdown' ? modules[0].durationSec : 0)
+  const [calculatorOpen, setCalculatorOpen] = useState(false)
+  // Where the Desmos panel sits — the question text shifts to the right of it.
+  const [calcShift, setCalcShift] = useState(CONTENT_SHIFT)
+  // The reference sheet docks on the right — the text shifts left of it.
+  const [refShift, setRefShift] = useState(REFERENCE_DEFAULT_WIDTH + REFERENCE_GAP)
+  const [referenceOpen, setReferenceOpen] = useState(false)
+  const highlightFnRef = useRef<(() => void) | null>(null)
+  // Footer height, measured — the mobile calculator sheet sits right above it.
+  const footerRef = useRef<HTMLDivElement>(null)
+  const [footerH, setFooterH] = useState(0)
+  useEffect(() => {
+    const el = footerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setFooterH(el.offsetHeight))
+    ro.observe(el)
+    setFooterH(el.offsetHeight)
+    return () => ro.disconnect()
+  }, [phase])
+
+  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [flags, setFlags] = useState<Record<string, boolean>>({})
+  const [eliminated, setEliminated] = useState<Record<string, ChoiceId[]>>({})
+
+  // Server grading: answer keys arrive only after submitting.
+  const [keys, setKeys] = useState<Record<string, AnswerKey>>({})
+  const [gradeState, setGradeState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [gradeError, setGradeError] = useState<string | null>(null)
+  const [videoReady, setVideoReady] = useState(false)
+  // The score exactly as the server computed and saved it.
+  const [serverScore, setServerScore] = useState<{ rw: SectionResult; math: SectionResult; composite: number } | null>(null)
+  const [startedAt] = useState(() => Date.now())
+  const [finishedAt, setFinishedAt] = useState<number | null>(null)
+
+  /* ----------------------------- admin preview ----------------------------- */
+  const [published, setPublished] = useState(preview?.published ?? true)
+  const [editMode, setEditMode] = useState(false)
+  // Saved (this session) and not-yet-saved layout edits, keyed by question id.
+  const [savedEdits, setSavedEdits] = useState<Record<string, LayoutEdit>>({})
+  const [edits, setEdits] = useState<Record<string, LayoutEdit>>({})
+  const [savingLayout, setSavingLayout] = useState(false)
+  const [publishing, setPublishing] = useState(false)
+  const [previewMsg, setPreviewMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const dirtyCount = Object.keys(edits).length
+
+  useEffect(() => {
+    if (!previewMsg) return
+    const t = setTimeout(() => setPreviewMsg(null), 4000)
+    return () => clearTimeout(t)
+  }, [previewMsg])
+
+  useEffect(() => {
+    if (!preview || dirtyCount === 0) return
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [preview, dirtyCount])
+
+  async function saveLayouts(): Promise<boolean> {
+    const items = Object.entries(edits).map(([id, e]) => ({ id, prompt: e.prompt, layout: e.layout }))
+    if (items.length === 0) return true
+    setSavingLayout(true)
+    try {
+      const res = await fetch('/api/admin/questions/batch-layout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setPreviewMsg({ ok: false, text: data.error ?? 'Saqlashda xatolik.' })
+        return false
+      }
+      setSavedEdits((m) => ({ ...m, ...edits }))
+      setEdits({})
+      setPreviewMsg({ ok: true, text: `Saqlandi — ${items.length} ta savol` })
+      return true
+    } catch {
+      setPreviewMsg({ ok: false, text: "Server bilan bog'lanib bo'lmadi." })
+      return false
+    } finally {
+      setSavingLayout(false)
+    }
+  }
+
+  async function togglePublish() {
+    const next = !published
+    if (next && dirtyCount > 0) {
+      const ok = await saveLayouts()
+      if (!ok) return
+    }
+    setPublishing(true)
+    try {
+      const res = await fetch('/api/admin/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ testLabel: testTitle, published: next }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setPreviewMsg({ ok: false, text: data.error ?? 'Xatolik.' })
+        return
+      }
+      setPublished(next)
+      setPreviewMsg({
+        ok: true,
+        text: next ? "Publish qilindi — o'quvchilarga ko'rinadi" : 'Draftga qaytarildi — yashirin',
+      })
+    } catch {
+      setPreviewMsg({ ok: false, text: "Server bilan bog'lanib bo'lmadi." })
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  const activeModule = modules[moduleIdx]
+  const baseQuestion = useMemo(() => questionAt(activeModule, current), [activeModule, current])
+  const question = useMemo(() => {
+    const id = baseQuestion.id
+    if (!id) return baseQuestion
+    const e = edits[id] ?? savedEdits[id]
+    return e ? { ...baseQuestion, prompt: e.prompt, layout: e.layout } : baseQuestion
+  }, [baseQuestion, edits, savedEdits])
+  const qKey = keyFor(activeModule.id, current)
+
+  // Timer — counts down for normal tests, counts up (stopwatch, never auto-submits) for course tasks.
+  useEffect(() => {
+    if (phase !== 'testing' || preview) return
+    if (timerMode === 'countdown' && timeLeft <= 0) {
+      finishModule()
+      return
+    }
+    const t = setInterval(() => {
+      setTimeLeft((s) => (timerMode === 'countdown' ? Math.max(0, s - 1) : s + 1))
+    }, 1000)
+    return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, timeLeft, timerMode])
+
+  // Computed once the exam reaches the report phase — shared by the on-screen
+  // result screen and the background submission to /api/results below.
+  // Groups by each module's own `kind` rather than a fixed position, so this
+  // works for full tests (2 reading + 2 math), single-subject tests (2 of one
+  // kind), and practice/course-task sets (however many modules of one kind).
+  const results = useMemo(() => {
+    const readingModules = modules.filter((m) => m.kind === 'reading')
+    const mathModules = modules.filter((m) => m.kind === 'math')
+
+    function tally(sectionModules: TestModule[]) {
+      let correct = 0
+      let incorrect = 0
+      let omitted = 0
+      let total = 0
+      const review: ReviewItem[] = []
+      for (const mod of sectionModules) {
+        for (let i = 0; i < mod.total; i++) {
+          const base = questionAt(mod, i)
+          const q = base.id && keys[base.id] ? { ...base, ...keys[base.id] } : base
+          const k = keyFor(mod.id, i)
+          const answer = answers[k]
+          total++
+          if (!answer) {
+            omitted++
+            review.push({
+              moduleLabel: mod.shortLabel,
+              sectionKind: mod.kind,
+              index: i,
+              question: q,
+              correct: false,
+              omitted: true,
+            })
+            continue
+          }
+          const ok = isCorrectAnswer(q, answer)
+          if (ok) correct++
+          else incorrect++
+          review.push({
+            moduleLabel: mod.shortLabel,
+            sectionKind: mod.kind,
+            index: i,
+            question: q,
+            answer,
+            correct: ok,
+            omitted: false,
+          })
+        }
+      }
+      return { correct, incorrect, omitted, total, review }
+    }
+
+    const rwTally = tally(readingModules)
+    const mathTally = tally(mathModules)
+    const rw = buildSectionResult(rwTally.correct, rwTally.incorrect, rwTally.omitted, rwTally.total)
+    const math = buildSectionResult(mathTally.correct, mathTally.incorrect, mathTally.omitted, mathTally.total)
+    const composite = singleSubjectKind === 'math' ? math.scaled : singleSubjectKind === 'reading' ? rw.scaled : rw.scaled + math.scaled
+
+    // Flat, position-ordered review used by the unscored practice result screen.
+    const practiceReview: PracticeReviewItem[] = [...rwTally.review, ...mathTally.review].map((r, i) => ({
+      index: i,
+      question: r.question,
+      answer: r.answer,
+      correct: r.correct,
+      omitted: r.omitted,
+    }))
+
+    return { rw, math, composite, rwTally, mathTally, practiceReview }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answers, keys])
+
+  // Once the exam is over, the server grades it (and saves the attempt for
+  // scored tests). Only then do the answer keys / explanations arrive.
+  async function submitForGrading() {
+    setGradeState('loading')
+    setGradeError(null)
+    const items: Record<string, unknown>[] = []
+    for (const mod of [...modules.filter((m) => m.kind === 'reading'), ...modules.filter((m) => m.kind === 'math')]) {
+      for (let i = 0; i < mod.total; i++) {
+        const q = questionAt(mod, i)
+        const answer = answers[keyFor(mod.id, i)]
+        items.push({
+          qid: q.id,
+          answer,
+        })
+      }
+    }
+    const elapsedMin = Math.round(((finishedAt ?? Date.now()) - startedAt) / 60000)
+    try {
+      const res = await fetch('/api/exam/grade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startId: startId ?? null,
+          testLabel: testTitle,
+          elapsedLabel: `${Math.floor(elapsedMin / 60)}h ${elapsedMin % 60}m`,
+          items,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setGradeError(data.error ?? 'Natijani hisoblab bo‘lmadi.')
+        setGradeState('error')
+        return
+      }
+      setKeys(data.keys ?? {})
+      if (data.rw && data.math) setServerScore({ rw: data.rw, math: data.math, composite: data.composite })
+      setGradeState('done')
+      if (scoringMode !== 'practice' && data.rw && data.math) {
+        try {
+          const sc = Number(data.rw.scaled) + Number(data.math.scaled)
+          sessionStorage.setItem('sd-celebrate', JSON.stringify({ label: testTitle, score: sc, outOf: 1600 }))
+        } catch {
+          /* ignore */
+        }
+      }
+      // A video analysis is offered right under the score, when one exists.
+      fetch(`/api/video?test=${encodeURIComponent(testTitle)}`)
+        .then((r) => setVideoReady(r.ok))
+        .catch(() => {})
+    } catch {
+      setGradeError("Server bilan bog'lanib bo'lmadi. Internetni tekshirib, qayta urinib ko'ring.")
+      setGradeState('error')
+    }
+  }
+
+  // While the result is being sent, closing the tab would lose it — ask first.
+  useEffect(() => {
+    if (gradeState !== 'loading') return
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [gradeState])
+
+  useEffect(() => {
+    if (phase !== 'report' || preview || gradeState !== 'idle') return
+    submitForGrading()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase])
+
+  function selectAnswer(value: string) {
+    setAnswers((a) => ({ ...a, [qKey]: value }))
+  }
+
+  function toggleFlag() {
+    setFlags((f) => ({ ...f, [qKey]: !f[qKey] }))
+  }
+
+  function toggleEliminate(id: ChoiceId) {
+    setEliminated((e) => {
+      const current = e[qKey] ?? []
+      const next = current.includes(id) ? current.filter((c) => c !== id) : [...current, id]
+      return { ...e, [qKey]: next }
+    })
+  }
+
+  function goNext() {
+    if (current < activeModule.total - 1) {
+      setCurrent((c) => c + 1)
+    } else {
+      finishModule()
+    }
+  }
+
+  function goBack() {
+    setCurrent((c) => Math.max(0, c - 1))
+  }
+
+  /** Directly begins a given module index: resets timer/question and starts testing. */
+  function startModule(idx: number) {
+    setCalculatorOpen(false)
+    setReferenceOpen(false)
+    setModuleIdx(idx)
+    setCurrent(0)
+    setTimeLeft(timerMode === 'countdown' ? modules[idx].durationSec : 0)
+    setPhase('testing')
+  }
+
+  function finishModule() {
+    if (preview) {
+      // Preview never scores or breaks — just walk on to the next module.
+      if (moduleIdx < modules.length - 1) startModule(moduleIdx + 1)
+      else setPreviewMsg({ ok: true, text: 'Bu oxirgi savol' })
+      return
+    }
+    setCalculatorOpen(false)
+    setReferenceOpen(false)
+    const isLastModule = moduleIdx === modules.length - 1
+
+    if (isLastModule) {
+      setFinishedAt(Date.now())
+      setPhase('report')
+      return
+    }
+
+    if (modules.length === 4 && moduleIdx === 1) {
+      // Full test, Reading & Writing finished — mandatory longer break before Math.
+      setPhase('break')
+      return
+    }
+
+    // First module of a pair just finished: auto-advance after a short
+    // countdown, with the option to take a break.
+    setPhase('autoNext')
+  }
+
+  function exitExam() {
+    if (preview) {
+      if (dirtyCount > 0 && !confirm("Saqlanmagan o'zgarishlar bor. Baribir chiqasizmi?")) return
+      // Back to the admin tab that opened this preview (its URL is secret,
+      // so it is never written into this public page).
+      if (window.history.length > 1) window.history.back()
+      else {
+        window.close()
+        setTimeout(() => router.push('/dashboard'), 300)
+      }
+      return
+    }
+    const msg =
+      timerMode === 'countup'
+        ? "Vazifadan chiqasizmi? Joriy jarayoningiz saqlanmaydi."
+        : 'Exit the practice test? Your progress in this session will be lost.'
+    if (confirm(msg)) {
+      router.push('/dashboard')
+    }
+  }
+
+  /* ------------------------------ Transitions ------------------------------ */
+
+  if (phase === 'moduleIntro') {
+    const subtitle =
+      modules.length === 4
+        ? 'You will complete two Reading and Writing modules, a short break, then two Math modules. Each module is timed.'
+        : modules.length === 2
+          ? `Siz ${modules[0].kind === 'math' ? 'Math' : 'Reading and Writing'} bo'yicha 2 modulni bajarasiz. Har bir modul vaqt bilan cheklangan.`
+          : timerMode === 'countup'
+            ? "Bu vazifada vaqt cheklovi yo'q — taymer yuqoriga sanaydi. O'zingiz tayyor bo'lganda yakunlaysiz."
+            : "Siz bir qator savolni bajarasiz. Vaqt tugaganda modul avtomatik yakunlanadi."
+    return (
+      <TransitionScreen
+        variant="start"
+        title={testTitle}
+        subtitle={subtitle}
+        onContinue={() => startModule(0)}
+      />
+    )
+  }
+
+  if (phase === 'autoNext') {
+    const nextIdx = moduleIdx + 1
+    return <TransitionScreen variant="autoNext" onProceed={() => startModule(nextIdx)} />
+  }
+
+  if (phase === 'break') {
+    const nextIdx = moduleIdx + 1
+    const isBigBreak = modules.length === 4 && moduleIdx === 1
+    return (
+      <TransitionScreen
+        variant="break"
+        breakSeconds={isBigBreak ? BIG_BREAK_SECONDS : SHORT_BREAK_SECONDS}
+        title={isBigBreak ? 'All Your Work Is Saved' : 'Dam olish vaqti'}
+        subtitle={
+          isBigBreak
+            ? "You've completed the Reading and Writing section. Take a short break before starting the Math section."
+            : `Keyingi modul: ${modules[nextIdx].label}. Tayyor bo'lganingizda davom eting.`
+        }
+        onContinue={() => startModule(nextIdx)}
+      />
+    )
+  }
+
+  if (phase === 'report' && gradeState !== 'done') {
+    return (
+      <div className="flex h-dvh flex-col items-center justify-center gap-4 bg-[#f8fafc] px-6 text-center text-[#0f172a]">
+        {gradeState === 'error' ? (
+          <>
+            <p className="max-w-sm text-sm font-semibold text-red-600">{gradeError}</p>
+            <button
+              type="button"
+              onClick={submitForGrading}
+              className="rounded-lg bg-[#0e7c75] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#0b4f4a]"
+            >
+              Qayta urinish
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="size-8 animate-spin rounded-full border-[3px] border-[#0e7c75] border-t-transparent" />
+            <p className="text-base font-extrabold">Natijalar hisoblanmoqda va yuborilmoqda…</p>
+            <p className="max-w-xs text-sm text-[#475569]">Iltimos, oynani yopmang va sahifani yangilamang. Bu bir necha soniya oladi.</p>
+          </>
+        )}
+      </div>
+    )
+  }
+
+  const videoHref = `/dashboard/analysis?test=${encodeURIComponent(testTitle)}`
+
+  if (phase === 'report') {
+    const elapsedMs = (finishedAt ?? Date.now()) - startedAt
+    const elapsedMin = Math.round(elapsedMs / 60000)
+    const elapsedLabel = `${Math.floor(elapsedMin / 60)}h ${elapsedMin % 60}m`
+
+    if (scoringMode === 'practice') {
+      return (
+        <PracticeResultScreen
+          testTitle={testTitle}
+          elapsedLabel={elapsedLabel}
+          review={results.practiceReview}
+          videoHref={videoReady ? videoHref : undefined}
+        />
+      )
+    }
+
+    return (
+      <ScoreReport
+        studentName={USER_NAME}
+        testTitle={testTitle}
+        composite={(serverScore?.rw ?? results.rw).scaled + (serverScore?.math ?? results.math).scaled}
+        rw={serverScore?.rw ?? results.rw}
+        math={serverScore?.math ?? results.math}
+        elapsedLabel={elapsedLabel}
+        review={[...results.rwTally.review, ...results.mathTally.review]}
+        outOf={1600}
+        singleSection={scoringMode === 'single' ? singleSubjectKind : undefined}
+        showCertificateButton
+        videoHref={videoReady ? videoHref : undefined}
+      />
+    )
+  }
+
+  /* -------------------------------- Testing -------------------------------- */
+
+  const answeredMap: Record<number, boolean> = {}
+  const flaggedMap: Record<number, boolean> = {}
+  for (let i = 0; i < activeModule.total; i++) {
+    const k = keyFor(activeModule.id, i)
+    answeredMap[i] = !!answers[k]
+    flaggedMap[i] = !!flags[k]
+  }
+
+  return (
+    <div className={`flex h-dvh flex-col overflow-hidden ${activeModule.kind === 'math' ? 'bg-[#f8fafc]' : 'bg-white'}`}>
+      {preview && (
+        <PreviewBar
+          published={published}
+          modules={modules.map((m) => ({ id: m.id, label: m.shortLabel }))}
+          moduleIdx={moduleIdx}
+          onModuleChange={(i) => startModule(i)}
+          editMode={editMode}
+          onToggleEdit={() => setEditMode((v) => !v)}
+          canEdit={!!baseQuestion.id}
+          dirtyCount={dirtyCount}
+          currentDirty={!!(baseQuestion.id && edits[baseQuestion.id])}
+          onDiscardCurrent={() => {
+            const id = baseQuestion.id
+            if (!id) return
+            setEdits((m) => {
+              const next = { ...m }
+              delete next[id]
+              return next
+            })
+          }}
+          onResetCurrent={() => {
+            const id = baseQuestion.id
+            if (!id) return
+            setEdits((m) => ({ ...m, [id]: { prompt: question.prompt, layout: null } }))
+          }}
+          saving={savingLayout}
+          onSave={saveLayouts}
+          publishing={publishing}
+          onTogglePublish={togglePublish}
+          onBack={exitExam}
+          message={previewMsg}
+        />
+      )}
+      <ExamHeader
+        label={activeModule.label}
+        seconds={timeLeft}
+        mathTools={activeModule.kind === 'math'}
+        calculatorOpen={calculatorOpen}
+        referenceOpen={referenceOpen}
+        onToggleCalculator={() => setCalculatorOpen((o) => !o)}
+        onToggleReference={() => setReferenceOpen((o) => !o)}
+        onHighlight={() => highlightFnRef.current?.()}
+        onExit={exitExam}
+      />
+
+      <div
+        className="flex min-h-0 flex-1 transition-[margin-left,margin-right] duration-[900ms] ease-in-out"
+        style={{
+          marginLeft: calculatorOpen && !isMobile ? calcShift : 0,
+          marginRight: referenceOpen && !isMobile ? refShift : 0,
+          // Mobile: the calculator sheet covers the lower part of the screen —
+          // shrink the question's scroll area to what's still visible, so the
+          // student can scroll every answer choice into view above it.
+          paddingBottom: isMobile && referenceOpen ? '60dvh' : calculatorOpen && isMobile ? MOBILE_SHEET_HEIGHT : 0,
+        }}
+      >
+        <main className="min-h-0 min-w-0 flex-1">
+          <QuestionView
+            module={activeModule}
+            index={current}
+            question={question}
+            selected={answers[qKey]}
+            eliminated={eliminated[qKey] ?? []}
+            flagged={!!flags[qKey]}
+            onSelect={selectAnswer}
+            onToggleEliminate={toggleEliminate}
+            onToggleFlag={toggleFlag}
+            compact={(calculatorOpen || referenceOpen) && isMobile}
+            editLayout={!!preview && editMode && !!baseQuestion.id}
+            onLayoutEdit={(edit) => {
+              const id = baseQuestion.id
+              if (id) setEdits((m) => ({ ...m, [id]: edit }))
+            }}
+            registerHighlightTrigger={(fn) => {
+              highlightFnRef.current = fn
+            }}
+          />
+        </main>
+      </div>
+
+      {/* Floating, draggable, always-mounted calculator — never re-inits Desmos */}
+      <CalculatorPanel
+        open={calculatorOpen}
+        onClose={() => setCalculatorOpen(false)}
+        bottomOffset={footerH}
+        onRectChange={({ x, width }) =>
+          // Docked (near the left edge): push the text past it. Dragged far
+          // away: leave the text where it is.
+          setCalcShift(x < 80 ? Math.min(x + width + PANEL_LEFT_GAP, Math.round(window.innerWidth * 0.6)) : 0)
+        }
+      />
+
+      <ReferenceSheet
+        open={referenceOpen}
+        onClose={() => setReferenceOpen(false)}
+        bottomOffset={footerH}
+        onWidthChange={(w) => setRefShift(w + REFERENCE_GAP)}
+      />
+
+      <div ref={footerRef} className="shrink-0">
+      <ExamFooter
+        current={current}
+        total={activeModule.total}
+        sectionLabel={activeModule.label}
+        userName={USER_NAME}
+        answered={answeredMap}
+        flagged={flaggedMap}
+        onNavigate={setCurrent}
+        onBack={goBack}
+        onNext={goNext}
+        nextLabel={current >= activeModule.total - 1 ? 'Submit Module' : 'Next'}
+      />
+      </div>
+    </div>
+  )
+}
+
+function splitHalves<T>(arr: T[]): [T[], T[]] {
+  if (arr.length === 0) return [[], []]
+  if (arr.length === 1) return [arr, arr]
+  const mid = Math.ceil(arr.length / 2)
+  return [arr.slice(0, mid), arr.slice(mid)]
+}
+
+/**
+ * Fetches one section's questions for a dedicated test, split into its two
+ * modules. Modern tests (imported via the admin panel's per-module import)
+ * are tagged with module_number in the database, so this asks the API for
+ * exactly Module 1's and Module 2's own rows — stable and independent of
+ * insertion order. A legacy test imported before that tagging existed has
+ * no module_number on any of its rows, so both requests come back empty;
+ * in that case this falls back to the old behavior (fetch everything,
+ * split the insertion-ordered list in half on the client).
+ */
+async function fetchModuleAware(kind: SectionKind, testLabel: string): Promise<[Question[], Question[]]> {
+  const qs = `kind=${kind}&test=${encodeURIComponent(testLabel)}`
+  const [m1Res, m2Res] = await Promise.all([
+    fetch(`/api/questions?${qs}&module=1`).then((r) => r.json()),
+    fetch(`/api/questions?${qs}&module=2`).then((r) => r.json()),
+  ])
+  const m1: Question[] = m1Res.questions ?? []
+  const m2: Question[] = m2Res.questions ?? []
+  if (m1.length > 0 || m2.length > 0) return [m1, m2]
+
+  const flatRes = await fetch(`/api/questions?${qs}`).then((r) => r.json())
+  return splitHalves<Question>(flatRes.questions ?? [])
+}
+
+/** Builds a 4-module full test (Reading&Writing + Math) from a dedicated test's own, already-split modules. */
+function buildFullModules(r1: Question[], r2: Question[], m1: Question[], m2: Question[], englishMinutes: number, mathMinutes: number): TestModule[] | null {
+  if (r1.length + r2.length === 0 || m1.length + m2.length === 0) return null
+  return [
+    { id: 'rw-1', kind: 'reading', label: 'Section 1, Module 1: Reading and Writing', shortLabel: 'Reading and Writing — Module 1', durationSec: englishMinutes * 60, total: Math.min(27, r1.length), pool: r1 },
+    { id: 'rw-2', kind: 'reading', label: 'Section 1, Module 2: Reading and Writing', shortLabel: 'Reading and Writing — Module 2', durationSec: englishMinutes * 60, total: Math.min(27, r2.length), pool: r2 },
+    { id: 'math-1', kind: 'math', label: 'Section 2, Module 1: Math', shortLabel: 'Math — Module 1', durationSec: mathMinutes * 60, total: Math.min(22, m1.length), pool: m1 },
+    { id: 'math-2', kind: 'math', label: 'Section 2, Module 2: Math', shortLabel: 'Math — Module 2', durationSec: mathMinutes * 60, total: Math.min(22, m2.length), pool: m2 },
+  ]
+}
+
+/** Builds a 2-module single-subject scored test (Math-only or R&W-only, 200-800 scale) from already-split modules. */
+function buildSingleScoredModules(kind: SectionKind, p1: Question[], p2: Question[], minutes: number): TestModule[] | null {
+  if (p1.length + p2.length === 0) return null
+  const cap = kind === 'math' ? 22 : 27
+  const label = kind === 'math' ? 'Math' : 'Reading and Writing'
+  return [
+    { id: `${kind}-1`, kind, label: `Module 1: ${label}`, shortLabel: `${label} — Module 1`, durationSec: minutes * 60, total: Math.min(cap, p1.length), pool: p1 },
+    { id: `${kind}-2`, kind, label: `Module 2: ${label}`, shortLabel: `${label} — Module 2`, durationSec: minutes * 60, total: Math.min(cap, p2.length), pool: p2 },
+  ]
+}
+
+/** Builds a single-module unscored practice set (any question count) — used for
+ *  both "erkin mashq" and Course Tasks (the latter with a count-up timer instead). */
+function buildPracticeModule(kind: SectionKind, questions: Question[], minutes: number): TestModule[] | null {
+  if (questions.length === 0) return null
+  const label = kind === 'math' ? 'Math' : 'Reading and Writing'
+  return [
+    { id: `${kind}-practice`, kind, label, shortLabel: label, durationSec: minutes * 60, total: questions.length, pool: questions },
+  ]
+}
+
+/** Builds a single, continuous SCORED module (no module break), numbered straight
+ *  through 1..44 on screen — the "ketma-ket 44 talik" Math mock layout. */
+function buildSequentialScoredModule(kind: SectionKind, questions: Question[], totalMinutes: number): TestModule[] | null {
+  if (questions.length === 0) return null
+  const cap = kind === 'math' ? 44 : 54
+  const label = kind === 'math' ? 'Math' : 'Reading and Writing'
+  return [
+    { id: `${kind}-seq`, kind, label, shortLabel: label, durationSec: totalMinutes * 60, total: Math.min(cap, questions.length), pool: questions },
+  ]
+}
+
+type LoadError = { message: string; href?: string; hrefLabel?: string }
+
+/** Registers the start of a mock (daily/hourly limits) before any question is fetched. */
+async function startExam(testLabel: string | null): Promise<{ startId: string | null } | LoadError> {
+  try {
+    const res = await fetch('/api/exam/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ testLabel }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (res.status === 401) {
+      return { message: 'Mock yechish uchun avval tizimga kiring.', href: '/login', hrefLabel: 'Kirish' }
+    }
+    if (res.status === 403 && data.code === 'COURSE') {
+      return { message: data.error ?? 'Bu vazifa faqat kurs o‘quvchilari uchun.', href: '/dashboard/course-tasks', hrefLabel: 'Kurslarga o‘tish' }
+    }
+    if (res.status === 402) {
+      return { message: data.error ?? 'Bu mock pullik.', href: '/dashboard/free-mocks', hrefLabel: 'Free Mocklarga qaytish' }
+    }
+    if (!res.ok) {
+      return { message: data.error ?? 'Testni boshlab bo‘lmadi.', href: '/dashboard/practice', hrefLabel: 'Mocklarga qaytish' }
+    }
+    return { startId: data.startId ?? null }
+  } catch {
+    return { message: "Server bilan bog'lanib bo'lmadi. Internet aloqasini tekshiring." }
+  }
+}
+
+type LoadedExam = {
+  startId?: string | null
+  /** Set only for an admin opening ?preview=1 ("Check it now"). */
+  preview?: { published: boolean }
+  modules: TestModule[]
+  scoringMode: ScoringMode
+  singleSubjectKind?: SectionKind
+  timerMode: TimerMode
+}
+
+function PageInner() {
+  const searchParams = useSearchParams()
+  const testParam = searchParams.get('test')
+  const previewParam = searchParams.get('preview') === '1'
+
+  const [ready, setReady] = useState(false)
+  const [loaded, setLoaded] = useState<LoadedExam | null>(null)
+  const [loadError, setLoadError] = useState<LoadError | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      if (testParam) {
+        try {
+          const [configRes, adminRes] = await Promise.all([
+            fetch(`/api/admin/test-config?testLabel=${encodeURIComponent(testParam)}`).then((r) => r.json()),
+            previewParam
+              ? fetch('/api/admin/check').then((r) => r.json()).catch(() => ({ admin: false }))
+              : Promise.resolve({ admin: false }),
+          ])
+          if (cancelled) return
+          const preview = adminRes.admin ? { published: configRes.config?.published ?? true } : undefined
+
+          // Students: count this start against the limits before loading questions.
+          let startId: string | null = null
+          if (!preview) {
+            const started = await startExam(testParam)
+            if (cancelled) return
+            if ('message' in started) {
+              setLoadError(started)
+              return
+            }
+            startId = started.startId
+          }
+
+          const config: TestConfig | null = configRes.config ?? null
+          const subject = config?.subject ?? 'full'
+          const scored = config?.scored ?? true
+          const placement = config?.placement ?? 'mock'
+          const englishMinutes = config?.englishModuleMinutes ?? 32
+          const mathMinutes = config?.mathModuleMinutes ?? 35
+          const mathLayout = config?.mathLayout ?? 'modules'
+          const isCourseTask = placement === 'course_task'
+
+          let built: TestModule[] | null = null
+          let scoringMode: ScoringMode = 'full'
+          let singleSubjectKind: SectionKind | undefined
+          const timerMode: TimerMode = isCourseTask ? 'countup' : 'countdown'
+
+          if (subject === 'full') {
+            const [[r1, r2], [m1, m2]] = await Promise.all([
+              fetchModuleAware('reading', testParam),
+              fetchModuleAware('math', testParam),
+            ])
+            if (cancelled) return
+            built = buildFullModules(r1, r2, m1, m2, englishMinutes, mathMinutes)
+            scoringMode = 'full'
+          } else {
+            singleSubjectKind = subject === 'math' ? 'math' : 'reading'
+            const minutes = subject === 'math' ? mathMinutes : englishMinutes
+
+            if (isCourseTask || !scored) {
+              const flatRes = await fetch(
+                `/api/questions?kind=${singleSubjectKind}&test=${encodeURIComponent(testParam)}`,
+              ).then((r) => r.json())
+              if (cancelled) return
+              built = buildPracticeModule(singleSubjectKind, flatRes.questions ?? [], minutes)
+              scoringMode = 'practice'
+            } else if (singleSubjectKind === 'math' && mathLayout === 'sequential') {
+              const flatRes = await fetch(`/api/questions?kind=math&test=${encodeURIComponent(testParam)}`).then((r) => r.json())
+              if (cancelled) return
+              built = buildSequentialScoredModule('math', flatRes.questions ?? [], minutes * 2)
+              scoringMode = 'single'
+            } else {
+              const [p1, p2] = await fetchModuleAware(singleSubjectKind, testParam)
+              if (cancelled) return
+              built = buildSingleScoredModules(singleSubjectKind, p1, p2, minutes)
+              scoringMode = 'single'
+            }
+          }
+
+          if (!built) {
+            setLoadError({
+              message:
+                configRes.config?.published === false && !preview
+                  ? "Bu test hali e'lon qilinmagan."
+                  : 'Bu test uchun hali yetarli savol yuklanmagan.',
+            })
+          } else {
+            setLoaded({ modules: built, scoringMode, singleSubjectKind, timerMode, preview, startId })
+          }
+        } catch {
+          setLoadError({ message: "Testni yuklab bo'lmadi. Internet aloqasini tekshiring." })
+        } finally {
+          if (!cancelled) setReady(true)
+        }
+        return
+      }
+
+      // No ?test= → there is no built-in test any more: back to the list.
+      window.location.replace('/dashboard/practice')
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [testParam, previewParam])
+
+  if (!ready) {
+    return (
+      <div className="flex h-dvh items-center justify-center bg-[#f8fafc] text-[#0f172a]">
+        <p className="text-sm font-medium">Yuklanmoqda...</p>
+      </div>
+    )
+  }
+
+  if (loadError || !loaded) {
+    return (
+      <div className="flex h-dvh items-center justify-center bg-[#f8fafc] text-[#0f172a] px-6">
+        <div className="flex max-w-sm flex-col items-center gap-4 text-center">
+          <p className="text-sm font-medium">{loadError?.message ?? 'Xatolik yuz berdi.'}</p>
+          {loadError?.href && (
+            <a
+              href={loadError.href}
+              className="rounded-lg bg-[#0e7c75] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#0b4f4a]"
+            >
+              {loadError.hrefLabel}
+            </a>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <ExamEngine
+      modules={loaded.modules}
+      testTitle={testParam ?? ''}
+      scoringMode={loaded.scoringMode}
+      singleSubjectKind={loaded.singleSubjectKind}
+      timerMode={loaded.timerMode}
+      preview={loaded.preview}
+      startId={loaded.startId}
+    />
+  )
+}
+
+export default function Page() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-dvh items-center justify-center bg-[#f8fafc] text-[#0f172a]">
+          <p className="text-sm font-medium">Yuklanmoqda...</p>
+        </div>
+      }
+    >
+      <PageInner />
+    </Suspense>
+  )
+}
