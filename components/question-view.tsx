@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Bookmark } from 'lucide-react'
 import { Math as MathTex } from '@/components/math'
 import { OptionCard } from '@/components/option-card'
@@ -191,7 +191,7 @@ function GridInInput({ value, onChange }: { value?: string; onChange: (v: string
 const MIN_PCT = 25
 const MAX_PCT = 75
 
-export function QuestionView({
+function QuestionViewImpl({
   module,
   index,
   question,
@@ -380,7 +380,7 @@ export function QuestionView({
           className="flex flex-col px-4 py-5 sm:px-5 sm:py-6 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:px-10 lg:py-8"
           style={isMobile ? undefined : { width: `${leftPct}%` }}
         >
-          <div ref={passageRef} className="whitespace-pre-line select-text font-serif text-[15px] leading-[1.5] text-[#111] sm:text-[16.2px] sm:leading-[1.43]">
+          <div ref={passageRef} className="whitespace-pre-line select-text font-serif text-[14px] leading-[1.4] text-[#111] sm:text-[16.2px] sm:leading-[1.43]">
             {markedPassage}
           </div>
           {image}
@@ -413,13 +413,13 @@ export function QuestionView({
               <QuestionStimulus
                 question={question}
                 withFigure={false}
-                textClassName="text-[15px] font-semibold leading-relaxed text-[#111] text-pretty sm:text-[16px]"
+                textClassName="text-[14.5px] font-semibold leading-[1.5] text-[#111] text-pretty sm:text-[16px] sm:leading-relaxed"
                 editable={editLayout}
                 onEdit={onLayoutEdit}
               />
             </div>
           ) : (
-            <div className="mb-4 text-[15px] font-semibold leading-relaxed text-[#111] text-pretty sm:text-[16px]">
+            <div className="mb-4 text-[14.5px] font-semibold leading-[1.5] text-[#111] text-pretty sm:text-[16px] sm:leading-relaxed">
               <RichText text={question.prompt} />
             </div>
           )}
@@ -442,7 +442,7 @@ export function QuestionView({
             <QuestionStimulus
               question={question}
               withFigure
-              textClassName="text-[16px] leading-[1.7] text-[#111] text-pretty"
+              textClassName="text-[15px] leading-[1.6] text-[#111] text-pretty sm:text-[16px] sm:leading-[1.7]"
               editable={editLayout}
               onEdit={onLayoutEdit}
             />
@@ -453,7 +453,7 @@ export function QuestionView({
                 question sentence asking about it — not the other way round. */}
             {image}
             {equations}
-            <div className="mb-2 text-[16px] leading-[1.7] text-[#111] text-pretty">
+            <div className="mb-2 text-[15px] leading-[1.6] text-[#111] text-pretty sm:text-[16px] sm:leading-[1.7]">
               <RichText text={question.prompt} />
             </div>
           </>
@@ -463,3 +463,6 @@ export function QuestionView({
     </div>
   )
 }
+
+/** Memoised: the exam timer re-renders the page every second — the question (and its KaTeX) must not. */
+export const QuestionView = memo(QuestionViewImpl)

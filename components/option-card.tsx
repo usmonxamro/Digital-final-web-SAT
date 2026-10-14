@@ -31,7 +31,7 @@ export function OptionCard({
         aria-checked={selected}
         onClick={eliminated ? undefined : onSelect}
         disabled={eliminated}
-        className={`group flex min-h-[47px] flex-1 items-center gap-3.5 rounded-lg border-[1.5px] px-3.5 py-2.5 text-left ${serif ? 'font-serif' : 'font-sans'} transition-colors duration-150 ${
+        className={`group flex min-h-[42px] flex-1 items-center gap-3 rounded-lg border-[1.5px] px-3 py-2 sm:min-h-[47px] sm:gap-3.5 sm:px-3.5 sm:py-2.5 text-left ${serif ? 'font-serif' : 'font-sans'} transition-colors duration-150 ${
           selected
             ? 'border-2 border-[#0e7c75] bg-[#e3f4f1]'
             : eliminated
@@ -51,7 +51,7 @@ export function OptionCard({
           {option.id}
         </span>
         <span
-          className="text-[15.5px] leading-relaxed"
+          className="text-[14.5px] leading-[1.45] sm:text-[15.5px] sm:leading-relaxed"
           style={
             eliminated
               ? {

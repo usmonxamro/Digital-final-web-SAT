@@ -7,9 +7,9 @@ export function LandingFooter() {
   const t = useT()
   const link = 'text-sp-text-muted hover:text-sp-green transition-colors'
   return (
-    <footer className="bg-sp-footer border-t border-sp-border py-10 font-jakarta">
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[13.5px] font-semibold">
+    <footer className="bg-sp-footer border-t border-sp-border py-7 md:py-10 font-jakarta">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-[13px] md:text-[13.5px] font-semibold">
           <a href={SITE_URL} className={link}>{SITE_DOMAIN}</a>
           {TG_CHANNELS.map((c) => (
             <a key={c.handle} href={c.url} target="_blank" rel="noopener noreferrer" className={link}>{c.handle}</a>

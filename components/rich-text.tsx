@@ -1,5 +1,6 @@
 'use client'
 
+import { memo, useMemo } from 'react'
 import { MixedText } from '@/components/math'
 import { parseRichText } from '@/lib/question-layout'
 
@@ -8,8 +9,8 @@ import { parseRichText } from '@/lib/question-layout'
  * lines are drawn as a normal fully-bordered grid table (first row = header).
  * Renders block elements, so wrap it in a <div>, not a <p>.
  */
-export function RichText({ text, className }: { text: string; className?: string }) {
-  const blocks = parseRichText(text)
+export const RichText = memo(function RichText({ text, className }: { text: string; className?: string }) {
+  const blocks = useMemo(() => parseRichText(text), [text])
   return (
     <>
       {blocks.map((b, i) =>
@@ -37,4 +38,4 @@ export function RichText({ text, className }: { text: string; className?: string
       )}
     </>
   )
-}
+})

@@ -55,7 +55,9 @@ export function QuestionImage({
 
   const adminScale = clamp(dragScale ?? scale, ADMIN_SCALE_MIN, ADMIN_SCALE_MAX)
 
-  const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1
+  // NOT the viewer's devicePixelRatio: a 3× phone used to draw every figure three times smaller than a
+  // 1× laptop, so figures looked tiny on phones. The same fixed size everywhere, capped by the column width.
+  const dpr = 1
   let baseW: number | undefined
   if (natural) {
     const cssW = natural.w / dpr

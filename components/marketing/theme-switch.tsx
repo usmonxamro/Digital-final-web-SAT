@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import { MoonStar, Sun } from 'lucide-react'
+import { useT } from '@/components/i18n-provider'
 
 /**
- * Day/night switch (sun | moon pill) — one component for the landing page, login,
- * dashboard and admin. Writes `data-sp-theme` on <html> and `sp-theme` in localStorage.
- * `defaultTheme` is used only when the visitor has never chosen one (admin starts light).
+ * Day/night switch — ONE round icon button (sun while it is dark, moon while it is light) that flips
+ * to the other mode. Shared by landing, login, dashboard and admin. Writes `data-sp-theme` on <html>
+ * and `sp-theme` in localStorage. `defaultTheme` is used only when the visitor has never chosen one.
  */
 export function ThemeSwitch({ defaultTheme, className = '' }: { defaultTheme?: 'light' | 'dark'; className?: string }) {
+  const t = useT()
   const [dark, setDark] = useState<boolean | null>(null)
 
   useEffect(() => {
@@ -35,21 +37,11 @@ export function ThemeSwitch({ defaultTheme, className = '' }: { defaultTheme?: '
     }
   }
 
+  const label = dark ? t('Kunduzgi rejimga o‘tish') : t('Tungi rejimga o‘tish')
   return (
-    <button
-      type="button"
-      className={`sp-theme ${className}`}
-      onClick={toggle}
-      aria-pressed={!!dark}
-      aria-label={dark ? 'Kunduzgi rejimga o‘tish' : 'Tungi rejimga o‘tish'}
-      title={dark ? 'Kunduzgi rejimni yoqish' : 'Tungi rejimni yoqish'}
-    >
-      <span className={dark === false ? 'sp-on' : ''}>
-        <Sun />
-      </span>
-      <span className={dark ? 'sp-on' : ''}>
-        <MoonStar />
-      </span>
+    <button type="button" className={`sp-theme ${className}`} data-mode={dark === false ? 'light' : 'dark'} onClick={toggle} aria-label={label} title={label}>
+      <Sun className="sp-sun" />
+      <MoonStar className="sp-moon" />
     </button>
   )
 }

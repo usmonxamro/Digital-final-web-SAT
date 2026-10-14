@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { ArrowUpRight, Bell, ChartColumn, FileText, GraduationCap, House, Layers, BookOpen, Menu, Search, Settings, Sparkles } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import { ArrowUpRight, Bell, ChartColumn, FileText, GraduationCap, House, Layers, BookOpen, Menu, Settings, Sparkles } from 'lucide-react'
 import { useUser } from '@/components/marketing/dashboard/user-context'
 import { DashboardDataProvider } from '@/components/marketing/dashboard/dashboard-data'
 import { SdUiProvider, useSd } from '@/components/marketing/dashboard/sd-ui'
@@ -101,7 +101,6 @@ function Sidebar({ open, pathname, hash }: { open: boolean; pathname: string; ha
         <BalanceCard />
         <div className="sd-support">
           <strong>{t('Yordam kerakmi?')}</strong>
-          <p>{t("Darslar, testlar yoki hisobingiz bo'yicha savollaringiz bormi?")}</p>
           <button className="sd-text-btn" onClick={() => openModal('help')}>
             {t('Yordam markazi')} <ArrowUpRight size={13} style={{ display: 'inline', verticalAlign: '-2px' }} />
           </button>
@@ -115,29 +114,9 @@ function Sidebar({ open, pathname, hash }: { open: boolean; pathname: string; ha
 function TopBar({ onMenu }: { onMenu: () => void }) {
   const t = useT()
   const user = useUser()
-  const router = useRouter()
   const { openModal } = useSd()
-  const [q, setQ] = useState('')
-  const input = useRef<HTMLInputElement>(null)
   const isPro = user.plan === 'premium'
   const planLabel = isPro ? (user.trialDaysLeft ? `PRO · ${t('{n} kun', { n: user.trialDaysLeft })}` : 'PRO') : 'FREE'
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        input.current?.focus()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
-
-  function search(e: React.FormEvent) {
-    e.preventDefault()
-    const v = q.trim()
-    if (v) router.push(`/dashboard/practice?q=${encodeURIComponent(v)}`)
-  }
 
   return (
     <header className="sd-topbar">
@@ -145,18 +124,6 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
         <button className="sd-icon-btn sd-menu-btn" onClick={onMenu} aria-label={t('Menyuni ochish')}>
           <Menu />
         </button>
-        <form className="sd-search" onSubmit={search} role="search">
-          <Search size={17} />
-          <input
-            ref={input}
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={t('Testlar yoki kurslarni qidirish...')}
-            aria-label={t('Qidirish')}
-            autoComplete="off"
-          />
-          <kbd>Ctrl K</kbd>
-        </form>
       </div>
       <div className="sd-top-right">
         <LangSwitch />

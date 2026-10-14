@@ -16,7 +16,14 @@ export async function GET(req: NextRequest) {
 
   try {
     const supabase = supabaseAdmin()
-    await releaseDueMocks(supabase)
+    // The independent look-ups run side by side (they used to run one after another: each exam load
+    // paid ~6 database round trips PER request, and the exam sent 4 requests).
+    const [, gateAdmin, ident] = await Promise.all([
+      releaseDueMocks(supabase),
+      requireAdmin().then(() => true).catch(() => false),
+      adminIdentity().catch(() => null),
+    ])
+    const isAdmin = gateAdmin || !!ident
 
     // Access rules — questions are never public:
     //  - admins (with the access code entered) always get them (preview);
@@ -24,33 +31,11 @@ export async function GET(req: NextRequest) {
     //    last 6 hours (/api/exam/start, which enforces the daily limits);
     //  - drafts are admin-only.
     // Owner / admins: no start or limit needed. Drafts still need the admin code.
-    const gateAdmin = await requireAdmin().then(() => true).catch(() => false)
-    const isAdmin = gateAdmin || !!(await adminIdentity().catch(() => null))
-    if (test && isAdmin && !gateAdmin) {
-      const { data: cfg } = await supabase.from('test_configs').select('*').eq('test_label', test).maybeSingle()
-      if (cfg && cfg.published === false) return NextResponse.json({ questions: [] as Question[] })
-    }
+    let session: ReturnType<typeof verifySession> = null
     if (!isAdmin) {
       const cookieStore = await cookies()
-      const session = verifySession(cookieStore.get(SESSION_COOKIE)?.value)
+      session = verifySession(cookieStore.get(SESSION_COOKIE)?.value)
       if (!session) return NextResponse.json({ questions: [] as Question[] }, { status: 401 })
-
-      if (test) {
-        const { data: cfg } = await supabase.from('test_configs').select('*').eq('test_label', test).maybeSingle()
-        if (cfg && cfg.published === false) return NextResponse.json({ questions: [] as Question[] })
-      }
-      const since = new Date(Date.now() - 6 * 3600_000).toISOString()
-      const { data: starts, error: startsError } = await supabase
-        .from('mock_starts')
-        .select('id')
-        .eq('user_id', session.userId)
-        .eq('test_label', test ?? '')
-        .gte('started_at', since)
-        .limit(1)
-      // (If the v38 table doesn't exist yet, startsError is set → allow.)
-      if (!startsError && (starts ?? []).length === 0) {
-        return NextResponse.json({ questions: [] as Question[] }, { status: 403 })
-      }
     }
 
     // Ordered by insertion so that a legacy test (imported before the
@@ -68,12 +53,40 @@ export async function GET(req: NextRequest) {
     // No ?test= → general skill-bank pool (feeds the skill drills).
     // ?test=<label> → only that dedicated full mock test's own questions.
     query = test ? query.eq('test_label', test) : query.is('test_label', null)
-    // ?module=1|2 → only that module's own rows (the modern, stable path
-    // for tests imported through the admin panel's per-module import).
+    // ?module=1|2 → only that module's own rows. Without it ALL rows of the test come back, each with its
+    // `moduleNumber`, and the exam splits them itself (one request per section instead of two).
     if (moduleParam === '1' || moduleParam === '2') {
       query = query.eq('module_number', Number(moduleParam))
     }
-    const { data } = await query
+
+    // Start the question query right away; the draft/started checks run beside it, and the rows are
+    // only returned once those checks pass.
+    const rowsPromise = Promise.resolve(query)
+    const cfgPromise = test
+      ? Promise.resolve(supabase.from('test_configs').select('*').eq('test_label', test).maybeSingle())
+      : Promise.resolve({ data: null })
+    let startsPromise: Promise<{ data: { id: string }[] | null; error: unknown }> | null = null
+    if (!isAdmin && session) {
+      const since = new Date(Date.now() - 6 * 3600_000).toISOString()
+      startsPromise = Promise.resolve(
+        supabase
+          .from('mock_starts')
+          .select('id')
+          .eq('user_id', session.userId)
+          .eq('test_label', test ?? '')
+          .gte('started_at', since)
+          .limit(1),
+      ) as Promise<{ data: { id: string }[] | null; error: unknown }>
+    }
+    const [{ data: cfg }, startsRes] = await Promise.all([cfgPromise, startsPromise ?? Promise.resolve(null)])
+    if (test && cfg && cfg.published === false && !gateAdmin) {
+      return NextResponse.json({ questions: [] as Question[] })
+    }
+    if (startsRes && !startsRes.error && (startsRes.data ?? []).length === 0) {
+      // (If the v38 table doesn't exist yet, error is set → allow.)
+      return NextResponse.json({ questions: [] as Question[] }, { status: 403 })
+    }
+    const { data } = await rowsPromise
 
     const questions: Question[] = (data ?? []).map((row) => ({
       id: row.id,
@@ -89,6 +102,7 @@ export async function GET(req: NextRequest) {
       // NO answer key / explanation here — anyone can read this response in
       // the browser. Keys come back only from /api/exam/grade after submitting.
       layout: row.layout ?? undefined,
+      moduleNumber: row.module_number === 1 || row.module_number === 2 ? row.module_number : undefined,
     }))
 
     return NextResponse.json({ questions })

@@ -194,5 +194,10 @@ export const en: Record<string, string> = {
  "Kurs guruhlari vazifalari PRO ga kirmaydi — ular faqat Telegram bot kodi orqali ochiladi.": "Course group tasks are not part of PRO — they unlock only with a Telegram bot code.",
  "Siz PRO obunani bir oyga tekinga qabul qilib oldingiz! 🎉": "You've received a free month of PRO! 🎉",
  "Ishga tushirish aksiyasi: {n} kun davomida kuniga 4 tagacha mock yechishingiz mumkin.": "Launch promo: for {n} days you can take up to 4 mocks a day.",
- "Ajoyib, boshlaymiz": "Great, let's go"
+ "Ajoyib, boshlaymiz": "Great, let's go",
+ "Kunduzgi rejimga o‘tish": "Switch to light mode",
+ "Tungi rejimga o‘tish": "Switch to dark mode",
+ "Real vaqtli modullar (32 va 35 daqiqa), o'rnatilgan Desmos kalkulyatori, formula varag'i va natijangizni aniq shkala bo'yicha hisoblab beruvchi aqlli platforma.": "Real timed modules (32 and 35 minutes), a built-in Desmos calculator, a formula sheet and a smart platform that scores your results on the exact scale.",
+ "Bluebook uslubidagi real imtihon muhiti": "A real Bluebook-style exam environment",
+ "Tez orada": "Coming soon",
 }

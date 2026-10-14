@@ -63,18 +63,16 @@ export function ExamHeader({
 
   return (
     <header className="sticky top-0 z-30 border-b border-[#d7e7e4] bg-[#e7f3f1]">
-      {/* Main row — wraps to a second line on narrow screens: title+tools on
-          row 1, timer centered on row 2, instead of overlapping via the
-          desktop absolute-centered timer. */}
-      <div className="relative flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 px-3 py-2 sm:flex-nowrap sm:px-6 sm:py-2.5">
+      {/* Main row — one compact line on phones too (title+Directions | timer | tools). */}
+      <div className="relative flex items-center justify-between gap-2 px-3 py-1.5 sm:gap-x-2 sm:px-6 sm:py-2.5">
         {/* Left: title + directions */}
         <div ref={dir.ref} className="relative flex min-w-0 flex-1 flex-col sm:flex-none">
-          <h1 className="truncate text-[13.5px] font-bold tracking-tight text-[#0b4f4a] sm:text-[15px]">{label}</h1>
+          <h1 className="truncate text-[12.5px] font-bold leading-tight tracking-tight text-[#0b4f4a] sm:text-[15px]">{label}</h1>
           <button
             type="button"
             onClick={() => dir.setOpen((o) => !o)}
             aria-expanded={dir.open}
-            className="mt-0.5 flex w-fit items-center gap-1 text-[13px] font-semibold text-[#0e7c75] hover:text-[#0a625c]"
+            className="flex w-fit items-center gap-1 text-[11.5px] font-semibold leading-tight text-[#0e7c75] sm:mt-0.5 sm:text-[13px] hover:text-[#0a625c]"
           >
             Directions
             <ChevronDown className={`size-3.5 transition-transform ${dir.open ? 'rotate-180' : ''}`} />
@@ -95,23 +93,22 @@ export function ExamHeader({
           )}
         </div>
 
-        {/* Center: timer + hide — flows to its own full-width row on mobile
-            (order-last + basis-full), stays absolutely centered from sm up. */}
-        <div className="order-last flex basis-full flex-col items-center sm:absolute sm:left-1/2 sm:top-1/2 sm:order-none sm:basis-auto sm:-translate-x-1/2 sm:-translate-y-1/2">
-          <span className={`text-[19px] font-bold tabular-nums tracking-wide sm:text-[22px] ${low ? 'text-red-600' : 'text-[#111]'}`}>
+        {/* Center: timer + hide — inline between title and tools on phones, absolutely centered from sm up. */}
+        <div className="flex shrink-0 flex-col items-center sm:absolute sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2">
+          <span className={`text-[16px] font-bold leading-tight tabular-nums tracking-wide sm:text-[22px] ${low ? 'text-red-600' : 'text-[#111]'}`}>
             {hidden ? '••:••' : formatTime(seconds)}
           </span>
           <button
             type="button"
             onClick={() => setHidden((h) => !h)}
-            className="mt-0.5 rounded-full border border-[#0e7c75]/40 px-3 py-0.5 text-[11.5px] font-semibold text-[#0e7c75] transition-colors hover:bg-[#d2ebe7]"
+            className="rounded-full border border-[#0e7c75]/40 px-2.5 text-[10px] font-semibold leading-[15px] text-[#0e7c75] transition-colors hover:bg-[#d2ebe7] sm:mt-0.5 sm:px-3 sm:py-0.5 sm:text-[11.5px] sm:leading-normal"
           >
             {hidden ? 'Show' : 'Hide'}
           </button>
         </div>
 
         {/* Right: tools */}
-        <div className="flex items-center gap-2.5 sm:gap-5">
+        <div className="flex items-center gap-3 sm:gap-5">
           {mathTools && (
             <>
               <button
@@ -201,13 +198,13 @@ export function ExamHeader({
 
       {/* Dashed separator */}
       <div
-        className="h-[3px]"
+        className="h-[2px] sm:h-[3px]"
         style={{ backgroundImage: 'repeating-linear-gradient(90deg,#111 0 20px,transparent 20px 26px)' }}
       />
 
-      {/* Practice test banner */}
-      <div className="px-4 py-1 sm:px-10">
-        <div className="rounded-b-xl bg-[#0b4f4a] py-1 text-center text-[10px] font-bold uppercase tracking-wider text-white sm:text-[11.5px]">
+      {/* Practice test banner — a hairline strip on phones, the full bar from sm up */}
+      <div className="px-4 sm:px-10 sm:py-1">
+        <div className="rounded-b-md bg-[#0b4f4a] py-px text-center text-[8.5px] font-bold uppercase leading-[13px] tracking-wider text-white sm:rounded-b-xl sm:py-1 sm:text-[11.5px] sm:leading-normal">
           This is a practice test
         </div>
       </div>

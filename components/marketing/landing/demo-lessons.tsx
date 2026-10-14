@@ -23,20 +23,20 @@ export function DemoLessons() {
   const [modalSrc, setModalSrc] = useState<string | null>(null)
 
   return (
-    <section id="darslar" className="py-20 md:py-24">
-      <div className="max-w-[1200px] mx-auto px-6">
+    <section id="darslar" className="py-11 md:py-[86px]">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         <Reveal>
-          <div className="text-center max-w-[560px] mx-auto mb-12">
-            <h2 className="text-[1.9rem] md:text-[2.3rem] font-extrabold text-sp-text">
+          <div className="text-center max-w-[560px] mx-auto mb-8 md:mb-12">
+            <h2 className="text-[1.5rem] sm:text-[1.9rem] md:text-[2.3rem] font-extrabold text-sp-text">
               {t('Video Darslar')}
             </h2>
-            <p className="mt-3 text-sp-text-muted text-[15.5px]">
+            <p className="mt-2 md:mt-3 text-sp-text-muted text-[14px] md:text-[15.5px]">
               {t('YouTube kanalimizdagi darslarni saytdan chiqmasdan tomosha qiling')}
             </p>
           </div>
         </Reveal>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-14">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8 md:mb-14">
           {VIDEOS.map((v, i) => (
             <Reveal key={v.id} delay={i * 80}>
               <button
@@ -53,13 +53,13 @@ export function DemoLessons() {
                     className="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                    <div className="w-12 h-12 rounded-full bg-sp-green flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-sp-green flex items-center justify-center group-hover:scale-110 transition-transform">
                       <Play size={16} className="text-white ml-0.5" fill="currentColor" />
                     </div>
                   </div>
                 </div>
-                <div className="p-4">
-                  <div className="text-[14px] font-bold text-sp-text leading-snug">{t(v.title)}</div>
+                <div className="p-3 sm:p-4">
+                  <div className="text-[13px] sm:text-[14px] font-bold text-sp-text leading-snug">{t(v.title)}</div>
                 </div>
               </button>
             </Reveal>
@@ -76,7 +76,7 @@ export function DemoLessons() {
                 onClick={() =>
                   setModalSrc(`https://www.youtube-nocookie.com/embed/videoseries?list=${p.id}&autoplay=1`)
                 }
-                className="group w-full flex items-center gap-4 sp-glass sp-hover-glow-green rounded-2xl p-5 text-left"
+                className="group w-full flex items-center gap-3 sm:gap-4 sp-glass sp-hover-glow-green rounded-2xl p-4 sm:p-5 text-left"
               >
                 <div className="w-14 h-14 rounded-xl bg-sp-green/10 flex items-center justify-center text-sp-green shrink-0 group-hover:scale-105 transition-transform">
                   <ListVideo size={24} />

@@ -194,5 +194,10 @@ export const ru: Record<string, string> = {
  "Kurs guruhlari vazifalari PRO ga kirmaydi — ular faqat Telegram bot kodi orqali ochiladi.": "Задания курсовых групп не входят в PRO — они открываются только кодом из Telegram-бота.",
  "Siz PRO obunani bir oyga tekinga qabul qilib oldingiz! 🎉": "Вы получили PRO-подписку на месяц бесплатно! 🎉",
  "Ishga tushirish aksiyasi: {n} kun davomida kuniga 4 tagacha mock yechishingiz mumkin.": "Акция запуска: в течение {n} дн. вы можете решать до 4 тестов в день.",
- "Ajoyib, boshlaymiz": "Отлично, начинаем"
+ "Ajoyib, boshlaymiz": "Отлично, начинаем",
+ "Kunduzgi rejimga o‘tish": "Включить светлую тему",
+ "Tungi rejimga o‘tish": "Включить тёмную тему",
+ "Real vaqtli modullar (32 va 35 daqiqa), o'rnatilgan Desmos kalkulyatori, formula varag'i va natijangizni aniq shkala bo'yicha hisoblab beruvchi aqlli platforma.": "Модули с реальным таймером (32 и 35 минут), встроенный калькулятор Desmos, лист формул и умная платформа, которая считает результат по точной шкале.",
+ "Bluebook uslubidagi real imtihon muhiti": "Настоящая среда экзамена в стиле Bluebook",
+ "Tez orada": "Скоро",
 }

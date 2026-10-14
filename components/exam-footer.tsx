@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 
 type ExamFooterProps = {
@@ -16,7 +16,7 @@ type ExamFooterProps = {
   nextLabel?: string
 }
 
-export function ExamFooter({
+function ExamFooterImpl({
   current,
   total,
   sectionLabel,
@@ -41,7 +41,7 @@ export function ExamFooter({
 
   return (
     <footer className="sticky bottom-0 z-30 border-t border-[#d7e7e4] bg-white">
-      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6">
+      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
         {/* User name (left) */}
         <div className="min-w-0">
           <span className="truncate text-[15px] font-semibold text-[#111]">{userName}</span>
@@ -144,7 +144,7 @@ export function ExamFooter({
             onClick={onNext}
             className="flex items-center gap-1 rounded-full bg-[#0e7c75] px-3.5 py-1.5 text-[13.5px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0a625c] sm:px-4"
           >
-            <span className="hidden sm:inline">{nextLabel ?? (current >= total - 1 ? 'Finish' : 'Next')}</span>
+            <span className={nextLabel && nextLabel !== 'Next' ? 'text-[12.5px] sm:text-[13.5px]' : 'hidden sm:inline'}>{nextLabel ?? (current >= total - 1 ? 'Finish' : 'Next')}</span>
             <ChevronRight className="size-4" />
           </button>
         </div>
@@ -152,3 +152,5 @@ export function ExamFooter({
     </footer>
   )
 }
+
+export const ExamFooter = memo(ExamFooterImpl)

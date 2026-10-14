@@ -146,6 +146,7 @@
   --sp-header-bg: rgba(5, 6, 10, 0.85);
   --sp-footer-bg: #030406;
   --sp-input: rgba(255, 255, 255, 0.06);
+  --sp-bg-elev: #12151d;
 }
 
 /* SAT Pro light mode override — toggled by ThemeToggle via localStorage */
@@ -163,6 +164,7 @@
   --sp-header-bg: rgba(248, 250, 252, 0.85);
   --sp-footer-bg: #f1f5f9;
   --sp-input: rgba(0, 0, 0, 0.045);
+  --sp-bg-elev: #ffffff;
 }
 
 @layer base {
@@ -305,12 +307,15 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* ---------- shared day/night switch (landing, login, dashboard, admin) ---------- */
-.sp-theme{display:inline-flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--sp-border);border-radius:30px;background:var(--sp-input);transition:border-color .2s;cursor:pointer}
-.sp-theme:hover{border-color:color-mix(in srgb,var(--sp-orange) 40%,transparent)}
-.sp-theme span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--sp-text-muted);transition:background .25s,color .25s,box-shadow .25s}
-.sp-theme span svg{width:17px;height:17px}
-.sp-theme .sp-on{background:linear-gradient(115deg,var(--sp-orange),var(--sp-yellow));color:#1a1200;box-shadow:0 3px 10px rgba(255,120,0,.35)}
+/* ---------- shared day/night switch: ONE icon button that flips to the other mode ---------- */
+.sp-theme{position:relative;display:inline-grid;place-items:center;width:38px;height:38px;border:1px solid var(--sp-border);border-radius:50%;background:var(--sp-input);color:var(--sp-text);cursor:pointer;overflow:hidden;transition:border-color .2s,background .2s,transform .15s}
+.sp-theme:hover{border-color:color-mix(in srgb,var(--sp-orange) 55%,transparent)}
+.sp-theme:active{transform:scale(.92)}
+.sp-theme svg{grid-area:1/1;width:18px;height:18px;transition:transform .45s cubic-bezier(.4,.8,.3,1),opacity .3s}
+.sp-theme .sp-sun{color:var(--sp-yellow)}
+.sp-theme .sp-moon{color:var(--sp-orange)}
+.sp-theme[data-mode='dark'] .sp-moon{transform:rotate(90deg) scale(.3);opacity:0}
+.sp-theme[data-mode='light'] .sp-sun{transform:rotate(-90deg) scale(.3);opacity:0}
 
 /* ---------- admin dark mode: re-map the admin tokens + hard-coded whites ---------- */
 html[data-sp-theme='dark'] .admin-root{
@@ -330,8 +335,21 @@ html[data-sp-theme='dark'] .admin-root select{background-color:#0f1512;color:var
 @keyframes sp-caret-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
 .sp-caret{animation:sp-caret-blink 1s steps(1) infinite}
 
-/* ---------- language switch (UZ | RU | EN) ---------- */
-.sp-lang{position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:3px;border:1px solid var(--sp-border);border-radius:30px;background:var(--sp-input)}
-.sp-lang i{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px) / 3);border-radius:26px;background:linear-gradient(115deg,var(--sp-orange),var(--sp-yellow));box-shadow:0 3px 10px rgba(255,120,0,.3);transition:transform .3s cubic-bezier(.4,.8,.3,1)}
-.sp-lang button{position:relative;z-index:1;border:0;background:transparent;color:var(--sp-text-muted);font:inherit;font-size:11.5px;font-weight:800;letter-spacing:.3px;padding:6px 10px;border-radius:26px;cursor:pointer;transition:color .2s}
-.sp-lang button[aria-pressed='true']{color:#1a1200}
+/* ---------- language switch: one compact button, click opens UZ / RU / EN ---------- */
+.sp-lang{position:relative;display:inline-block}
+.sp-lang-btn{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 11px 0 10px;border:1px solid var(--sp-border);border-radius:30px;background:var(--sp-input);color:var(--sp-text);font:inherit;font-size:12.5px;font-weight:800;letter-spacing:.3px;cursor:pointer;transition:border-color .2s}
+.sp-lang-btn:hover,.sp-lang-btn[aria-expanded='true']{border-color:color-mix(in srgb,var(--sp-orange) 55%,transparent)}
+.sp-lang-btn svg{width:15px;height:15px;color:var(--sp-text-muted)}
+.sp-lang-btn .sp-chev{width:13px;height:13px;transition:transform .25s}
+.sp-lang-btn[aria-expanded='true'] .sp-chev{transform:rotate(180deg)}
+.sp-lang-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:80;min-width:158px;padding:5px;border:1px solid var(--sp-border);border-radius:14px;background:var(--sp-bg-elev,var(--sp-input));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 18px 40px -12px rgba(0,0,0,.45);animation:sp-lang-in .18s ease-out both;transform-origin:top right}
+.sp-lang-menu button{display:flex;align-items:center;gap:9px;width:100%;border:0;background:transparent;color:var(--sp-text);font:inherit;font-size:13.5px;font-weight:600;padding:9px 10px;border-radius:10px;cursor:pointer;text-align:left}
+.sp-lang-menu button:hover{background:color-mix(in srgb,var(--sp-orange) 12%,transparent)}
+.sp-lang-menu button[aria-checked='true']{background:linear-gradient(115deg,var(--sp-orange),var(--sp-yellow));color:#1a1200;font-weight:800}
+.sp-lang-menu .sp-flag{font-size:16px;line-height:1}
+@keyframes sp-lang-in{from{opacity:0;transform:translateY(-4px) scale(.96)}to{opacity:1;transform:none}}
+
+.sp-lang-dark{--sp-border:rgba(255,255,255,.12);--sp-input:rgba(255,255,255,.06);--sp-text:#f8fafc;--sp-text-muted:#94a3b8;--sp-bg-elev:#12151d;--sp-orange:#ff6600;--sp-yellow:#f59e0b}
+
+/* Phones: formulas in the exam follow the 1px smaller text */
+@media (max-width: 639px) { .exam-text .katex { font-size: 1.08em; } }

@@ -42,6 +42,8 @@ export type Question = {
   image?: string
   /** SAT content domain, e.g. "Algebra" or "Craft and Structure". */
   domain?: string
+  /** 1 or 2 when the question was imported for a specific module (sent by /api/questions). */
+  moduleNumber?: 1 | 2
   /** Optional visual arrangement of prompt paragraphs / tables / figure /
    *  equations, set in the admin's exam preview. See lib/question-layout.ts. */
   layout?: QuestionLayout | null

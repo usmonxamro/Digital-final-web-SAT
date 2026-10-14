@@ -7,6 +7,7 @@ import { ExamFooter } from '@/components/exam-footer'
 import { QuestionView } from '@/components/question-view'
 import { CalculatorPanel, CONTENT_SHIFT, MOBILE_SHEET_HEIGHT, PANEL_LEFT_GAP } from '@/components/calculator-panel'
 import { useIsMobile } from '@/lib/use-is-mobile'
+import { useStableCallback } from '@/lib/use-stable-callback'
 import { ReferenceSheet, REFERENCE_DEFAULT_WIDTH, REFERENCE_GAP } from '@/components/reference-sheet'
 import { PreviewBar } from '@/components/preview-bar'
 import type { LayoutEdit } from '@/components/question-stimulus'
@@ -29,6 +30,7 @@ type Phase = 'moduleIntro' | 'testing' | 'autoNext' | 'break' | 'report'
 type ScoringMode = 'full' | 'single' | 'practice'
 type TimerMode = 'countdown' | 'countup'
 
+const NO_CHOICES: ChoiceId[] = []
 const BIG_BREAK_SECONDS = 10 * 60
 const SHORT_BREAK_SECONDS = 5 * 60
 const USER_NAME = 'Usmon Xamroyev'
@@ -189,6 +191,18 @@ function ExamEngine({
   }, [baseQuestion, edits, savedEdits])
   const qKey = keyFor(activeModule.id, current)
 
+  // Computed once per change of answers/flags (not on every timer tick) so the footer can stay memoised.
+  const { answeredMap, flaggedMap } = useMemo(() => {
+    const a: Record<number, boolean> = {}
+    const f: Record<number, boolean> = {}
+    for (let i = 0; i < activeModule.total; i++) {
+      const k = keyFor(activeModule.id, i)
+      a[i] = !!answers[k]
+      f[i] = !!flags[k]
+    }
+    return { answeredMap: a, flaggedMap: f }
+  }, [answers, flags, activeModule])
+
   // Timer — counts down for normal tests, counts up (stopwatch, never auto-submits) for course tasks.
   useEffect(() => {
     if (phase !== 'testing' || preview) return
@@ -342,33 +356,42 @@ function ExamEngine({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
-  function selectAnswer(value: string) {
+  const selectAnswer = useStableCallback((value: string) => {
     setAnswers((a) => ({ ...a, [qKey]: value }))
-  }
+  })
 
-  function toggleFlag() {
+  const toggleFlag = useStableCallback(() => {
     setFlags((f) => ({ ...f, [qKey]: !f[qKey] }))
-  }
+  })
 
-  function toggleEliminate(id: ChoiceId) {
+  const toggleEliminate = useStableCallback((id: ChoiceId) => {
     setEliminated((e) => {
       const current = e[qKey] ?? []
       const next = current.includes(id) ? current.filter((c) => c !== id) : [...current, id]
       return { ...e, [qKey]: next }
     })
-  }
+  })
 
-  function goNext() {
+  const goNext = useStableCallback(() => {
     if (current < activeModule.total - 1) {
       setCurrent((c) => c + 1)
     } else {
       finishModule()
     }
-  }
+  })
 
-  function goBack() {
+  const goBack = useStableCallback(() => {
     setCurrent((c) => Math.max(0, c - 1))
-  }
+  })
+
+  const onLayoutEdit = useStableCallback((edit: LayoutEdit) => {
+    const id = baseQuestion.id
+    if (id) setEdits((m) => ({ ...m, [id]: edit }))
+  })
+
+  const registerHighlight = useStableCallback((fn: (() => void) | null) => {
+    highlightFnRef.current = fn
+  })
 
   /** Directly begins a given module index: resets timer/question and starts testing. */
   function startModule(idx: number) {
@@ -535,16 +558,8 @@ function ExamEngine({
 
   /* -------------------------------- Testing -------------------------------- */
 
-  const answeredMap: Record<number, boolean> = {}
-  const flaggedMap: Record<number, boolean> = {}
-  for (let i = 0; i < activeModule.total; i++) {
-    const k = keyFor(activeModule.id, i)
-    answeredMap[i] = !!answers[k]
-    flaggedMap[i] = !!flags[k]
-  }
-
   return (
-    <div className={`flex h-dvh flex-col overflow-hidden ${activeModule.kind === 'math' ? 'bg-[#f8fafc]' : 'bg-white'}`}>
+    <div className={`exam-text flex h-dvh flex-col overflow-hidden ${activeModule.kind === 'math' ? 'bg-[#f8fafc]' : 'bg-white'}`}>
       {preview && (
         <PreviewBar
           published={published}
@@ -591,7 +606,7 @@ function ExamEngine({
       />
 
       <div
-        className="flex min-h-0 flex-1 transition-[margin-left,margin-right] duration-[900ms] ease-in-out"
+        className="flex min-h-0 flex-1 transition-[margin-left,margin-right] duration-700 ease-[cubic-bezier(.4,0,.2,1)]"
         style={{
           marginLeft: calculatorOpen && !isMobile ? calcShift : 0,
           marginRight: referenceOpen && !isMobile ? refShift : 0,
@@ -607,20 +622,15 @@ function ExamEngine({
             index={current}
             question={question}
             selected={answers[qKey]}
-            eliminated={eliminated[qKey] ?? []}
+            eliminated={eliminated[qKey] ?? NO_CHOICES}
             flagged={!!flags[qKey]}
             onSelect={selectAnswer}
             onToggleEliminate={toggleEliminate}
             onToggleFlag={toggleFlag}
             compact={(calculatorOpen || referenceOpen) && isMobile}
             editLayout={!!preview && editMode && !!baseQuestion.id}
-            onLayoutEdit={(edit) => {
-              const id = baseQuestion.id
-              if (id) setEdits((m) => ({ ...m, [id]: edit }))
-            }}
-            registerHighlightTrigger={(fn) => {
-              highlightFnRef.current = fn
-            }}
+            onLayoutEdit={onLayoutEdit}
+            registerHighlightTrigger={registerHighlight}
           />
         </main>
       </div>
@@ -680,17 +690,15 @@ function splitHalves<T>(arr: T[]): [T[], T[]] {
  * split the insertion-ordered list in half on the client).
  */
 async function fetchModuleAware(kind: SectionKind, testLabel: string): Promise<[Question[], Question[]]> {
-  const qs = `kind=${kind}&test=${encodeURIComponent(testLabel)}`
-  const [m1Res, m2Res] = await Promise.all([
-    fetch(`/api/questions?${qs}&module=1`).then((r) => r.json()),
-    fetch(`/api/questions?${qs}&module=2`).then((r) => r.json()),
-  ])
-  const m1: Question[] = m1Res.questions ?? []
-  const m2: Question[] = m2Res.questions ?? []
+  // ONE request per section (it used to be one per module + a fallback): the server sends every
+  // row of the test with its `moduleNumber`, we split here. Fewer requests = a much faster start.
+  const res = await fetch(`/api/questions?kind=${kind}&test=${encodeURIComponent(testLabel)}`).then((r) => r.json())
+  const all: Question[] = res.questions ?? []
+  const m1 = all.filter((q) => q.moduleNumber === 1)
+  const m2 = all.filter((q) => q.moduleNumber === 2)
   if (m1.length > 0 || m2.length > 0) return [m1, m2]
-
-  const flatRes = await fetch(`/api/questions?${qs}`).then((r) => r.json())
-  return splitHalves<Question>(flatRes.questions ?? [])
+  // Legacy test imported before module numbers existed: split the insertion-ordered list in half.
+  return splitHalves<Question>(all)
 }
 
 /** Builds a 4-module full test (Reading&Writing + Math) from a dedicated test's own, already-split modules. */

@@ -316,8 +316,8 @@ export function CalculatorPanel({
         width: size?.width ?? DEFAULT_WIDTH,
         height: size?.height ?? 600,
         opacity: open ? 1 : 0,
-        transform: open ? 'translateX(0)' : 'translateX(-12px)',
-        transition: interacting ? 'none' : 'opacity 600ms ease-in-out, transform 600ms ease-in-out',
+        transform: open ? 'translateX(0)' : 'translateX(-56px)',
+        transition: interacting ? 'none' : 'opacity 700ms cubic-bezier(.4,0,.2,1), transform 700ms cubic-bezier(.4,0,.2,1), visibility 0s linear ' + (open ? '0s' : '700ms'),
         pointerEvents: open ? 'auto' : 'none',
         visibility: open ? 'visible' : 'hidden',
       }}
