@@ -44,6 +44,9 @@ const nextConfig = {
       { source: '/:path*', headers: securityHeaders },
       // API answers are personal / live — never cache them in shared caches.
       { source: '/api/:path*', headers: [{ key: 'Cache-Control', value: 'no-store' }] },
+      // Private pages must not be re-shown from the browser cache after logout.
+      { source: '/dashboard/:path*', headers: [{ key: 'Cache-Control', value: 'no-store' }] },
+      { source: '/exam', headers: [{ key: 'Cache-Control', value: 'no-store' }] },
     ]
   },
 }

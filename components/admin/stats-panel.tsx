@@ -29,7 +29,8 @@ export function StatsPanel() {
     )
   }
 
-  const { visits, users, attempts } = stats
+  const { visits, users, attempts, insights } = stats
+  const bmax = Math.max(1, ...insights.buckets.map((b) => b.count))
   const max = Math.max(1, ...visits.daily.map((d) => d.views))
   const h = hover ?? visits.daily.length - 1
   const fmtDate = (s: string) => {
@@ -113,6 +114,46 @@ export function StatsPanel() {
           <h3 className="mb-2 text-[13.5px] font-extrabold text-ink">Mock natijalari</h3>
           <div className="text-[30px] font-black leading-none text-ink">{attempts.total}</div>
           <div className="mt-1 text-[12.5px] text-ink-faint">jami topshirilgan · shu hafta +{attempts.last7}</div>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 lg:grid-cols-4">
+        <Tile label="PRO (to'lagan)" value={insights.plans.pro} sub="doimiy PRO foydalanuvchi" />
+        <Tile label="Bepul PRO sinov" value={insights.plans.trial} sub="30 kunlik sinovdagilar" />
+        <Tile label="FREE" value={insights.plans.free} sub="sinov tugagan" />
+        <Tile label="30 kun: mocklar" value={insights.last30Attempts} sub={`o'rtacha aniqlik ${insights.accuracy ?? '–'}%`} />
+      </div>
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-line bg-white p-4">
+          <h3 className="mb-1 text-[13.5px] font-extrabold text-ink">Ball taqsimoti (to&apos;liq mocklar, 30 kun)</h3>
+          <p className="mb-3 text-[12px] text-ink-faint">O&apos;rtacha: {insights.avgFull ?? '–'}</p>
+          {insights.buckets.map((b) => (
+            <div key={b.label} className="mb-2 flex items-center gap-2 text-[12px]">
+              <span className="w-20 text-ink-soft">{b.label}</span>
+              <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-bg-deep">
+                <div className="h-full rounded-full bg-green" style={{ width: `${(b.count / bmax) * 100}%` }} />
+              </div>
+              <span className="w-8 text-right font-bold tabular-nums text-ink">{b.count}</span>
+            </div>
+          ))}
+        </div>
+        <div className="rounded-xl border border-line bg-white p-4">
+          <h3 className="mb-2 text-[13.5px] font-extrabold text-ink">Eng ko&apos;p ishlangan mocklar (30 kun)</h3>
+          {insights.topMocks.length === 0 ? (
+            <p className="text-[12.5px] text-ink-faint">Hali ma&apos;lumot yo&apos;q.</p>
+          ) : (
+            <table className="w-full text-[12.5px]">
+              <tbody>
+                {insights.topMocks.map((m) => (
+                  <tr key={m.label} className="border-t border-line first:border-t-0">
+                    <td className="max-w-0 truncate py-1.5 pr-2 text-ink-soft">{m.label}</td>
+                    <td className="py-1.5 text-right font-bold tabular-nums text-ink">{m.count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

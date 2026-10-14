@@ -4,10 +4,13 @@ export function Logo({
   subtitle = true,
   size = 'md',
   href = '/',
+  compact = false,
 }: {
   subtitle?: boolean
   size?: 'sm' | 'md'
   href?: string
+  /** Hide the wordmark on phones (header with several buttons). */
+  compact?: boolean
 }) {
   const box = size === 'sm' ? 'w-8 h-8 rounded-[9px]' : 'w-9 h-9 rounded-[10px]'
   const text = size === 'sm' ? 'text-base' : 'text-lg'
@@ -23,7 +26,7 @@ export function Logo({
           <path d="M12 3v18" />
         </svg>
       </div>
-      <div className={`font-extrabold leading-tight text-sp-text ${text}`}>
+      <div className={`font-extrabold leading-tight text-sp-text ${text} ${compact ? 'hidden sm:block' : ''}`}>
         SAT AKADEMIYASI
         {subtitle && (
           <span className="block font-semibold text-[10.5px] tracking-wide text-sp-text-muted mt-0.5">

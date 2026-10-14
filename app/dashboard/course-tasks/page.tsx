@@ -6,6 +6,7 @@ import { BookOpen, ChevronLeft, Clock, KeyRound, Lock, Play } from 'lucide-react
 import { useDashboardData, type TestSummary } from '@/components/marketing/dashboard/dashboard-data'
 import { useUser } from '@/components/marketing/dashboard/user-context'
 import { useSd } from '@/components/marketing/dashboard/sd-ui'
+import { CourseCard } from '@/components/marketing/dashboard/course-card'
 import { COURSE_GROUPS } from '@/lib/course-groups'
 
 /** "December Intensive — Week 1" → course "December Intensive"; labels without a dash go to "Umumiy vazifalar". */
@@ -133,22 +134,15 @@ export default function CourseTasksPage() {
       </div>
       <div className="sd-course-grid">
         {tests === null && <div className="sd-panel sd-empty">Yuklanmoqda...</div>}
-        {courses.map((c) => (
-          <div className="sd-course-card" key={c.name}>
-            <div className="sd-course-top">
-              <div className="sd-course-symbol">
-                <BookOpen />
-              </div>
-              <span className={`sd-course-badge ${unlocked(c) ? '' : 'sd-locked'}`}>{unlocked(c) ? "A'zo" : 'Qabul ochiq'}</span>
-            </div>
-            <h3>{c.name}</h3>
-            <p>
-              {c.tasks.length > 0 ? `${c.tasks.length} ta mashg'ulot` : "Vazifalar tez orada"} · Telegram guruhi vazifalari
-            </p>
-            <button className={`${unlocked(c) ? 'sd-primary' : 'sd-soft'} sd-block`} onClick={() => pick(c)}>
-              {unlocked(c) ? 'Vazifalarni ko‘rish' : (<><Lock /> Kursni ko‘rish</>)} →
-            </button>
-          </div>
+        {courses.map((c, i) => (
+          <CourseCard
+            key={c.name}
+            name={c.name}
+            index={i}
+            unlocked={unlocked(c)}
+            taskCount={c.tasks.length}
+            onOpen={() => pick(c)}
+          />
         ))}
       </div>
     </>

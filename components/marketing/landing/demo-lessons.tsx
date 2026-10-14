@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Play, ListVideo } from 'lucide-react'
 import { VideoModal } from '@/components/marketing/landing/video-modal'
 import { Reveal } from '@/components/marketing/reveal'
+import { useT } from '@/components/i18n-provider'
 
 const VIDEOS = [
   { id: '_Mx0OD1bB1Y', title: 'SAT darsi 1' },
@@ -18,6 +19,7 @@ const PLAYLISTS = [
 ]
 
 export function DemoLessons() {
+  const t = useT()
   const [modalSrc, setModalSrc] = useState<string | null>(null)
 
   return (
@@ -26,10 +28,10 @@ export function DemoLessons() {
         <Reveal>
           <div className="text-center max-w-[560px] mx-auto mb-12">
             <h2 className="text-[1.9rem] md:text-[2.3rem] font-extrabold text-sp-text">
-              Video Darslar
+              {t('Video Darslar')}
             </h2>
             <p className="mt-3 text-sp-text-muted text-[15.5px]">
-              YouTube kanalimizdagi darslarni saytdan chiqmasdan tomosha qiling
+              {t('YouTube kanalimizdagi darslarni saytdan chiqmasdan tomosha qiling')}
             </p>
           </div>
         </Reveal>
@@ -47,7 +49,7 @@ export function DemoLessons() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`https://img.youtube.com/vi/${v.id}/hqdefault.jpg`}
-                    alt={v.title}
+                    alt={t(v.title)}
                     className="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20">
@@ -57,7 +59,7 @@ export function DemoLessons() {
                   </div>
                 </div>
                 <div className="p-4">
-                  <div className="text-[14px] font-bold text-sp-text leading-snug">{v.title}</div>
+                  <div className="text-[14px] font-bold text-sp-text leading-snug">{t(v.title)}</div>
                 </div>
               </button>
             </Reveal>
@@ -65,7 +67,7 @@ export function DemoLessons() {
         </div>
 
         <Reveal>
-          <h3 className="text-[18px] font-bold text-sp-text mb-5">Pleylistlar</h3>
+          <h3 className="text-[18px] font-bold text-sp-text mb-5">{t('Pleylistlar')}</h3>
         </Reveal>
         <div className="grid sm:grid-cols-2 gap-5">
           {PLAYLISTS.map((p, i) => (
@@ -80,8 +82,8 @@ export function DemoLessons() {
                   <ListVideo size={24} />
                 </div>
                 <div>
-                  <div className="text-[15px] font-bold text-sp-text">{p.title}</div>
-                  <div className="text-[12.5px] text-sp-text-muted mt-0.5">To&apos;liq pleylistni ko&apos;rish</div>
+                  <div className="text-[15px] font-bold text-sp-text">{t(p.title)}</div>
+                  <div className="text-[12.5px] text-sp-text-muted mt-0.5">{t("To'liq pleylistni ko'rish")}</div>
                 </div>
               </button>
             </Reveal>

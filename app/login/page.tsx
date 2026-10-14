@@ -3,6 +3,9 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowRight, Check, Eye, EyeOff, GraduationCap, Lock, Mail, Phone, ShieldCheck, User } from 'lucide-react'
+import Link from 'next/link'
+import { useT } from '@/components/i18n-provider'
+import { LangSwitch } from '@/components/lang-switch'
 
 type Method = 'email' | 'phone'
 type Mode = 'signin' | 'signup'
@@ -18,6 +21,7 @@ const ERRORS: Record<string, string> = {
 }
 
 function SignIn() {
+  const t = useT()
   const router = useRouter()
   const params = useSearchParams()
   const [mode, setMode] = useState<Mode>('signin')
@@ -28,6 +32,7 @@ function SignIn() {
   const [progress, setProgress] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [forgot, setForgot] = useState(false)
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -37,8 +42,15 @@ function SignIn() {
 
   useEffect(() => {
     const e = params.get('error')
-    if (e) setError(ERRORS[e] ?? 'Xatolik yuz berdi.')
+    if (e) setError(t(ERRORS[e] ?? 'Xatolik yuz berdi.'))
+    if (params.get('mode') === 'signup') setMode('signup')
   }, [params])
+
+  function switchMode(m: Mode) {
+    setError(null)
+    setNotice(null)
+    setMode(m)
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -56,7 +68,7 @@ function SignIn() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setError(data.error ?? 'Xatolik yuz berdi.')
+        setError(t(data.error ?? 'Xatolik yuz berdi.'))
         setLoading(false)
         return
       }
@@ -68,7 +80,7 @@ function SignIn() {
         router.refresh()
       }, 1300)
     } catch {
-      setError("Server bilan bog'lanib bo'lmadi. Qaytadan urinib ko'ring.")
+      setError(t("Server bilan bog'lanib bo'lmadi. Qaytadan urinib ko'ring."))
       setLoading(false)
     }
   }
@@ -82,16 +94,44 @@ function SignIn() {
 
   return (
     <div className="min-h-screen font-sans relative overflow-x-hidden flex items-center justify-center p-4 bg-[#070709] text-[#f8fafc]">
+      <div className="absolute top-0 inset-x-0 z-20 flex items-center justify-between gap-2 px-4 py-4 sm:px-8">
+        <Link href="/" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{t('← Bosh sahifa')}</Link>
+        <div className="flex items-center gap-2">
+          <LangSwitch />
+          <button
+            type="button"
+            onClick={() => switchMode('signin')}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              mode === 'signin'
+                ? 'bg-gradient-to-r from-orange-600 to-amber-500 text-white shadow-lg shadow-orange-600/30'
+                : 'border border-slate-700 text-slate-200 hover:border-orange-500'
+            }`}
+          >
+            {t('Kirish')}
+          </button>
+          <button
+            type="button"
+            onClick={() => switchMode('signup')}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              mode === 'signup'
+                ? 'bg-gradient-to-r from-orange-600 to-amber-500 text-white shadow-lg shadow-orange-600/30'
+                : 'border border-slate-700 text-slate-200 hover:border-orange-500'
+            }`}
+          >
+            {t('Ro‘yxatdan o‘tish')}
+          </button>
+        </div>
+      </div>
       <div className="sat-signin-orb-1 pointer-events-none" />
       <div className="sat-signin-orb-2 pointer-events-none" />
 
-      <div className="sat-signin-scale w-full max-w-md relative z-10 my-4">
+      <div className="w-full max-w-[480px] relative z-10 my-16">
         <div className="text-center mb-5">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 shadow-lg shadow-orange-600/30 mb-4 transform hover:scale-105 transition-transform duration-300">
             <GraduationCap className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">SAT AKADEMIYASI</h1>
-          <p className="text-sm text-slate-400 mt-1">Next-Generation Digital SAT Preparation</p>
+          <p className="text-sm text-slate-400 mt-1">{t('Digital SAT tayyorgarlik platformasi')}</p>
         </div>
 
         <div className="sat-glass-card rounded-3xl p-8 shadow-2xl relative overflow-hidden transition-all duration-500">
@@ -104,8 +144,8 @@ function SignIn() {
               <div className="w-16 h-16 bg-gradient-to-tr from-orange-600 to-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-600/40 mb-4 animate-bounce">
                 <Check className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Welcome Back, Scholar!</h3>
-              <p className="text-sm text-slate-400 mb-6">Redirecting to your digital test dashboard...</p>
+              <h3 className="text-xl font-bold text-white mb-2">{t('Xush kelibsiz!')}</h3>
+              <p className="text-sm text-slate-400 mb-6">{t('Dashboardga o‘tilmoqda...')}</p>
               <div className="w-48 h-1.5 bg-slate-800 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-orange-600 to-amber-500 transition-all duration-1000 ease-out"
@@ -115,17 +155,21 @@ function SignIn() {
             </div>
           )}
 
+          {forgot ? (
+            <ForgotPanel email={email} onBack={() => setForgot(false)} onDone={() => { setForgot(false); setNotice(t('Parol yangilandi. Yangi parol bilan kiring.')) }} />
+          ) : (
+          <>
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-semibold text-white">{mode === 'signin' ? 'Sign In' : 'Create Account'}</h2>
+              <h2 className="text-xl font-semibold text-white">{mode === 'signin' ? t('Kirish') : t('Ro‘yxatdan o‘tish')}</h2>
               <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20">
-                Digital Portal
+                SAT Portal
               </span>
             </div>
             <p className="text-xs text-slate-400">
               {mode === 'signin'
-                ? 'Enter your credentials to access your adaptive practice tests.'
-                : 'Create your free account to start your adaptive practice tests.'}
+                ? t('Hisobingizga kirib, mashqni davom ettiring.')
+                : t('Bepul hisob yarating va birinchi mockni ishlang.')}
             </p>
           </div>
 
@@ -134,7 +178,7 @@ function SignIn() {
               <Mail className="w-3.5 h-3.5" /> Email
             </button>
             <button type="button" onClick={() => setMethod('phone')} className={method === 'phone' ? tabOn : tabOff}>
-              <Phone className="w-3.5 h-3.5" /> Phone
+              <Phone className="w-3.5 h-3.5" /> {t('Telefon')}
             </button>
           </div>
 
@@ -142,7 +186,7 @@ function SignIn() {
             {mode === 'signup' && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-300">First Name</label>
+                  <label className="block text-xs font-medium text-slate-300">{t('Ism')}</label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                       <User className="w-4 h-4" />
@@ -157,7 +201,7 @@ function SignIn() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-xs font-medium text-slate-300">Last Name</label>
+                  <label className="block text-xs font-medium text-slate-300">{t('Familiya')}</label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                       <User className="w-4 h-4" />
@@ -176,7 +220,7 @@ function SignIn() {
 
             {method === 'email' ? (
               <div className="space-y-1">
-                <label className="block text-xs font-medium text-slate-300">Email Address</label>
+                <label className="block text-xs font-medium text-slate-300">{t('Email manzil')}</label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                     <Mail className="w-4 h-4" />
@@ -194,7 +238,7 @@ function SignIn() {
               </div>
             ) : (
               <div className="space-y-1">
-                <label className="block text-xs font-medium text-slate-300">Phone Number</label>
+                <label className="block text-xs font-medium text-slate-300">{t('Telefon raqam')}</label>
                 <div className="relative flex">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                     <Phone className="w-4 h-4" />
@@ -214,17 +258,19 @@ function SignIn() {
 
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-medium text-slate-300">Password</label>
+                <label className="block text-xs font-medium text-slate-300">{t('Parol')}</label>
                 {mode === 'signin' && (
                   <a
                     href="#"
                     onClick={(e) => {
                       e.preventDefault()
-                      setNotice("Parolni tiklash uchun administrator bilan bog'laning yoki Google orqali kiring.")
+                      setError(null)
+                      setNotice(null)
+                      setForgot(true)
                     }}
                     className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
                   >
-                    Forgot password?
+                    {t('Parolni unutdingizmi?')}
                   </a>
                 )}
               </div>
@@ -259,7 +305,7 @@ function SignIn() {
                   defaultChecked
                   className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-orange-600 focus:ring-orange-500 focus:ring-offset-slate-900 cursor-pointer accent-orange-600"
                 />
-                <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">Remember this device</span>
+                <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">{t('Bu qurilmani eslab qolish')}</span>
               </label>
             </div>
 
@@ -286,7 +332,7 @@ function SignIn() {
                 </svg>
               ) : (
                 <>
-                  <span>{mode === 'signin' ? 'Launch Practice Portal' : 'Create My Account'}</span>
+                  <span>{mode === 'signin' ? t('Kirish') : t('Ro‘yxatdan o‘tish')}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </>
               )}
@@ -296,39 +342,29 @@ function SignIn() {
           <div className="mt-6">
             <div className="relative flex py-2 items-center">
               <div className="flex-grow border-t border-slate-800" />
-              <span className="flex-shrink mx-4 text-xs text-slate-500 uppercase tracking-widest">Or continue with</span>
+              <span className="flex-shrink mx-4 text-xs text-slate-500 uppercase tracking-widest">{t('yoki')}</span>
               <div className="flex-grow border-t border-slate-800" />
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-4">
+            <div className="grid grid-cols-1 gap-3 mt-4">
               <a
                 href="/api/auth/google"
-                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-xl text-xs font-medium text-slate-300 transition-all duration-200"
+                className="flex items-center justify-center gap-3 py-3.5 px-4 bg-white hover:bg-slate-100 border border-white rounded-xl text-sm font-semibold text-slate-900 shadow-lg shadow-black/30 transition-all duration-200"
               >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                 </svg>
-                Google
+                {t('Google bilan davom etish')}
               </a>
-              <button
-                type="button"
-                onClick={() => setNotice('Apple ID orqali kirish tez orada qo‘shiladi. Hozircha Google yoki email/telefon bilan kiring.')}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-xl text-xs font-medium text-slate-300 transition-all duration-200"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.35c.67-.82 1.12-1.96.99-3.1-1.01.04-2.22.68-2.92 1.49-.62.72-1.16 1.88-1 2.99 1.13.09 2.27-.58 2.93-1.38z" />
-                </svg>
-                Apple ID
-              </button>
             </div>
           </div>
 
           <div className="mt-8 text-center">
             <p className="text-xs text-slate-400">
-              {mode === 'signin' ? "Don't have an account yet?" : 'Already have an account?'}
+              {mode === 'signin' ? t('Hisobingiz yo‘qmi?') : t('Hisobingiz bormi?')}
               <a
                 href="#"
                 onClick={(e) => {
@@ -339,21 +375,92 @@ function SignIn() {
                 }}
                 className="font-medium text-orange-400 hover:text-orange-300 transition-colors ml-1"
               >
-                {mode === 'signin' ? 'Create free account' : 'Sign in'}
+                {mode === 'signin' ? t('Ro‘yxatdan o‘tish') : t('Kirish')}
               </a>
             </p>
           </div>
+          </>
+          )}
         </div>
 
         <div className="mt-6 flex items-center justify-center gap-4 text-xs text-slate-500">
           <span className="flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-orange-500" /> 256-Bit SSL Secure
+            <ShieldCheck className="w-3.5 h-3.5 text-orange-500" /> {t('Ma’lumotlar himoyalangan')}
           </span>
           <span>•</span>
-          <span>Bluebook™ Compatible</span>
+          <span>{t('Bluebook uslubida')}</span>
         </div>
       </div>
     </div>
+  )
+}
+
+function ForgotPanel({ email: initial, onBack, onDone }: { email: string; onBack: () => void; onDone: () => void }) {
+  const t = useT()
+  const [step, setStep] = useState<1 | 2>(1)
+  const [email, setEmail] = useState(initial)
+  const [code, setCode] = useState('')
+  const [pw, setPw] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const cls =
+    'w-full px-4 py-3 bg-slate-900/90 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none sat-input-glow transition-all'
+
+  async function call(url: string, body: object): Promise<boolean> {
+    setBusy(true)
+    setErr(null)
+    try {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setErr(t(d.error ?? 'Xatolik yuz berdi.'))
+        return false
+      }
+      return true
+    } catch {
+      setErr(t("Server bilan bog'lanib bo'lmadi."))
+      return false
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (step === 1) {
+      if (await call('/api/auth/forgot', { email })) setStep(2)
+    } else if (await call('/api/auth/reset', { email, code, password: pw })) {
+      onDone()
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <h2 className="text-xl font-semibold text-white">{t('Parolni tiklash')}</h2>
+      <p className="text-xs text-slate-400">
+        {step === 1
+          ? t('Ro‘yxatdan o‘tgan email manzilingizni kiriting — 6 xonali kodni yuboramiz.')
+          : t('{email} manziliga kod yuborildi (spam papkasini ham tekshiring). Kodni va yangi parolni kiriting.', { email })}
+      </p>
+      {step === 1 ? (
+        <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('Email manzil')} autoComplete="email" className={cls} />
+      ) : (
+        <>
+          <input inputMode="numeric" required maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder={t('6 xonali kod')} className={`${cls} tracking-[0.4em] text-center text-lg`} />
+          <input type="password" required minLength={6} value={pw} onChange={(e) => setPw(e.target.value)} placeholder={t('Yangi parol (kamida 6 belgi)')} autoComplete="new-password" className={cls} />
+        </>
+      )}
+      {err && <p className="text-xs text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{err}</p>}
+      <button type="submit" disabled={busy} className="w-full py-3.5 bg-gradient-to-r from-orange-600 to-amber-500 text-white font-medium rounded-xl shadow-lg shadow-orange-600/30 disabled:opacity-70">
+        {busy ? t('Kuting…') : step === 1 ? t('Kod yuborish') : t('Parolni yangilash')}
+      </button>
+      <p className="text-center text-[11px] text-slate-500">
+        {t('Telefon bilan ro‘yxatdan o‘tgan bo‘lsangiz yoki email kelmasa, Telegramda @Usmon_Xamroyev ga yozing.')}
+      </p>
+      <button type="button" onClick={onBack} className="block mx-auto text-xs text-orange-400 hover:text-orange-300">
+        {t('← Kirishga qaytish')}
+      </button>
+    </form>
   )
 }
 

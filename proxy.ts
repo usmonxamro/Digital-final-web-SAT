@@ -30,6 +30,18 @@ export function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
+  // Private areas: no session cookie → straight to the sign-in page (the layouts
+  // then verify the signature and that the account still exists).
+  if (
+    (pathname === '/dashboard' || pathname.startsWith('/dashboard/') || pathname === '/exam' || pathname.startsWith('/exam/')) &&
+    !req.cookies.get('sat_session')?.value
+  ) {
+    const url = req.nextUrl.clone()
+    url.pathname = '/login'
+    url.search = ''
+    return NextResponse.redirect(url)
+  }
+
   const secret = (process.env.ADMIN_PATH ?? '').replace(/^\/+|\/+$/g, '')
   if (secret) {
     if (pathname === '/admin' || pathname.startsWith('/admin/')) {

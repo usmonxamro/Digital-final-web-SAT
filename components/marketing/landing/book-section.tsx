@@ -6,6 +6,7 @@ import { BookCover } from '@/components/marketing/landing/book-cover'
 import { BookPreviewModal } from '@/components/marketing/landing/book-preview-modal'
 import { Reveal } from '@/components/marketing/reveal'
 import { MarketingButton } from '@/components/marketing/button'
+import { useT } from '@/components/i18n-provider'
 
 // TODO(Usmon): kitobingizning PDF faylini public/book.pdf sifatida qo'ying —
 // shu manzil bo'yicha avtomatik topiladi. Muqova hozircha shu faylning birinchi
@@ -13,6 +14,7 @@ import { MarketingButton } from '@/components/marketing/button'
 const BOOK_PDF_URL = '/book.pdf'
 
 export function BookSection() {
+  const t = useT()
   const [previewOpen, setPreviewOpen] = useState(false)
 
   return (
@@ -27,19 +29,19 @@ export function BookSection() {
               </div>
               <div className="flex-1 text-center sm:text-left">
                 <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold text-sp-green bg-sp-green/10 px-2.5 py-1 rounded-full">
-                  <BookOpen size={12} /> Mualliflik kitobi
+                  <BookOpen size={12} /> {t('Mualliflik kitobi')}
                 </span>
                 <h3 className="text-[20px] font-extrabold text-sp-text mt-3">
-                  Usmon Xamroyev bilan SAT&apos;ga tayyorgarlik
+                  {t("Usmon Xamroyev bilan SAT'ga tayyorgarlik")}
                 </h3>
                 <p className="text-[14px] text-sp-text-muted mt-2 leading-relaxed">
-                  Real imtihon tajribasiga asoslangan strategiya va misollar to&apos;plami.
+                  {t("Real imtihon tajribasiga asoslangan strategiya va misollar to'plami.")}
                 </p>
                 <button
                   onClick={() => setPreviewOpen(true)}
                   className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 rounded-[10px] font-bold text-[13.5px] text-white bg-[linear-gradient(135deg,var(--sp-green),var(--sp-green-glow))]"
                 >
-                  <Eye size={15} /> Kitobni ko&apos;rish
+                  <Eye size={15} /> {t("Kitobni ko'rish")}
                 </button>
               </div>
             </div>
@@ -54,13 +56,12 @@ export function BookSection() {
               <span className="inline-flex items-center gap-1.5 text-[11.5px] font-extrabold text-[#1A1200] bg-[linear-gradient(135deg,var(--sp-yellow),var(--sp-yellow-glow))] px-3 py-1 rounded-full mb-3">
                 <Crown size={12} /> PREMIUM
               </span>
-              <h3 className="text-[20px] font-extrabold text-sp-text">800/800 Math kurs darslari</h3>
+              <h3 className="text-[20px] font-extrabold text-sp-text">{t('800/800 Math kurs darslari')}</h3>
               <p className="text-[14px] text-sp-text-muted mt-2 max-w-[320px]">
-                Eng yuqori ballga olib boruvchi video darslar to&apos;plami — faqat Premium
-                obunachilar uchun.
+                {t("Eng yuqori ballga olib boruvchi video darslar to'plami — faqat Premium obunachilar uchun.")}
               </p>
               <MarketingButton href="/login" variant="gold" className="mt-5">
-                Premium&apos;ga o&apos;tish
+                {t("Premium'ga o'tish")}
               </MarketingButton>
             </div>
           </Reveal>

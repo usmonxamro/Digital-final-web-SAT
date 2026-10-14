@@ -1,12 +1,14 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { HelpModal } from '@/components/marketing/dashboard/help-modal'
+import { PlansModal } from '@/components/marketing/dashboard/plans-modal'
 import { X, Lock, LifeBuoy, Bell, KeyRound, CheckCircle2 } from 'lucide-react'
 
 /** Telegram channel / bot / contact for "Yordam" and "Kursga qo'shilish" (set NEXT_PUBLIC_HELP_URL). */
 export const HELP_URL = process.env.NEXT_PUBLIC_HELP_URL ?? ''
 
-type ModalKind = 'help' | 'locked' | 'paid' | 'notifications' | 'code'
+type ModalKind = 'help' | 'locked' | 'paid' | 'notifications' | 'code' | 'plans'
 type Ctx = { toast: (m: string) => void; openModal: (k: ModalKind) => void }
 
 const SdContext = createContext<Ctx>({ toast: () => {}, openModal: () => {} })
@@ -34,6 +36,7 @@ const MODALS: Record<ModalKind, { icon: React.ReactNode; title: string; text: st
       : "Savollaringiz bo'lsa, SAT Akademiyasi Telegram kanali yoki guruhi orqali o'qituvchiga murojaat qiling.",
     button: HELP_URL ? 'Telegramda yozish' : 'Tushunarli',
   },
+  plans: { icon: <Lock />, title: 'Tariflar', text: '', button: '' },
   notifications: {
     icon: <Bell />,
     title: 'Bildirishnomalar',
@@ -94,10 +97,7 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
       setModal('code')
       return
     }
-    if ((modal === 'paid' || modal === 'help') && HELP_URL) {
-      window.open(HELP_URL, '_blank', 'noopener,noreferrer')
-      setModal(null)
-    } else if (modal === 'paid') {
+    if (modal === 'paid') {
       setModal('help')
     } else {
       setModal(null)
@@ -109,11 +109,15 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
       {children}
       {m && (
         <div className="sd-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && setModal(null)}>
-          <div className="sd-modal" role="dialog" aria-modal="true" aria-label={m.title}>
+          <div className={`sd-modal ${modal === 'help' ? 'sd-modal-wide' : ''} ${modal === 'plans' ? 'sd-modal-plans' : ''}`} role="dialog" aria-modal="true" aria-label={m.title}>
             <button className="sd-modal-close" onClick={() => setModal(null)} aria-label="Yopish">
               <X size={15} />
             </button>
-            {modal === 'code' ? (
+            {modal === 'help' ? (
+              <HelpModal onClose={() => setModal(null)} />
+            ) : modal === 'plans' ? (
+              <PlansModal onHelp={() => setModal('help')} />
+            ) : modal === 'code' ? (
               joined ? (
                 <>
                   <div className="sd-modal-icon sd-pop">

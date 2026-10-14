@@ -8,23 +8,37 @@ import { studyStreak, useDashboardData, type Attempt } from '@/components/market
 import { groupExams } from '@/lib/exam-groups'
 import { GhostCards } from '@/components/marketing/dashboard/ghost-cards'
 import { Celebration } from '@/components/marketing/dashboard/celebration'
+import { useI18n } from '@/components/i18n-provider'
+import type { Lang } from '@/lib/i18n'
 
 const TARGET_KEY = 'sd-target-score'
-const WEEKDAYS = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba']
-const SHORT_DAYS = ['Ya', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh']
-const MONTHS = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr']
+const WEEKDAYS: Record<Lang, string[]> = {
+  uz: ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'],
+  ru: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+}
+const SHORT_DAYS: Record<Lang, string[]> = {
+  uz: ['Ya', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'],
+  ru: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+  en: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+}
+const MONTHS: Record<Lang, string[]> = {
+  uz: ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'],
+  ru: ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+}
 
 const dayKey = (t: number | string) => new Date(t).toLocaleDateString('en-CA', { timeZone: 'Asia/Tashkent' })
 
-function dateHeading() {
+function dateHeading(lang: Lang) {
   const [y, m, d] = dayKey(Date.now()).split('-').map(Number)
   const wd = new Date(Date.UTC(y, m - 1, d)).getUTCDay()
-  return `${WEEKDAYS[wd]}, ${d}-${MONTHS[m - 1]} ${y}`
+  return lang === 'uz' ? `${WEEKDAYS.uz[wd]}, ${d}-${MONTHS.uz[m - 1]} ${y}` : `${WEEKDAYS[lang][wd]}, ${d} ${MONTHS[lang][m - 1]} ${y}`
 }
 
-function shortDate(iso: string) {
+function shortDate(iso: string, lang: Lang) {
   const [, m, d] = dayKey(iso).split('-').map(Number)
-  return `${d}-${MONTHS[m - 1]}`
+  return lang === 'uz' ? `${d}-${MONTHS.uz[m - 1]}` : `${d} ${MONTHS[lang][m - 1]}`
 }
 
 function max(a: Attempt) {
@@ -42,6 +56,7 @@ function tone(a: Attempt) {
 }
 
 export default function DashboardPage() {
+  const { t, lang } = useI18n()
   const user = useUser()
   const { attempts, tests, platform } = useDashboardData()
   const [target, setTarget] = useState(1400)
@@ -91,14 +106,14 @@ export default function DashboardPage() {
       const t = Date.now() - (6 - i) * 86400_000
       const key = dayKey(t)
       const [y, m, d] = key.split('-').map(Number)
-      return { key, label: SHORT_DAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()], n: 0 }
+      return { key, label: SHORT_DAYS[lang][new Date(Date.UTC(y, m - 1, d)).getUTCDay()], n: 0 }
     })
     for (const a of list) {
       const hit = days.find((d) => d.key === dayKey(a.created_at))
       if (hit) hit.n++
     }
     return { best, accuracy: total ? Math.round((correct / total) * 100) : null, count: list.length, lastWeek, days }
-  }, [attempts])
+  }, [attempts, lang])
 
   const mocks = useMemo(() => (tests ?? []).filter((t) => t.placement === 'mock' && t.section !== 'free'), [tests])
   const exams = useMemo(() => groupExams(mocks).slice(0, 3), [mocks])
@@ -114,11 +129,11 @@ export default function DashboardPage() {
       <div className="sd-page-header">
         <div>
           <div className="sd-eyebrow" suppressHydrationWarning>
-            {dateHeading()}
+            {dateHeading(lang)}
           </div>
-          <h1>Xush kelibsiz, {user.firstName} 👋</h1>
+          <h1>{t('Xush kelibsiz, {name} 👋', { name: user.firstName })}</h1>
         </div>
-        <span className="sd-pill">{streak > 0 ? `🔥 ${streak} kun ketma-ket` : '● Ta’lim jarayonida'}</span>
+        <span className="sd-pill">{streak > 0 ? t('🔥 {n} kun ketma-ket', { n: streak }) : t('● Ta’lim jarayonida')}</span>
       </div>
 
       <section className="sd-hero">
@@ -126,13 +141,13 @@ export default function DashboardPage() {
         <img className="sd-hero-art sd-hero-art-night" src="/assets/student-banner-night.webp" alt="" width={1600} height={243} decoding="async" loading="lazy" />
         <div className="sd-hero-copy">
           <div className="sd-kicker">SAT AKADEMIYASI</div>
-          <h2>Katta natijalar kichik qadamlardan boshlanadi.</h2>
+          <h2>{t('Katta natijalar kichik qadamlardan boshlanadi.')}</h2>
           <div className="sd-hero-actions">
             <Link href="/dashboard/practice" className="sd-primary">
-              <Play /> Test ishlashni boshlash
+              <Play /> {t('Test ishlashni boshlash')}
             </Link>
             <Link href="/dashboard/course-tasks" className="sd-soft">
-              <BookOpen /> Kurslarim
+              <BookOpen /> {t('Kurslarim')}
             </Link>
           </div>
         </div>
@@ -144,11 +159,11 @@ export default function DashboardPage() {
             <span className="sd-stat-icon">
               <FileText />
             </span>
-            {stats.lastWeek > 0 && <span className="sd-trend"><TrendingUp size={12} style={{ display: 'inline', verticalAlign: '-2px' }} /> +{stats.lastWeek} shu hafta</span>}
+            {stats.lastWeek > 0 && <span className="sd-trend"><TrendingUp size={12} style={{ display: 'inline', verticalAlign: '-2px' }} /> {t('+{n} shu hafta', { n: stats.lastWeek })}</span>}
           </div>
-          <div className="sd-stat-label">Yechilgan testlar</div>
+          <div className="sd-stat-label">{t('Yechilgan testlar')}</div>
           <div className="sd-stat-value">
-            {attempts === null ? '…' : stats.count} <small>ta</small>
+            {attempts === null ? '…' : stats.count} <small>{t('ta')}</small>
           </div>
         </div>
         <div className="sd-stat">
@@ -158,14 +173,14 @@ export default function DashboardPage() {
             </span>
             {platform?.rank && stats.best ? (
               <span className="sd-trend">
-                <Medal size={11} style={{ display: 'inline', verticalAlign: '-1px' }} /> O&apos;rningiz: #{platform.rank}
+                <Medal size={11} style={{ display: 'inline', verticalAlign: '-1px' }} /> {t("O'rningiz: #{rank}", { rank: platform.rank })}
               </span>
             ) : null}
           </div>
-          <div className="sd-stat-label">Eng yuqori SAT ball</div>
+          <div className="sd-stat-label">{t('Eng yuqori SAT ball')}</div>
           {attempts !== null && stats.best === null ? (
             <span className="sd-stat-empty">
-              <Info /> Hali test yechmadingiz
+              <Info /> {t('Hali test yechmadingiz')}
             </span>
           ) : (
             <div className="sd-stat-value">
@@ -179,10 +194,10 @@ export default function DashboardPage() {
               <Crosshair />
             </span>
           </div>
-          <div className="sd-stat-label">O&apos;rtacha aniqlik</div>
+          <div className="sd-stat-label">{t("O'rtacha aniqlik")}</div>
           {attempts !== null && stats.accuracy === null ? (
             <span className="sd-stat-empty">
-              <Info /> Hali test yechmadingiz
+              <Info /> {t('Hali test yechmadingiz')}
             </span>
           ) : (
             <div className="sd-stat-value">{stats.accuracy === null ? '…' : `${stats.accuracy}%`}</div>
@@ -193,9 +208,9 @@ export default function DashboardPage() {
             <span className="sd-stat-icon sd-violet">
               <Eye />
             </span>
-            <span className="sd-trend sd-muted">● Jonli</span>
+            <span className="sd-trend sd-muted">{t('● Jonli')}</span>
           </div>
-          <div className="sd-stat-label">Saytga tashriflar</div>
+          <div className="sd-stat-label">{t('Saytga tashriflar')}</div>
           <div className="sd-stat-value">{platform?.visits == null ? '—' : platform.visits.toLocaleString('en-US')}</div>
         </div>
       </section>
@@ -203,17 +218,17 @@ export default function DashboardPage() {
       <div className="sd-columns">
         <div>
           <div className="sd-section-title" id="results">
-            <h3>So&apos;nggi ishlangan testlar</h3>
+            <h3>{t("So'nggi ishlangan testlar")}</h3>
             <Link href="/dashboard/practice" className="sd-link-btn">
-              Barchasi <ArrowRight size={13} />
+              {t('Barchasi')} <ArrowRight size={13} />
             </Link>
           </div>
           <div className="sd-panel">
             {attempts === null ? (
-              <div className="sd-empty">Yuklanmoqda…</div>
+              <div className="sd-empty">{t('Yuklanmoqda…')}</div>
             ) : recent.length === 0 ? (
               <div className="sd-empty">
-                Hali mock yechilmagan. <Link href="/dashboard/practice">Birinchi testni boshlang →</Link>
+                {t('Hali mock yechilmagan.')} <Link href="/dashboard/practice">{t('Birinchi testni boshlang →')}</Link>
               </div>
             ) : (
               recent.map((a, i) => (
@@ -224,14 +239,14 @@ export default function DashboardPage() {
                   <div>
                     <div className="sd-test-name">{a.test_label}</div>
                     <div className="sd-test-meta">
-                      {shortDate(a.created_at)} · {a.subject === 'full' ? 'Full Test' : a.subject === 'math' ? 'Math' : 'Reading & Writing'}
+                      {shortDate(a.created_at, lang)} · {a.subject === 'full' ? t('Full Test') : a.subject === 'math' ? 'Math' : 'Reading & Writing'}
                     </div>
                   </div>
                   <div className={`sd-score ${tone(a)}`}>
                     <strong>
                       {a.composite} / {max(a)}
                     </strong>
-                    <small>Yakunlangan ✓</small>
+                    <small>{t('Yakunlangan ✓')}</small>
                   </div>
                 </div>
               ))
@@ -239,18 +254,18 @@ export default function DashboardPage() {
           </div>
 
           <div className="sd-section-title">
-            <h3>Past Exams</h3>
+            <h3>{t('Past Exams')}</h3>
             <Link href="/dashboard/practice" className="sd-link-btn">
-              Barchasi <ArrowRight size={13} />
+              {t('Barchasi')} <ArrowRight size={13} />
             </Link>
           </div>
           {tests === null ? (
             <div className="sd-panel">
-              <div className="sd-empty">Yuklanmoqda…</div>
+              <div className="sd-empty">{t('Yuklanmoqda…')}</div>
             </div>
           ) : exams.length === 0 ? (
             <div className="sd-panel">
-              <div className="sd-empty">Hozircha mocklar yo&apos;q — tez orada qo&apos;shiladi.</div>
+              <div className="sd-empty">{t("Hozircha mocklar yo'q — tez orada qo'shiladi.")}</div>
             </div>
           ) : (
             <div className="sd-exam-grid">
@@ -260,28 +275,28 @@ export default function DashboardPage() {
                     <BookOpen />
                   </div>
                   <h3>{g.name}</h3>
-                  <p>SAT Math va Reading &amp; Writing bo&apos;yicha imtihon variantlari.</p>
+                  <p>{t("SAT Math va Reading & Writing bo'yicha imtihon variantlari.")}</p>
                   <div className="sd-exam-foot">
-                    <span>{g.versions.length} ta versiya</span>
-                    <span>Ko&apos;rish →</span>
+                    <span>{t('{n} ta versiya', { n: g.versions.length })}</span>
+                    <span>{t("Ko'rish →")}</span>
                   </div>
                 </Link>
               ))}
-              {exams.length < 3 && <GhostCards count={3 - exams.length} label="Yangi mock tayyorlanmoqda" />}
+              {exams.length < 3 && <GhostCards count={3 - exams.length} label={t('Yangi mock tayyorlanmoqda')} />}
             </div>
           )}
         </div>
 
         <div>
           <div className="sd-section-title">
-            <h3>O&apos;quv jarayoni</h3>
+            <h3>{t("O'quv jarayoni")}</h3>
             <Link href="/dashboard/course-tasks" className="sd-link-btn">
-              Kurslar <ArrowRight size={13} />
+              {t('Kurslar')} <ArrowRight size={13} />
             </Link>
           </div>
           <div className="sd-panel">
             <div className="sd-active-plan">
-              <strong>SAT maqsadingiz</strong>
+              <strong>{t('SAT maqsadingiz')}</strong>
               {editing ? (
                 <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   <input
@@ -296,11 +311,11 @@ export default function DashboardPage() {
                     onKeyDown={(e) => e.key === 'Enter' && saveTarget()}
                   />
                   <button className="sd-edit-btn" onClick={saveTarget}>
-                    Saqlash
+                    {t('Saqlash')}
                   </button>
                 </span>
               ) : (
-                <button className="sd-edit-btn" onClick={() => setEditing(true)} title="Maqsadni o'zgartirish">
+                <button className="sd-edit-btn" onClick={() => setEditing(true)} title={t("Maqsadni o'zgartirish")}>
                   {stats.best ?? 0} / {target} ✎
                 </button>
               )}
@@ -309,32 +324,32 @@ export default function DashboardPage() {
               <div className="sd-progress-fill" style={{ width: `${progress}%` }} />
             </div>
             <div className="sd-progress-labels">
-              <span>Maqsad sari progress</span>
+              <span>{t('Maqsad sari progress')}</span>
               <strong>{progress}%</strong>
             </div>
             <div className="sd-group-card">
               <div className="sd-group-icon">{isMember ? <Crown /> : <Target />}</div>
               <div>
-                <strong>{isMember ? 'Kurs vazifalaringiz' : "Kursga qo'shiling"}</strong>
-                <small>{isMember ? 'Yangi vazifalar mavjud' : 'Aktiv kurslar bilan tanishing'}</small>
+                <strong>{isMember ? t('Kurs vazifalaringiz') : t("Kursga qo'shiling")}</strong>
+                <small>{isMember ? t('Yangi vazifalar mavjud') : t('Aktiv kurslar bilan tanishing')}</small>
               </div>
               <Link href="/dashboard/course-tasks" className="sd-primary">
-                Ko&apos;rish →
+                {t("Ko'rish →")}
               </Link>
             </div>
           </div>
 
           <div className="sd-section-title">
-            <h3>Haftalik faollik</h3>
+            <h3>{t('Haftalik faollik')}</h3>
           </div>
           <div className="sd-panel">
             <div className="sd-active-plan">
-              <strong>Test ishlash faolligi</strong>
-              <small>So&apos;nggi 7 kun</small>
+              <strong>{t('Test ishlash faolligi')}</strong>
+              <small>{t("So'nggi 7 kun")}</small>
             </div>
-            <div className="sd-mini-chart" aria-label="Haftalik faollik">
+            <div className="sd-mini-chart" aria-label={t('Haftalik faollik')}>
               {stats.days.map((d) => (
-                <div key={d.key} className={d.n ? 'sd-hot' : ''} style={{ ['--h' as string]: `${d.n ? Math.max(18, (d.n / maxDay) * 100) : 6}%` }} title={`${d.n} ta test`} />
+                <div key={d.key} className={d.n ? 'sd-hot' : ''} style={{ ['--h' as string]: `${d.n ? Math.max(18, (d.n / maxDay) * 100) : 6}%` }} title={t('{n} ta test', { n: d.n })} />
               ))}
             </div>
             <div className="sd-chart-labels">

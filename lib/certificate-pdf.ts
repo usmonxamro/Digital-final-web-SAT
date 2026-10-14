@@ -103,6 +103,11 @@ export async function buildCertificatePdf(data: CertificateData) {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
   doc.text('SAT AKADEMIYASI', iconCx + 16, iconCy + 3.6)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7.5)
+  doc.text('satbyusmon.com', iconCx + 16, iconCy + 13)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
 
   // Name + disclaimer (right-aligned). "Name:" is regular weight; the name itself is bold —
   // matching the source exactly (two separate font runs on one line).

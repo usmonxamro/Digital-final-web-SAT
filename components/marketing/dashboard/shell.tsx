@@ -3,10 +3,14 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ArrowUpRight, Bell, ChartColumn, FileText, GraduationCap, House, Layers, BookOpen, Menu, MoonStar, Search, Settings, Sparkles, Sun } from 'lucide-react'
+import { ArrowUpRight, Bell, ChartColumn, FileText, GraduationCap, House, Layers, BookOpen, Menu, Search, Settings, Sparkles } from 'lucide-react'
 import { useUser } from '@/components/marketing/dashboard/user-context'
 import { DashboardDataProvider } from '@/components/marketing/dashboard/dashboard-data'
 import { SdUiProvider, useSd } from '@/components/marketing/dashboard/sd-ui'
+import { ThemeSwitch } from '@/components/marketing/theme-switch'
+import { LangSwitch } from '@/components/lang-switch'
+import { LangPicker } from '@/components/marketing/dashboard/lang-picker'
+import { useT } from '@/components/i18n-provider'
 
 const NAV = [
   { href: '/dashboard', hash: '', label: 'Dashboard', Icon: House },
@@ -25,6 +29,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <div className="sd-root font-sans">
         <SdUiProvider>
           <Frame>{children}</Frame>
+          <LangPicker />
         </SdUiProvider>
       </div>
     </DashboardDataProvider>
@@ -62,6 +67,7 @@ function Frame({ children }: { children: React.ReactNode }) {
 
 function Sidebar({ open, pathname, hash }: { open: boolean; pathname: string; hash: string }) {
   const { openModal } = useSd()
+  const t = useT()
   const active = (n: (typeof NAV)[number]) => {
     if (n.hash) return pathname === '/dashboard' && hash === n.hash
     if (n.href === '/dashboard') return pathname === '/dashboard' && !hash
@@ -76,41 +82,45 @@ function Sidebar({ open, pathname, hash }: { open: boolean; pathname: string; ha
         </span>
         <span>
           <b>SAT Akademiyasi</b>
-          <small>LEARNING PLATFORM</small>
+          <small>{t('LEARNING PLATFORM')}</small>
         </span>
       </Link>
-      <div className="sd-nav-label">MENU</div>
+      <div className="sd-nav-label">{t('MENU')}</div>
       <nav className="sd-nav">
         {NAV.map(({ href, hash: h, label, Icon, badge }) => (
           <Link key={label} href={href + h} className={`sd-nav-btn ${active({ href, hash: h } as (typeof NAV)[number]) ? 'sd-active' : ''}`}>
             <i>
               <Icon />
             </i>
-            <span>{label}</span>
+            <span>{t(label)}</span>
             {badge && <span className="sd-count">{badge}</span>}
           </Link>
         ))}
       </nav>
       <div className="sd-sidebar-bottom">
+        <BalanceCard />
         <div className="sd-support">
-          <strong>Yordam kerakmi?</strong>
-          <p>Darslar, testlar yoki hisobingiz bo&apos;yicha savollaringiz bormi?</p>
+          <strong>{t('Yordam kerakmi?')}</strong>
+          <p>{t("Darslar, testlar yoki hisobingiz bo'yicha savollaringiz bormi?")}</p>
           <button className="sd-text-btn" onClick={() => openModal('help')}>
-            Yordam markazi <ArrowUpRight size={13} style={{ display: 'inline', verticalAlign: '-2px' }} />
+            {t('Yordam markazi')} <ArrowUpRight size={13} style={{ display: 'inline', verticalAlign: '-2px' }} />
           </button>
         </div>
-        <p className="sd-copy">© 2026 SAT Akademiyasi</p>
+        <p className="sd-copy">© 2026 SAT Akademiyasi · satbyusmon.com</p>
       </div>
     </aside>
   )
 }
 
 function TopBar({ onMenu }: { onMenu: () => void }) {
+  const t = useT()
   const user = useUser()
   const router = useRouter()
   const { openModal } = useSd()
   const [q, setQ] = useState('')
   const input = useRef<HTMLInputElement>(null)
+  const isPro = user.plan === 'premium'
+  const planLabel = isPro ? (user.trialDaysLeft ? `PRO · ${t('{n} kun', { n: user.trialDaysLeft })}` : 'PRO') : 'FREE'
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -132,7 +142,7 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
   return (
     <header className="sd-topbar">
       <div className="sd-top-left">
-        <button className="sd-icon-btn sd-menu-btn" onClick={onMenu} aria-label="Menyuni ochish">
+        <button className="sd-icon-btn sd-menu-btn" onClick={onMenu} aria-label={t('Menyuni ochish')}>
           <Menu />
         </button>
         <form className="sd-search" onSubmit={search} role="search">
@@ -141,60 +151,83 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
             ref={input}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Testlar yoki kurslarni qidirish..."
-            aria-label="Qidirish"
+            placeholder={t('Testlar yoki kurslarni qidirish...')}
+            aria-label={t('Qidirish')}
             autoComplete="off"
           />
           <kbd>Ctrl K</kbd>
         </form>
       </div>
       <div className="sd-top-right">
+        <LangSwitch />
         <ThemeSwitch />
-        <button className="sd-icon-btn" onClick={() => openModal('notifications')} aria-label="Bildirishnomalar">
-          <Bell />
-        </button>
-        <Link href="/dashboard/profile" className="sd-user" aria-label="Profil">
-          <span className="sd-user-avatar">{user.firstName.slice(0, 1).toUpperCase()}</span>
-          <span className="sd-user-text">
-            <strong>{user.firstName}</strong>
-            <small>O&apos;quvchi profili</small>
-          </span>
-        </Link>
+        <div className="sd-pill">
+          <button className="sd-pill-bell" onClick={() => openModal('notifications')} aria-label={t('Bildirishnomalar')}>
+            <Bell />
+          </button>
+          <Link href="/dashboard/profile" className="sd-pill-user" aria-label="Profil">
+            <span className="sd-user-avatar">{user.firstName.slice(0, 1).toUpperCase()}</span>
+            <span className="sd-user-text">
+              <strong>{[user.firstName, user.lastName].filter(Boolean).join(' ')}</strong>
+              <small className={`sd-plan ${isPro ? 'sd-plan-pro' : ''}`}>{planLabel}</small>
+            </span>
+          </Link>
+        </div>
       </div>
     </header>
   )
 }
 
-function ThemeSwitch() {
-  const [dark, setDark] = useState<boolean | null>(null)
+/** Sidebar "Balans" card — there is no money balance, so it shows the plan and today's mock allowance. */
+function BalanceCard() {
+  const t = useT()
+  const user = useUser()
+  const { openModal } = useSd()
+  const [quota, setQuota] = useState<{ usedToday: number; perDay: number } | null>(null)
+  const [unlimited, setUnlimited] = useState(false)
   useEffect(() => {
-    setDark(document.documentElement.getAttribute('data-sp-theme') !== 'light')
-  }, [])
-  function toggle() {
-    const next = dark ? 'light' : 'dark'
-    setDark(next === 'dark')
-    document.documentElement.setAttribute('data-sp-theme', next)
-    try {
-      localStorage.setItem('sp-theme', next)
-    } catch {
-      /* private mode */
+    let off = false
+    fetch('/api/exam/quota')
+      .then((r) => r.json())
+      .then((d) => {
+        if (off) return
+        if (d?.unlimited) setUnlimited(true)
+        else if (d?.quota) setQuota({ usedToday: d.quota.usedToday, perDay: d.quota.perDay })
+      })
+      .catch(() => {})
+    return () => {
+      off = true
     }
-  }
+  }, [])
+  const isPro = user.plan === 'premium'
+  const left = quota ? Math.max(0, quota.perDay - quota.usedToday) : null
   return (
-    <button
-      type="button"
-      className="sd-theme"
-      onClick={toggle}
-      aria-pressed={!!dark}
-      aria-label={dark ? 'Kunduzgi rejimga o‘tish' : 'Tungi rejimga o‘tish'}
-      title={dark ? 'Kunduzgi rejimni yoqish' : 'Tungi rejimni yoqish'}
-    >
-      <span className={dark === false ? 'sd-on' : ''}>
-        <Sun />
-      </span>
-      <span className={dark ? 'sd-on' : ''}>
-        <MoonStar />
-      </span>
-    </button>
+    <div className="sd-balance sd-balance-click" role="button" tabIndex={0} onClick={() => openModal('plans')} onKeyDown={(e) => e.key === 'Enter' && openModal('plans')}>
+      <div className="sd-balance-head">
+        <span>{t('Balansim')}</span>
+        <b className={isPro ? 'sd-plan-pro' : ''}>{isPro ? 'PRO' : 'FREE'}</b>
+      </div>
+      {unlimited ? (
+        <div className="sd-balance-big">{t('Cheksiz')}</div>
+      ) : (
+        <>
+          <div className="sd-balance-big">
+            {left ?? '–'} <small>{t('ta mock qoldi')}</small>
+          </div>
+          {quota && (
+            <div className="sd-balance-bar">
+              <i style={{ width: `${Math.min(100, (quota.usedToday / quota.perDay) * 100)}%` }} />
+            </div>
+          )}
+          <p>{t('Bugun: {x} mock yechildi', { x: quota ? `${quota.usedToday}/${quota.perDay}` : '–' })}</p>
+        </>
+      )}
+      {isPro && user.trialDaysLeft ? <p>{t('Bepul PRO: yana {n} kun', { n: user.trialDaysLeft })}</p> : null}
+      {!isPro && (
+        <button className="sd-text-btn" onClick={(e) => { e.stopPropagation(); openModal('plans') }}>
+          {t("PRO ga o'tish")} <ArrowUpRight size={13} style={{ display: 'inline', verticalAlign: '-2px' }} />
+        </button>
+      )}
+    </div>
   )
 }

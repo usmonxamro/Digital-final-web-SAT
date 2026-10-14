@@ -5,9 +5,12 @@ import 'katex/dist/katex.min.css'
 import './globals.css'
 import { SiteGuards } from '@/components/site-guards'
 import { VisitPing } from '@/components/visit-ping'
+import { cookies } from 'next/headers'
+import { I18nProvider } from '@/components/i18n-provider'
+import { LANG_COOKIE, isLang, type Lang } from '@/lib/i18n'
 
 const inter = Inter({
-  subsets: ['latin'],
+  subsets: ['latin', 'cyrillic'],
   variable: '--font-sans',
 })
 
@@ -55,14 +58,16 @@ const THEME_INIT_SCRIPT = `
 })();
 `
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const cookieLang = (await cookies()).get(LANG_COOKIE)?.value
+  const lang: Lang = isLang(cookieLang) ? cookieLang : 'uz'
   return (
     <html
-      lang="en"
+      lang={lang}
       suppressHydrationWarning
       className={`${inter.variable} ${fraunces.variable} ${jakarta.variable} bg-background`}
     >
@@ -70,7 +75,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="font-sans antialiased">
-        {children}
+        <I18nProvider initial={lang}>{children}</I18nProvider>
         <SiteGuards />
         <VisitPing />
         {process.env.NODE_ENV === 'production' && <Analytics />}

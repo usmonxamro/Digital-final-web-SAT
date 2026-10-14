@@ -293,3 +293,28 @@ create table if not exists course_memberships (
 );
 create unique index if not exists course_memberships_tg_uidx on course_memberships (group_slug, tg_id) where tg_id is not null;
 alter table course_memberships enable row level security;
+
+-- v62: help-centre messages sent from the site (text + optional screenshot).
+create table if not exists support_messages (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete set null,
+  name text not null default '',
+  contact text not null default '',
+  message text not null,
+  image text,                          -- small JPEG data URL (compressed in the browser)
+  read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+alter table support_messages enable row level security;
+
+-- v66: password reset by e-mail code (6 digits, 15 minutes, max 5 tries).
+create table if not exists password_resets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  code_hash text not null,
+  attempts integer not null default 0,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists password_resets_user_idx on password_resets(user_id);
+alter table password_resets enable row level security;

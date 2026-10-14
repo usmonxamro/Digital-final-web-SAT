@@ -15,14 +15,19 @@ async function loadUser(): Promise<DashboardUser | null> {
 
   try {
     const supabase = supabaseAdmin()
-    const { data } = await supabase.from('users').select('*').eq('id', session.userId).maybeSingle()
+    const { data, error } = await supabase.from('users').select('*').eq('id', session.userId).maybeSingle()
+    // The database answered and this account no longer exists (deleted) → the cookie is worthless.
+    if (!error && !data) return null
 
     if (data) {
       // Everyone gets 30 days of free Pro — start the clock for an account
       // that doesn't have one yet (only possible once the v38 column exists).
       if ('premium_until' in data && !data.premium_until) {
-        data.premium_until = trialEndFromNow()
-        await supabase.from('users').update({ premium_until: data.premium_until }).eq('id', data.id)
+        const until = trialEndFromNow() // null once the launch promotion is over
+        if (until) {
+          data.premium_until = until
+          await supabase.from('users').update({ premium_until: until }).eq('id', data.id)
+        }
       }
       const plan = planInfo(data)
       const access = await courseAccessFor(supabase, data)

@@ -1,5 +1,14 @@
-/** 30-day free Pro for every account (no payments yet). */
+/** Free Pro length for accounts created while the launch promotion runs. */
 export const TRIAL_DAYS = 30
+/**
+ * Launch promotion: everyone who joins until this moment gets TRIAL_DAYS of free Pro.
+ * Later sign-ups start on FREE (offer Pro separately). Override with env PROMO_UNTIL (ISO date).
+ */
+export function promoEndsAt(): number {
+  const env = process.env.PROMO_UNTIL ? Date.parse(process.env.PROMO_UNTIL) : NaN
+  return Number.isFinite(env) ? env : Date.parse('2026-11-14T00:00:00Z')
+}
+export const promoActive = (): boolean => Date.now() < promoEndsAt()
 
 export type PlanInfo = {
   /** What the app should treat the user as right now. */
@@ -23,6 +32,7 @@ export function planInfo(user: { plan?: string | null; premium_until?: string | 
   return { plan: 'free', trialDaysLeft: Number.isFinite(until) ? 0 : null, premiumUntil: user.premium_until ?? null }
 }
 
-export function trialEndFromNow(): string {
-  return new Date(Date.now() + TRIAL_DAYS * 86400_000).toISOString()
+/** End of the free Pro for a new account, or null when the launch promotion is over. */
+export function trialEndFromNow(): string | null {
+  return promoActive() ? new Date(Date.now() + TRIAL_DAYS * 86400_000).toISOString() : null
 }

@@ -1,27 +1,35 @@
-# Telegram bot ↔ sayt: kurs kodlari
+# Telegram bot ↔ sayt: kurs guruhlari
 
-Maqsad: kurs guruhingiz (SAT November / December 800/800) a'zosi saytda shu guruhning vazifalarini ochsin.
+## Tayyor fayl
+`bot_updated.py` — sizning botingizning TO'LIQ yangilangan nusxasi (3750 qator + kurs kodi tizimi).
+Eski `bot.py` o'rniga qo'ying (bazani `sat_system.db` o'zgartirmang — yangi jadvallar o'zi yaratiladi).
+Qo'shilganlar: `🌐 Sayt orqali vazifalar` tugmasi, `/kurs`, `/kurslar`, `/kod`. Token endi FAQAT `BOT_TOKEN` muhit o'zgaruvchisidan olinadi.
+(Faqat qo'shimcha qismni o'zingiz qo'shmoqchi bo'lsangiz: `course_codes.py`.)
 
-## 1. Maxfiy so'z (ikkala joyda BIR XIL)
-Uzun tasodifiy so'z o'ylab toping (masalan 40 ta belgi).
-- **Sayt**: `.env.local` ga `COURSE_CODE_SECRET=...`
-- **Bot (Wispbyte)**: muhit o'zgaruvchisi `COURSE_CODE_SECRET=...` va `COURSE_SITE_URL=https://saytingiz`
+## 1. Muhit o'zgaruvchilari (Wispbyte)
+- `BOT_TOKEN` — bot tokeni (eskisi kodda ochiq qolgan edi: BotFather → /revoke bilan YANGILANG)
+- `COURSE_CODE_SECRET` — uzun tasodifiy so'z, saytdagi bilan BIR XIL
+- `COURSE_SITE_URL=https://satbyusmon.com`
 
-## 2. Sayt
-Supabase → SQL Editor: `supabase/schema.sql` oxiridagi **v60** blokni ishga tushiring (`course_memberships` jadvali).
+Saytda (`.env.local` / hosting): `COURSE_CODE_SECRET=...` (bot bilan bir xil).
 
-## 3. Bot
-`course_codes.py` mazmunini bot faylingizga qo'shing: `_execute` funksiyasidan keyin, birinchi `@dp.message(...)` dan oldin.
-Botning o'quvchi menyusiga tugma qo'shing (`get_main_menu` ichida):
-`[KeyboardButton(text="🔑 Saytga kirish kodi")]`
+## 2. Sayt SQL
+Supabase → SQL Editor: `supabase/schema.sql` oxiridagi v60, v62, v66 bloklar.
 
-## 4. Guruhlarni bog'lash
-Kurs guruhida (siz admin sifatida) yozing: `/kurs nov` yoki `/kurs dec`. Tekshirish: botga `/kurslar`.
+## 3. Guruhlarni bog'lash
+Kurs guruhida (siz admin sifatida): `/kurs nov` yoki `/kurs dec`. Tekshirish: botga `/kurslar`.
 Bot guruhda **admin** bo'lsa, a'zolikni eng ishonchli tekshiradi.
 
-## 5. O'quvchi uchun
-Botda **🔑 Saytga kirish kodi** → kod → saytda **Kurslar → Kod bilan qo'shilish**.
-Bir Telegram o'quvchining kodi faqat bitta sayt akkauntida ishlaydi. Admin → Foydalanuvchilar'da guruhni qo'lda qo'shish/olib tashlash mumkin.
+## 4. O'quvchi uchun
+Botda **🌐 Sayt orqali vazifalar** → saytga o'tish tugmasi + a'zo bo'lgan guruhlari uchun "🔑 kod olish".
+Saytda: **Kurslar → Kod bilan qo'shilish**.
 
-## Xavfsizlik
-Bot tokenini kod ichida emas, faqat muhit o'zgaruvchisida saqlang (kod ichidagi token ochiq qolgan bo'lsa, BotFather → /revoke bilan yangilang).
+## Qoidalar
+- Kod faqat guruh a'zosiga (Telegramdan jonli tekshiriladi) va har guruh uchun alohida beriladi; NOV kodi faqat November guruhini ochadi.
+- Kod bir marta beriladi; qayta bosilsa yangi emas, o'sha kod eslatma bilan ko'rsatiladi.
+- Sayt kodni faqat bitta akkauntga bog'laydi — boshqa akkaunt shu kod bilan kira olmaydi.
+- Pro obuna kurs guruhini ochmaydi. Qo'lda: Admin → Foydalanuvchilar. Akkaunt almashtirish kerak bo'lsa, admin guruhni olib tashlaydi — o'sha kod qayta ishlatiladi.
+
+## v67 yangilanishi
+- `bot_updated.py` — yangi (joriy) bot versiyasi ustiga qayta yig'ilgan: sayt kodi (`course_codes.py`) + admin statistikasi (`group_stats.py`) kiritilgan.
+- Admin menyusida **📈 O'quvchilar statistikasi**: guruhni tanlang → har bir o'quvchi nechta vazifa bajargan/bajarmagan va har bir mockni nechta o'quvchi ishlagan/ishlamagan ro'yxati.

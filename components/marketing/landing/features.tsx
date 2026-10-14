@@ -1,5 +1,8 @@
+'use client'
+
 import { Layers, Calculator, TrendingUp } from 'lucide-react'
 import { Reveal } from '@/components/marketing/reveal'
+import { useT } from '@/components/i18n-provider'
 
 const FEATURES = [
   {
@@ -23,16 +26,17 @@ const FEATURES = [
 ]
 
 export function Features() {
+  const t = useT()
   return (
     <section id="imkoniyat" className="py-20 md:py-24 font-jakarta">
       <div className="max-w-[1200px] mx-auto px-6">
         <Reveal>
           <div className="text-center max-w-[560px] mx-auto mb-14">
             <h2 className="text-[1.9rem] md:text-[2.3rem] font-extrabold text-sp-text">
-              Nima uchun bizning platforma?
+              {t('Nima uchun bizning platforma?')}
             </h2>
             <p className="mt-3 text-sp-text-muted text-[15.5px]">
-              Aynan raqamli SAT imtihonida yuqori ball olish uchun kerakli barcha vositalar
+              {t('Aynan raqamli SAT imtihonida yuqori ball olish uchun kerakli barcha vositalar')}
             </p>
           </div>
         </Reveal>
@@ -50,8 +54,8 @@ export function Features() {
                 >
                   <Icon size={21} />
                 </div>
-                <h3 className="text-[18px] font-bold text-sp-text">{title}</h3>
-                <p className="mt-2.5 text-[14.5px] leading-relaxed text-sp-text-muted">{desc}</p>
+                <h3 className="text-[18px] font-bold text-sp-text">{t(title)}</h3>
+                <p className="mt-2.5 text-[14.5px] leading-relaxed text-sp-text-muted">{t(desc)}</p>
               </div>
             </Reveal>
           ))}

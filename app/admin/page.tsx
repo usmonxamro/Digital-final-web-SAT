@@ -2,8 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { SupportPanel } from '@/components/admin/support-panel'
+import { ThemeSwitch } from '@/components/marketing/theme-switch'
 import {
   ArrowLeft,
+  MessageSquare,
   CheckCircle2,
   AlertTriangle,
   Loader2,
@@ -1047,11 +1050,15 @@ function SkillBankImport() {
 
 /* ------------------------------------ page ---------------------------------- */
 
-type Tab = 'mocks' | 'new' | 'edit' | 'bank' | 'stats' | 'users' | 'admins'
+type Tab = 'mocks' | 'new' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support'
 type NewMockType = 'full' | 'math' | 'english' | null
 
 export default function AdminPage() {
-  return <AdminGate>{({ isOwner, lock }) => <AdminPanel isOwner={isOwner} onLock={lock} />}</AdminGate>
+  return (
+    <div className="admin-root min-h-screen">
+      <AdminGate>{({ isOwner, lock }) => <AdminPanel isOwner={isOwner} onLock={lock} />}</AdminGate>
+    </div>
+  )
 }
 
 function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void }) {
@@ -1072,6 +1079,7 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <ThemeSwitch defaultTheme="light" />
             <Link
               href="/dashboard"
               className="flex items-center gap-1.5 rounded-lg bg-green px-3 py-1.5 text-[12px] font-extrabold text-white hover:brightness-110"
@@ -1101,6 +1109,7 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
           <TabButton icon={<UploadCloud size={15} />} label="Savol banki" active={tab === 'bank'} onClick={() => setTab('bank')} />
           <TabButton icon={<BarChart3 size={15} />} label="Statistika" active={tab === 'stats'} onClick={() => setTab('stats')} />
           <TabButton icon={<Users size={15} />} label="Foydalanuvchilar" active={tab === 'users'} onClick={() => setTab('users')} />
+          <TabButton icon={<MessageSquare size={15} />} label="Xabarlar" active={tab === 'support'} onClick={() => setTab('support')} />
           <TabButton icon={<ShieldCheck size={15} />} label="Adminlar" active={tab === 'admins'} onClick={() => setTab('admins')} />
         </div>
 
@@ -1111,6 +1120,7 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
         )}
 
         {tab === 'stats' && <StatsPanel />}
+        {tab === 'support' && <SupportPanel />}
         {tab === 'users' && <UsersPanel isOwner={isOwner} />}
 
         {tab === 'admins' && (

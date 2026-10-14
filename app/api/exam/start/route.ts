@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifySession, SESSION_COOKIE } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { mockQuota, quotaMessage, MOCKS_PER_DAY, MOCKS_PER_HOUR } from '@/lib/exam-limits'
+import { mockQuota, quotaMessage, dailyLimitFor, MOCKS_PER_HOUR } from '@/lib/exam-limits'
+import { planOf } from '@/lib/plan-db'
 import { isMissingTable } from '@/lib/db-errors'
 import { adminIdentity } from '@/lib/admin-auth'
 import { planInfo } from '@/lib/plan'
@@ -93,8 +94,9 @@ export async function POST(req: NextRequest) {
 
   if (kind === 'mock') {
     let quota
+    const plan = await planOf(supabase, session.userId).catch(() => 'free' as const)
     try {
-      quota = await mockQuota(supabase, session.userId)
+      quota = await mockQuota(supabase, session.userId, plan)
     } catch {
       return NextResponse.json({ error: "Server xatosi. Birozdan keyin urinib ko'ring." }, { status: 503 })
     }
@@ -114,10 +116,11 @@ export async function POST(req: NextRequest) {
 
   // Re-check after inserting: parallel requests can't all slip under the limit.
   if (kind === 'mock') {
-    const after = await mockQuota(supabase, session.userId).catch(() => null)
-    if (after && (after.usedToday > MOCKS_PER_DAY || after.usedLastHour > MOCKS_PER_HOUR)) {
+    const plan2 = await planOf(supabase, session.userId).catch(() => 'free' as const)
+    const after = await mockQuota(supabase, session.userId, plan2).catch(() => null)
+    if (after && (after.usedToday > dailyLimitFor(plan2) || after.usedLastHour > MOCKS_PER_HOUR)) {
       await supabase.from('mock_starts').delete().eq('id', data.id)
-      return NextResponse.json({ error: quotaMessage({ ...after, reason: after.usedToday > MOCKS_PER_DAY ? 'day' : 'hour' }), code: 'LIMIT' }, { status: 429 })
+      return NextResponse.json({ error: quotaMessage({ ...after, reason: after.usedToday > dailyLimitFor(plan2) ? 'day' : 'hour' }), code: 'LIMIT' }, { status: 429 })
     }
   }
   return NextResponse.json({ startId: data.id })
