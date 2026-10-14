@@ -64,7 +64,7 @@ export function ExamHeader({
   return (
     <header className="sticky top-0 z-30 border-b border-[#d7e7e4] bg-[#e7f3f1]">
       {/* Main row — one compact line on phones too (title+Directions | timer | tools). */}
-      <div className="relative flex items-center justify-between gap-2 px-3 py-1.5 sm:gap-x-2 sm:px-6 sm:py-2.5">
+      <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-1.5 sm:flex sm:justify-between sm:gap-x-2 sm:px-6 sm:py-2.5">
         {/* Left: title + directions */}
         <div ref={dir.ref} className="relative flex min-w-0 flex-1 flex-col sm:flex-none">
           <h1 className="truncate text-[12.5px] font-bold leading-tight tracking-tight text-[#0b4f4a] sm:text-[15px]">{label}</h1>
@@ -95,7 +95,7 @@ export function ExamHeader({
 
         {/* Center: timer + hide — inline between title and tools on phones, absolutely centered from sm up. */}
         <div className="flex shrink-0 flex-col items-center sm:absolute sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2">
-          <span className={`text-[16px] font-bold leading-tight tabular-nums tracking-wide sm:text-[22px] ${low ? 'text-red-600' : 'text-[#111]'}`}>
+          <span className={`text-[15px] font-bold leading-tight tabular-nums tracking-wide sm:text-[22px] ${low ? 'text-red-600' : 'text-[#111]'}`}>
             {hidden ? '••:••' : formatTime(seconds)}
           </span>
           <button
@@ -108,7 +108,7 @@ export function ExamHeader({
         </div>
 
         {/* Right: tools */}
-        <div className="flex items-center gap-3 sm:gap-5">
+        <div className="flex items-center justify-end gap-3 sm:gap-5">
           {mathTools && (
             <>
               <button

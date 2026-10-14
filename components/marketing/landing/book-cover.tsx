@@ -20,8 +20,8 @@ export function BookCover({ pdfUrl, coverUrl = '/book-cover.jpg', className = ''
 
     async function render() {
       try {
-        const pdfjs = await import('pdfjs-dist')
-        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+        const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.legacy.min.mjs'
         const doc = await pdfjs.getDocument({ url: pdfUrl }).promise
         const page = await doc.getPage(1)
         const viewport = page.getViewport({ scale: 1.2 })

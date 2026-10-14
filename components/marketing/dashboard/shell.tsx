@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { ArrowUpRight, Bell, ChartColumn, FileText, GraduationCap, House, Layers, BookOpen, Menu, Settings, Sparkles } from 'lucide-react'
 import { useUser } from '@/components/marketing/dashboard/user-context'
 import { DashboardDataProvider } from '@/components/marketing/dashboard/dashboard-data'
@@ -115,6 +115,9 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
   const t = useT()
   const user = useUser()
   const { openModal } = useSd()
+  const router = useRouter()
+  const pathname = usePathname()
+  const onProfile = pathname.startsWith('/dashboard/profile')
   const isPro = user.plan === 'premium'
   const planLabel = isPro ? (user.trialDaysLeft ? `PRO · ${t('{n} kun', { n: user.trialDaysLeft })}` : 'PRO') : 'FREE'
 
@@ -132,7 +135,18 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
           <button className="sd-pill-bell" onClick={() => openModal('notifications')} aria-label={t('Bildirishnomalar')}>
             <Bell />
           </button>
-          <Link href="/dashboard/profile" className="sd-pill-user" aria-label="Profil">
+          <Link
+            href="/dashboard/profile"
+            className="sd-pill-user"
+            aria-label="Profil"
+            onClick={(e) => {
+              // Already on the profile page: a second tap closes it (back to where you came from).
+              if (!onProfile) return
+              e.preventDefault()
+              if (window.history.length > 1) router.back()
+              else router.push('/dashboard')
+            }}
+          >
             <span className="sd-user-avatar">{user.firstName.slice(0, 1).toUpperCase()}</span>
             <span className="sd-user-text">
               <strong>{[user.firstName, user.lastName].filter(Boolean).join(' ')}</strong>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Download, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { buildCertificatePdf } from '@/lib/certificate-pdf'
+import { useIsMobile } from '@/lib/use-is-mobile'
 import type { SectionResult } from '@/lib/scoring'
 import type { ReviewItem } from '@/components/score-report'
 
@@ -21,6 +22,10 @@ export function Certificate({ studentName, testTitle, composite, rw, math, revie
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [error, setError] = useState(false)
   const urlRef = useRef<string | null>(null)
+  const isMobile = useIsMobile()
+  // Phones can't show a PDF inside an <iframe>, so the pages are drawn as images instead.
+  const [pages, setPages] = useState<string[] | null>(null)
+  const blobRef = useRef<Blob | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -30,6 +35,7 @@ export function Certificate({ studentName, testTitle, composite, rw, math, revie
         const doc = await buildCertificatePdf({ studentName, testTitle, composite, rw, math, review })
         if (cancelled) return
         const blob = doc.output('blob')
+        blobRef.current = blob
         const url = URL.createObjectURL(blob)
         urlRef.current = url
         setPdfUrl(url)
@@ -46,6 +52,38 @@ export function Certificate({ studentName, testTitle, composite, rw, math, revie
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (!isMobile || !pdfUrl || pages || !blobRef.current) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.legacy.min.mjs'
+        const data = new Uint8Array(await blobRef.current!.arrayBuffer())
+        const doc = await pdfjs.getDocument({ data, standardFontDataUrl: '/pdf-fonts/', useSystemFonts: true }).promise
+        const out: string[] = []
+        const scale = Math.min(2, (window.devicePixelRatio || 1) * 1.2)
+        for (let n = 1; n <= doc.numPages; n++) {
+          const page = await doc.getPage(n)
+          const vp = page.getViewport({ scale: scale * (Math.min(window.innerWidth, 600) / page.getViewport({ scale: 1 }).width) })
+          const canvas = document.createElement('canvas')
+          canvas.width = Math.floor(vp.width)
+          canvas.height = Math.floor(vp.height)
+          await page.render({ canvas, canvasContext: canvas.getContext('2d')!, viewport: vp }).promise
+          out.push(canvas.toDataURL('image/jpeg', 0.92))
+          if (cancelled) return
+        }
+        if (!cancelled) setPages(out)
+      } catch (err) {
+        console.error('Certificate preview failed', err)
+        if (!cancelled) setPages([])
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [isMobile, pdfUrl, pages])
 
   function handleDownload() {
     if (!pdfUrl) return
@@ -75,6 +113,24 @@ export function Certificate({ studentName, testTitle, composite, rw, math, revie
             <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-sm text-red-600">
               Sertifikatni yaratishda xatolik yuz berdi. Iltimos, qaytadan urinib ko&apos;ring.
             </div>
+          ) : pdfUrl && isMobile ? (
+            pages && pages.length ? (
+              <div className="h-full space-y-2 overflow-y-auto p-2">
+                {pages.map((src, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={src} alt={`Sertifikat ${i + 1}`} className="w-full rounded bg-white shadow" />
+                ))}
+              </div>
+            ) : pages ? (
+              <div className="flex h-full items-center justify-center px-6 text-center text-sm text-[#64748b]">
+                Ko&apos;rish imkoni bo&apos;lmadi — pastdagi “PDF yuklab olish” tugmasini bosing.
+              </div>
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-[#64748b]">
+                <Loader2 className="size-6 animate-spin text-[#22c55e]" />
+                Sertifikat tayyorlanmoqda...
+              </div>
+            )
           ) : pdfUrl ? (
             <iframe src={pdfUrl} title="Sertifikat" className="h-full w-full border-0" />
           ) : (

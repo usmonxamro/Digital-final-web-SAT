@@ -28,6 +28,7 @@ export const CONTENT_SHIFT = DEFAULT_WIDTH + PANEL_LEFT_GAP
  *  same amount so every line (and every answer choice) can be scrolled into
  *  view above the open calculator. */
 export const MOBILE_SHEET_HEIGHT = '46dvh'
+const MOBILE_MIN_SHEET = 220
 
 type Mode = 'graphing' | 'scientific'
 
@@ -48,6 +49,7 @@ export function CalculatorPanel({
   onClose,
   bottomOffset = 0,
   onRectChange,
+  onSheetHeightChange,
 }: {
   open: boolean
   onClose: () => void
@@ -55,6 +57,8 @@ export function CalculatorPanel({
   bottomOffset?: number
   /** Reports where the panel is, so the page can shift the question text right of it. */
   onRectChange?: (rect: { x: number; width: number }) => void
+  /** Mobile: reports the sheet's height in px after the student drags its top edge. */
+  onSheetHeightChange?: (px: number | null) => void
 }) {
   const graphRef = useRef<HTMLDivElement>(null)
   const sciRef = useRef<HTMLDivElement>(null)
@@ -71,6 +75,9 @@ export function CalculatorPanel({
   const drag = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null)
   const resize = useRef<{ startX: number; startY: number; origW: number; origH: number } | null>(null)
   const [interacting, setInteracting] = useState(false)
+  // Mobile sheet: the bottom stays pinned; dragging the title bar up/down moves only the top edge.
+  const [sheetH, setSheetH] = useState<number | null>(null)
+  const sheetDrag = useRef<{ startY: number; origH: number } | null>(null)
 
   /* ------------------------- default: docked, full height ------------------------- */
   const fullHeight = useCallback(
@@ -169,7 +176,7 @@ export function CalculatorPanel({
   useEffect(() => {
     graphCalc.current?.resize?.()
     sciCalc.current?.resize?.()
-  }, [size, open, mode, isMobile])
+  }, [size, open, mode, isMobile, sheetH])
 
   /* ------------------------------- drag / resize ------------------------------ */
   function clampPos(x: number, y: number) {
@@ -216,16 +223,39 @@ export function CalculatorPanel({
     setInteracting(false)
   }
 
+  const maxSheet = () => Math.max(MOBILE_MIN_SHEET, window.innerHeight - bottomOffset - 70)
+  function onSheetStart(e: React.PointerEvent) {
+    const el = (e.currentTarget as HTMLElement).parentElement as HTMLElement
+    sheetDrag.current = { startY: e.clientY, origH: el.getBoundingClientRect().height }
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    setInteracting(true)
+  }
+  function onSheetMove(e: React.PointerEvent) {
+    const d = sheetDrag.current
+    if (!d) return
+    // Finger up = taller (the top edge follows the finger); the bottom never moves.
+    const h = Math.min(maxSheet(), Math.max(MOBILE_MIN_SHEET, d.origH + (d.startY - e.clientY)))
+    setSheetH(h)
+  }
+  function onSheetEnd() {
+    if (!sheetDrag.current) return
+    sheetDrag.current = null
+    setInteracting(false)
+    graphCalc.current?.resize?.()
+    sciCalc.current?.resize?.()
+    onSheetHeightChange?.(sheetH)
+  }
+
   /* ---------------------------------- pieces ---------------------------------- */
-  const header = (draggable: boolean) => (
+  const header = (draggable: boolean, sheet = false) => (
     <div
-      onPointerDown={draggable ? onDragStart : undefined}
-      onPointerMove={draggable ? onDragMove : undefined}
-      onPointerUp={draggable ? onDragEnd : undefined}
-      onPointerCancel={draggable ? onDragEnd : undefined}
+      onPointerDown={draggable ? onDragStart : sheet ? onSheetStart : undefined}
+      onPointerMove={draggable ? onDragMove : sheet ? onSheetMove : undefined}
+      onPointerUp={draggable ? onDragEnd : sheet ? onSheetEnd : undefined}
+      onPointerCancel={draggable ? onDragEnd : sheet ? onSheetEnd : undefined}
       className={`flex h-[50px] shrink-0 touch-none select-none items-center gap-3 bg-[#1e1e1e] px-3 ${
         draggable ? 'cursor-move' : ''
-      }`}
+      } ${sheet ? 'relative' : ''}`}
     >
       {/* Graphing / Scientific */}
       <div
@@ -255,6 +285,9 @@ export function CalculatorPanel({
 
       {/* ⠿ grip — has its own slot between the switch and ×, so it never overlaps them */}
       <span aria-hidden className="pointer-events-none flex min-w-0 flex-1 justify-center">
+        {sheet && (
+          <span className="h-1 w-10 rounded-full bg-white/70" />
+        )}
         {draggable && (
           <svg width="22" height="14" viewBox="0 0 22 14" fill="#fff" className="shrink-0">
             {[3, 11, 19].flatMap((cx) => [3, 11].map((cy) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="2" />))}
@@ -289,9 +322,9 @@ export function CalculatorPanel({
   if (isMobile) {
     return (
       <div
-        className="fixed inset-x-0 z-40 flex flex-col overflow-hidden rounded-t-xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.3)] transition-transform duration-[600ms] ease-in-out"
+        className={`fixed inset-x-0 z-40 flex flex-col overflow-hidden rounded-t-xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.3)] ease-in-out ${interacting ? '' : 'transition-transform duration-[600ms]'}`}
         style={{
-          height: MOBILE_SHEET_HEIGHT,
+          height: sheetH ?? MOBILE_SHEET_HEIGHT,
           bottom: bottomOffset,
           transform: open ? 'translateY(0)' : `translateY(calc(100% + ${bottomOffset}px))`,
           pointerEvents: open ? 'auto' : 'none',
@@ -300,7 +333,7 @@ export function CalculatorPanel({
         aria-label="Calculator"
         aria-hidden={!open}
       >
-        {header(false)}
+        {header(false, true)}
         {body}
       </div>
     )

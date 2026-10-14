@@ -30,8 +30,8 @@ export function BookPreviewModal({ pdfUrl, onClose }: { pdfUrl: string; onClose:
 
     async function renderPages() {
       try {
-        const pdfjs = await import('pdfjs-dist')
-        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+        const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.legacy.min.mjs'
 
         const doc = await pdfjs.getDocument({ url: pdfUrl }).promise
         const total = Math.min(doc.numPages, MAX_PREVIEW_PAGES)

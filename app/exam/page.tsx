@@ -68,6 +68,7 @@ function ExamEngine({
   const [calculatorOpen, setCalculatorOpen] = useState(false)
   // Where the Desmos panel sits — the question text shifts to the right of it.
   const [calcShift, setCalcShift] = useState(CONTENT_SHIFT)
+  const [sheetPx, setSheetPx] = useState<number | null>(null)
   // The reference sheet docks on the right — the text shifts left of it.
   const [refShift, setRefShift] = useState(REFERENCE_DEFAULT_WIDTH + REFERENCE_GAP)
   const [referenceOpen, setReferenceOpen] = useState(false)
@@ -613,7 +614,7 @@ function ExamEngine({
           // Mobile: the calculator sheet covers the lower part of the screen —
           // shrink the question's scroll area to what's still visible, so the
           // student can scroll every answer choice into view above it.
-          paddingBottom: isMobile && referenceOpen ? '60dvh' : calculatorOpen && isMobile ? MOBILE_SHEET_HEIGHT : 0,
+          paddingBottom: isMobile && referenceOpen ? '60dvh' : calculatorOpen && isMobile ? (sheetPx ?? MOBILE_SHEET_HEIGHT) : 0,
         }}
       >
         <main className="min-h-0 min-w-0 flex-1">
@@ -637,6 +638,7 @@ function ExamEngine({
 
       {/* Floating, draggable, always-mounted calculator — never re-inits Desmos */}
       <CalculatorPanel
+        onSheetHeightChange={setSheetPx}
         open={calculatorOpen}
         onClose={() => setCalculatorOpen(false)}
         bottomOffset={footerH}
