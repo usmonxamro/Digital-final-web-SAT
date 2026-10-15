@@ -11,6 +11,8 @@ import { ThemeSwitch } from '@/components/marketing/theme-switch'
 import { LangSwitch } from '@/components/lang-switch'
 import { LangPicker } from '@/components/marketing/dashboard/lang-picker'
 import { useT } from '@/components/i18n-provider'
+import { NotifCenter } from '@/components/marketing/dashboard/notif-center'
+import { Tour } from '@/components/marketing/dashboard/tour'
 
 const NAV = [
   { href: '/dashboard', hash: '', label: 'Dashboard', Icon: House },
@@ -61,6 +63,7 @@ function Frame({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
+      <Tour onMenu={setOpen} menuOpen={open} />
     </>
   )
 }
@@ -114,7 +117,6 @@ function Sidebar({ open, pathname, hash }: { open: boolean; pathname: string; ha
 function TopBar({ onMenu }: { onMenu: () => void }) {
   const t = useT()
   const user = useUser()
-  const { openModal } = useSd()
   const router = useRouter()
   const pathname = usePathname()
   const onProfile = pathname.startsWith('/dashboard/profile')
@@ -132,9 +134,7 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
         <LangSwitch />
         <ThemeSwitch />
         <div className="sd-pill">
-          <button className="sd-pill-bell" onClick={() => openModal('notifications')} aria-label={t('Bildirishnomalar')}>
-            <Bell />
-          </button>
+          <NotifCenter />
           <Link
             href="/dashboard/profile"
             className="sd-pill-user"
@@ -166,12 +166,14 @@ function BalanceCard() {
   const { openModal } = useSd()
   const [quota, setQuota] = useState<{ usedToday: number; perDay: number } | null>(null)
   const [unlimited, setUnlimited] = useState(false)
+  const [elite, setElite] = useState(false)
   useEffect(() => {
     let off = false
     fetch('/api/exam/quota')
       .then((r) => r.json())
       .then((d) => {
         if (off) return
+        if (d?.tier === 'elite') setElite(true)
         if (d?.unlimited) setUnlimited(true)
         else if (d?.quota) setQuota({ usedToday: d.quota.usedToday, perDay: d.quota.perDay })
       })
@@ -186,7 +188,7 @@ function BalanceCard() {
     <div className="sd-balance sd-balance-click" role="button" tabIndex={0} onClick={() => openModal('plans')} onKeyDown={(e) => e.key === 'Enter' && openModal('plans')}>
       <div className="sd-balance-head">
         <span>{t('Balansim')}</span>
-        <b className={isPro ? 'sd-plan-pro' : ''}>{isPro ? 'PRO' : 'FREE'}</b>
+        <b className={isPro || elite ? 'sd-plan-pro' : ''}>{elite ? 'ELITE' : isPro ? 'PRO' : 'FREE'}</b>
       </div>
       {unlimited ? (
         <div className="sd-balance-big">{t('Cheksiz')}</div>
@@ -204,7 +206,7 @@ function BalanceCard() {
         </>
       )}
       {isPro && user.trialDaysLeft ? <p>{t('Bepul PRO: yana {n} kun', { n: user.trialDaysLeft })}</p> : null}
-      {!isPro && (
+      {!isPro && !elite && (
         <button className="sd-text-btn" onClick={(e) => { e.stopPropagation(); openModal('plans') }}>
           {t("PRO ga o'tish")} <ArrowUpRight size={13} style={{ display: 'inline', verticalAlign: '-2px' }} />
         </button>

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { SupportPanel } from '@/components/admin/support-panel'
+import { NotifyPanel } from '@/components/admin/notify-panel'
+import { ReportsPanel } from '@/components/admin/reports-panel'
 import { ThemeSwitch } from '@/components/marketing/theme-switch'
 import {
   ArrowLeft,
@@ -23,6 +25,8 @@ import {
   Globe,
   Users,
   Pencil,
+  Bell,
+  Flag,
   X,
 } from 'lucide-react'
 import { AdminGate } from '@/components/admin/admin-gate'
@@ -1050,7 +1054,7 @@ function SkillBankImport() {
 
 /* ------------------------------------ page ---------------------------------- */
 
-type Tab = 'mocks' | 'new' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support'
+type Tab = 'mocks' | 'new' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support' | 'notify' | 'reports'
 type NewMockType = 'full' | 'math' | 'english' | null
 
 export default function AdminPage() {
@@ -1110,6 +1114,8 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
           <TabButton icon={<BarChart3 size={15} />} label="Statistika" active={tab === 'stats'} onClick={() => setTab('stats')} />
           <TabButton icon={<Users size={15} />} label="Foydalanuvchilar" active={tab === 'users'} onClick={() => setTab('users')} />
           <TabButton icon={<MessageSquare size={15} />} label="Xabarlar" active={tab === 'support'} onClick={() => setTab('support')} />
+          <TabButton icon={<Bell size={15} />} label="Bildirishnoma" active={tab === 'notify'} onClick={() => setTab('notify')} />
+          <TabButton icon={<Flag size={15} />} label="Xato xabarlari" active={tab === 'reports'} onClick={() => setTab('reports')} />
           <TabButton icon={<ShieldCheck size={15} />} label="Adminlar" active={tab === 'admins'} onClick={() => setTab('admins')} />
         </div>
 
@@ -1121,6 +1127,8 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
 
         {tab === 'stats' && <StatsPanel />}
         {tab === 'support' && <SupportPanel />}
+        {tab === 'notify' && <NotifyPanel />}
+        {tab === 'reports' && <ReportsPanel />}
         {tab === 'users' && <UsersPanel isOwner={isOwner} />}
 
         {tab === 'admins' && (

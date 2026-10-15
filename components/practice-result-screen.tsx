@@ -6,6 +6,7 @@ import { ArrowLeft, Check, X, Minus, ChevronDown } from 'lucide-react'
 import { Math as MathTex, MixedText } from '@/components/math'
 import type { Question } from '@/lib/test-data'
 import { VideoAnalysisCta } from '@/components/score-report'
+import { ReportQuestionButton } from '@/components/report-question'
 
 export type PracticeReviewItem = {
   index: number
@@ -76,9 +77,10 @@ export function PracticeResultScreen({
               const open = openIndex === i
               return (
                 <div key={i}>
+                  <div className="relative">
                   <button
                     onClick={() => setOpenIndex(open ? null : i)}
-                    className="flex w-full items-center gap-3 px-6 py-4 text-left hover:bg-[#f8fafc]"
+                    className="flex w-full items-center gap-3 py-4 pl-4 pr-[3.5rem] text-left hover:bg-[#f8fafc] sm:pl-6 sm:pr-[4.5rem]"
                   >
                     <span
                       className={`flex size-8 shrink-0 items-center justify-center rounded-sm text-sm font-bold ${
@@ -96,6 +98,10 @@ export function PracticeResultScreen({
                     </span>
                     <ChevronDown className={`size-4 shrink-0 text-[#94a3b8] transition-transform ${open ? 'rotate-180' : ''}`} />
                   </button>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 sm:right-5">
+                    <ReportQuestionButton testLabel={testTitle} qNumber={item.index + 1} question={item.question} />
+                  </span>
+                  </div>
                   {open && (
                     <div className="bg-[#f8fafc] px-6 py-4">
                       {item.question.type === 'gridin' ? (

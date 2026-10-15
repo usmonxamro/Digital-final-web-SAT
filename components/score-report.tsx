@@ -8,6 +8,7 @@ import { QuestionImage } from '@/components/question-image'
 import { Math, MixedText } from '@/components/math'
 import { Button } from '@/components/ui/button'
 import { Certificate } from '@/components/certificate'
+import { ReportQuestionButton } from '@/components/report-question'
 import type { SectionResult } from '@/lib/scoring'
 import type { Question } from '@/lib/test-data'
 
@@ -231,10 +232,11 @@ export function ScoreReport({
                       {item.moduleLabel}
                     </div>
                   )}
+                  <div className="relative">
                   <button
                     type="button"
                     onClick={() => setOpenIndex(isOpen ? null : i)}
-                    className="grid w-full grid-cols-[3rem_1fr_auto_auto_auto] items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-slate-50 sm:px-6"
+                    className="grid w-full grid-cols-[3rem_1fr_auto_auto_auto] items-center gap-2 py-3 pl-4 pr-[3.5rem] text-left transition-colors hover:bg-slate-50 sm:pl-6 sm:pr-[4.5rem]"
                   >
                     <span className="flex items-center gap-2">
                       <StatusBadge item={item} />
@@ -255,6 +257,10 @@ export function ScoreReport({
                       className={`size-4 text-[#94a3b8] transition-transform ${isOpen ? 'rotate-180' : ''}`}
                     />
                   </button>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 sm:right-5">
+                    <ReportQuestionButton testLabel={testTitle} moduleLabel={item.moduleLabel} qNumber={item.index + 1} question={item.question} />
+                  </span>
+                  </div>
                   {isOpen && <QuestionDetail item={item} />}
                 </div>
               )

@@ -15,7 +15,8 @@ export async function GET() {
     // Owner / admins: no limits.
     if (await adminIdentity().catch(() => null)) return NextResponse.json({ quota: null, unlimited: true })
     const supabase = supabaseAdmin()
-    return NextResponse.json({ quota: await mockQuota(supabase, session.userId, await planOf(supabase, session.userId)) })
+    const tier = await planOf(supabase, session.userId)
+    return NextResponse.json({ quota: await mockQuota(supabase, session.userId, tier), tier })
   } catch {
     return NextResponse.json({ quota: null })
   }

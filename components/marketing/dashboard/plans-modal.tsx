@@ -44,6 +44,12 @@ export function PlansModal({ onHelp }: { onHelp: () => void }) {
           </ul>
         </div>
       </div>
+      <div className="sd-plan-elite">
+        <h3>
+          ELITE <i>{t('Guruh o‘quvchilari')}</i>
+        </h3>
+        <p>{t('Kunlik limit guruh o‘quvchilari uchun 7 ta mock. Kurs guruhiga qo‘shilgan o‘quvchilar avtomatik ELITE rejimga o‘tadi.')}</p>
+      </div>
       {!isPro && (
         <button className="sd-primary" onClick={onHelp}>
           {t("PRO ga o'tish")}

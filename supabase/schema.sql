@@ -318,3 +318,35 @@ create table if not exists password_resets (
 );
 create index if not exists password_resets_user_idx on password_resets(user_id);
 alter table password_resets enable row level security;
+
+-- v71: bell notifications (admin broadcasts + replies to question reports), question reports,
+-- and "last time the student opened the bell" for unread counts / new-mock counts.
+alter table users add column if not exists notifs_seen_at timestamptz;
+create table if not exists notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,   -- null = broadcast to every student
+  kind text not null default 'admin' check (kind in ('admin', 'reply')),
+  title text not null default '',
+  body text not null default '',
+  created_at timestamptz not null default now()
+);
+create index if not exists notifications_user_idx on notifications(user_id, created_at desc);
+alter table notifications enable row level security;
+
+create table if not exists question_reports (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete set null,
+  name text not null default '',
+  test_label text not null default '',
+  module_label text not null default '',
+  q_number integer,
+  question_id text,
+  prompt text not null default '',
+  message text not null default '',
+  status text not null default 'open' check (status in ('open', 'answered')),
+  reply text,
+  replied_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists question_reports_status_idx on question_reports(status, created_at desc);
+alter table question_reports enable row level security;

@@ -1,10 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { isMissingTable } from '@/lib/db-errors'
 
-/** Daily mock allowance: FREE 3, PRO 4. */
+/** Daily mock allowance: FREE 3, PRO 4, ELITE (course/group students) 7. */
 export const MOCKS_PER_DAY = 3
 export const MOCKS_PER_DAY_PRO = 4
-export const dailyLimitFor = (plan: 'premium' | 'free' | string | undefined) => (plan === 'premium' ? MOCKS_PER_DAY_PRO : MOCKS_PER_DAY)
+export const MOCKS_PER_DAY_ELITE = 7
+export const dailyLimitFor = (plan: 'elite' | 'premium' | 'free' | string | undefined) =>
+  plan === 'elite' ? MOCKS_PER_DAY_ELITE : plan === 'premium' ? MOCKS_PER_DAY_PRO : MOCKS_PER_DAY
 export const MOCKS_PER_HOUR = 2
 /** Days are counted in Uzbekistan time (UTC+5, no DST). */
 const TZ_OFFSET_MS = 5 * 3600_000
@@ -30,7 +32,7 @@ export type Quota = {
 export async function mockQuota(
   supabase: SupabaseClient,
   userId: string,
-  plan: 'premium' | 'free' | string = 'free',
+  plan: 'elite' | 'premium' | 'free' | string = 'free',
   now = Date.now(),
 ): Promise<Quota | null> {
   const perDay = dailyLimitFor(plan)

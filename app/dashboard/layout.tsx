@@ -42,6 +42,7 @@ async function loadUser(): Promise<DashboardUser | null> {
         courseMember: access.all || access.groups.length > 0,
         courseAll: access.all,
         courseGroups: access.groups,
+        createdAt: (data.created_at as string | undefined) ?? null,
       }
     }
   } catch {
