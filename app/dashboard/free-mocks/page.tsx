@@ -1,5 +1,6 @@
 'use client'
 
+import { SatSkeleton } from '@/components/sat-loader'
 import { GhostCards } from '@/components/marketing/dashboard/ghost-cards'
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
@@ -89,7 +90,7 @@ export default function FreeMocksPage() {
       </div>
 
       <div className="sd-fm-grid">
-        {tests === null && <div className="sd-panel sd-empty">Yuklanmoqda...</div>}
+        {tests === null && <div style={{ gridColumn: '1 / -1' }}><SatSkeleton kind="cards" count={3} /></div>}
         {shown.map((t) => {
           const sub = SUBJECT[t.subject]
           const ready = isReady(t)

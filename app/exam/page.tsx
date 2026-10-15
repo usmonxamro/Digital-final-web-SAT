@@ -1,4 +1,5 @@
 'use client'
+import { SatLoader } from '@/components/sat-loader'
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -513,8 +514,7 @@ function ExamEngine({
           </>
         ) : (
           <>
-            <span className="size-8 animate-spin rounded-full border-[3px] border-[#0e7c75] border-t-transparent" />
-            <p className="text-base font-extrabold">Natijalar hisoblanmoqda va yuborilmoqda…</p>
+            <SatLoader variant="results" fullscreen={false} theme="light" label="Natijalar hisoblanmoqda va yuborilmoqda…" />
             <p className="max-w-xs text-sm text-[#475569]">Iltimos, oynani yopmang va sahifani yangilamang. Bu bir necha soniya oladi.</p>
           </>
         )}
@@ -897,9 +897,7 @@ function PageInner() {
 
   if (!ready) {
     return (
-      <div className="flex h-dvh items-center justify-center bg-[#f8fafc] text-[#0f172a]">
-        <p className="text-sm font-medium">Yuklanmoqda...</p>
-      </div>
+      <SatLoader variant="exam" theme="light" />
     )
   }
 
@@ -937,11 +935,7 @@ function PageInner() {
 export default function Page() {
   return (
     <Suspense
-      fallback={
-        <div className="flex h-dvh items-center justify-center bg-[#f8fafc] text-[#0f172a]">
-          <p className="text-sm font-medium">Yuklanmoqda...</p>
-        </div>
-      }
+      fallback={<SatLoader variant="exam" theme="light" />}
     >
       <PageInner />
     </Suspense>

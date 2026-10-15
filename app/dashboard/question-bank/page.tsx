@@ -1,5 +1,6 @@
 'use client'
 
+import { SatSkeleton } from '@/components/sat-loader'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Play, TrendingDown } from 'lucide-react'
@@ -44,7 +45,7 @@ export default function QuestionBankPage() {
       )}
 
       <div className="mt-7 space-y-2.5">
-        {skills === null && <p className="text-[13.5px] text-sp-text-muted">Yuklanmoqda...</p>}
+        {skills === null && <SatSkeleton kind="list" count={4} />}
         {skills?.map((s) => (
           <div key={s.domain} className="sp-glass sp-hover-glow-orange rounded-xl p-4 flex items-center gap-4">
             <div className="flex-1 min-w-0">

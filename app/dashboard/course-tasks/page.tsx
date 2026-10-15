@@ -1,5 +1,6 @@
 'use client'
 
+import { SatSkeleton } from '@/components/sat-loader'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { BookOpen, ChevronLeft, Clock, KeyRound, Lock, Play } from 'lucide-react'
@@ -133,7 +134,7 @@ export default function CourseTasksPage() {
         <h3>{member ? 'Kurs guruhlari' : 'Hozirda faol kurslar'}</h3>
       </div>
       <div className="sd-course-grid">
-        {tests === null && <div className="sd-panel sd-empty">Yuklanmoqda...</div>}
+        {tests === null && <div style={{ gridColumn: '1 / -1' }}><SatSkeleton kind="cards" count={3} /></div>}
         {courses.map((c, i) => (
           <CourseCard
             key={c.name}

@@ -1,5 +1,6 @@
 'use client'
 
+import { SatSkeleton } from '@/components/sat-loader'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Sparkles, BookOpen, Calculator, CheckCircle2, Crown, Lock, MonitorPlay, Play, Timer, ChevronLeft, PenLine } from 'lucide-react'
@@ -147,7 +148,7 @@ export default function PracticePage() {
           )}
 
           <div className="sd-exam-grid">
-            {tests === null && <div className="sd-panel sd-empty">Yuklanmoqda...</div>}
+            {tests === null && <div style={{ gridColumn: '1 / -1' }}><SatSkeleton kind="cards" count={3} /></div>}
             {visible.map((g) => (
               <ExamCard key={g.name} group={g} onOpen={() => show(g.name)} />
             ))}
