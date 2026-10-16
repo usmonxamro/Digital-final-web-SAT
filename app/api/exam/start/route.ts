@@ -55,11 +55,11 @@ export async function POST(req: NextRequest) {
 
   // Course tasks: only students of that course group (or admins).
   {
-    const { data: cfg } = await supabase.from('test_configs').select('placement').eq('test_label', testLabel).maybeSingle()
+    const { data: cfg } = await supabase.from('test_configs').select('*').eq('test_label', testLabel).maybeSingle()
     if (cfg?.placement === 'course_task' && !(await adminIdentity().catch(() => null))) {
       const { data: u } = await supabase.from('users').select('*').eq('id', session.userId).maybeSingle()
       const access = u ? await courseAccessFor(supabase, u) : null
-      if (!access || !canOpenTask(testLabel, access)) {
+      if (!access || !canOpenTask(testLabel, access, (cfg.course_group as string | null) ?? null)) {
         return NextResponse.json(
           { error: "Bu vazifa faqat kurs guruhi o'quvchilari uchun. Telegram botdan olgan kodingizni Kurslar bo'limida kiriting.", code: 'COURSE' },
           { status: 403 },

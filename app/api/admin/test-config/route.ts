@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { releaseDueMocks } from '@/lib/schedule'
 import { isMissingColumn } from '@/lib/db-columns'
+import { groupBySlug } from '@/lib/course-groups'
 
 
 export type TestSubject = 'full' | 'math' | 'english'
@@ -28,6 +29,8 @@ export type TestConfig = {
   publishAt: string | null
   section: TestSection
   access: TestAccess
+  /** Course group slug the mock is attached to, or null. */
+  courseGroup: string | null
 }
 
 export async function POST(req: NextRequest) {
@@ -129,6 +132,7 @@ export async function GET(req: NextRequest) {
       publishAt: row.publish_at ?? null,
       section: row.section === 'free' ? 'free' : 'exams',
       access: row.access === 'paid' ? 'paid' : 'free',
+      courseGroup: (row.course_group as string | null) || null,
     }))
 
     return NextResponse.json(testLabel ? { config: configs[0] ?? null } : { configs })
@@ -150,11 +154,26 @@ export async function PATCH(req: NextRequest) {
   const patch: Record<string, unknown> = {}
   if (body?.section === 'free' || body?.section === 'exams') patch.section = body.section
   if (body?.access === 'free' || body?.access === 'paid') patch.access = body.access
+  // Attach to / detach from a course group: { courseGroup: 'nov' | 'dec' | null }.
+  // Attached = a course task (shown in My Courses of that group only); detached = a normal mock again.
+  if (body && 'courseGroup' in body) {
+    const g = body.courseGroup
+    if (g === null || g === '') {
+      patch.course_group = null
+      patch.placement = 'mock'
+    } else if (typeof g === 'string' && groupBySlug(g)) {
+      patch.course_group = g
+      patch.placement = 'course_task'
+    } else {
+      return NextResponse.json({ error: "Noma'lum guruh." }, { status: 400 })
+    }
+  }
   if (Object.keys(patch).length === 0) return NextResponse.json({ error: "O'zgartirish yo'q." }, { status: 400 })
   const { error } = await supabaseAdmin().from('test_configs').update(patch).eq('test_label', testLabel)
   if (error) {
+    const hint = 'course_group' in patch ? 'v68' : 'v55'
     return NextResponse.json(
-      { error: "Avval Supabase'da v55 SQL'ni ishga tushiring (supabase/schema.sql oxiridagi qism)." },
+      { error: `Avval Supabase'da ${hint} SQL'ni ishga tushiring (supabase/schema.sql oxiridagi qism).` },
       { status: 500 },
     )
   }

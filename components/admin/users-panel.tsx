@@ -177,7 +177,7 @@ export function UsersPanel({ isOwner }: { isOwner: boolean }) {
                               on ? 'bg-green-mist text-green-deep' : 'bg-bg-deep text-ink-faint hover:text-ink'
                             }`}
                           >
-                            {g.slug}
+                            {g.short}
                             {on ? ' ✓' : ''}
                           </button>
                         )

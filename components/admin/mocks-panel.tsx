@@ -5,6 +5,7 @@ import { BarChart3, CalendarClock, ChevronDown, Loader2, MonitorPlay, Search, Tr
 import type { MockTestSummary } from '@/app/api/tests/route'
 import type { MockAttemptRow, MockStat } from '@/app/api/admin/mock-stats/route'
 import { PublishActions } from '@/components/admin/publish-actions'
+import { groupBySlug, groupOfLabel } from '@/lib/course-groups'
 
 type Filter = 'all' | 'published' | 'draft'
 
@@ -117,7 +118,13 @@ export function MocksPanel() {
                         <span className="rounded-full bg-amber-300 px-1.5 py-px text-[9.5px] font-extrabold text-amber-950">🔒 PULLIK</span>
                       )}
                       {t.placement === 'course_task' && (
-                        <span className="rounded-full bg-sky-100 px-1.5 py-px text-[9.5px] font-extrabold text-sky-800">VAZIFA</span>
+                        <span className="rounded-full bg-sky-100 px-1.5 py-px text-[9.5px] font-extrabold text-sky-800">
+                          VAZIFA
+                          {(() => {
+                            const g = groupBySlug(t.courseGroup ?? '') ?? groupBySlug(groupOfLabel(t.label) ?? '')
+                            return g ? ` · ${g.short.toUpperCase()}` : ''
+                          })()}
+                        </span>
                       )}
                       {t.hasVideo && (
                         <span className="flex items-center gap-0.5 rounded-full bg-orange-100 px-1.5 py-px text-[9.5px] font-extrabold text-orange-800">

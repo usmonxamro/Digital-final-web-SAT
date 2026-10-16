@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { SectionAccessPicker, type Access, type Section } from '@/components/admin/section-access'
-import { AlertTriangle, CalendarClock, ExternalLink, EyeOff, Globe, Loader2, X } from 'lucide-react'
+import { AlertTriangle, CalendarClock, ExternalLink, EyeOff, Globe, GraduationCap, Loader2, X } from 'lucide-react'
+import { COURSE_GROUPS, groupOfLabel } from '@/lib/course-groups'
 
 /**
  * "Check it now" + "Publish" for one mock.
@@ -27,6 +28,9 @@ export function PublishActions({
   const [when, setWhen] = useState('')
   const [placement, setPlacement] = useState<{ section: Section; access: Access } | null>(null)
   const [placing, setPlacing] = useState(false)
+  // Course group the mock is attached to ('' = not attached).
+  const [group, setGroup] = useState<string | null>(null)
+  const [grouping, setGrouping] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -36,6 +40,7 @@ export function PublishActions({
         if (!cancelled) {
           setPublished(d.config?.published ?? true)
           setPublishAt(d.config?.publishAt ?? null)
+          setGroup(d.config?.courseGroup ?? (d.config?.placement === 'course_task' ? groupOfLabel(testLabel) : null) ?? '')
           setPlacement({ section: d.config?.section === 'free' ? 'free' : 'exams', access: d.config?.access === 'paid' ? 'paid' : 'free' })
         }
       })
@@ -72,6 +77,32 @@ export function PublishActions({
       setError("Server bilan bog'lanib bo'lmadi.")
     } finally {
       setPlacing(false)
+    }
+  }
+
+  async function attach(slug: string) {
+    const before = group
+    setGroup(slug)
+    setGrouping(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/admin/test-config', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ testLabel, courseGroup: slug || null }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setGroup(before)
+        setError(data.error ?? 'Saqlab bo‘lmadi.')
+      } else {
+        onChange?.(published ?? true)
+      }
+    } catch {
+      setGroup(before)
+      setError("Server bilan bog'lanib bo'lmadi.")
+    } finally {
+      setGrouping(false)
     }
   }
 
@@ -163,6 +194,32 @@ export function PublishActions({
         {placement && (
           <div className="mt-3">
             <SectionAccessPicker section={placement.section} access={placement.access} onChange={place} busy={placing} />
+          </div>
+        )}
+        {group !== null && (
+          <div className={`mt-3 rounded-lg border border-line bg-white p-3 ${grouping ? 'pointer-events-none opacity-60' : ''}`}>
+            <div className="mb-2 flex items-center gap-1.5 text-[12.5px] font-extrabold text-ink">
+              <GraduationCap size={14} className="text-sky-600" /> Kurs guruhi (My Courses)
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[{ slug: '', title: 'Biriktirilmagan' }, ...COURSE_GROUPS].map((g) => (
+                <button
+                  key={g.slug || 'none'}
+                  type="button"
+                  onClick={() => g.slug !== group && attach(g.slug)}
+                  aria-pressed={group === g.slug}
+                  className={`rounded-lg border px-3 py-1.5 text-[12px] font-bold transition-colors ${
+                    group === g.slug ? 'border-sky-600 bg-sky-600 text-white' : 'border-line text-ink-soft hover:border-sky-400'
+                  }`}
+                >
+                  {g.title}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-[11px] text-ink-faint">
+              Guruhga biriktirilgan mock faqat shu guruh o&apos;quvchilarining <b>My Courses</b> bo&apos;limida vazifa sifatida ko&apos;rinadi
+              (vaqt cheklovsiz) va oddiy mocklar ro&apos;yxatidan chiqadi. &quot;Biriktirilmagan&quot; — oddiy mockka qaytaradi.
+            </p>
           </div>
         )}
         {published === false && (

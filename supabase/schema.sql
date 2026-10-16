@@ -350,3 +350,9 @@ create table if not exists question_reports (
 );
 create index if not exists question_reports_status_idx on question_reports(status, created_at desc);
 alter table question_reports enable row level security;
+
+-- v68: attach any mock to a course group (Admin -> Mocklar -> mockni oching -> "Kurs guruhi").
+-- NULL = not attached (the old rule still applies: a label starting with the group title, e.g.
+-- "SAT November 800/800 — Week 1", belongs to that group). A value is a slug from lib/course-groups.ts
+-- ('nov', 'dec'); such a mock is shown in My Courses of that group only.
+alter table test_configs add column if not exists course_group text;

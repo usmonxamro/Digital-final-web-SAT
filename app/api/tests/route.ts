@@ -26,6 +26,8 @@ export type MockTestSummary = {
   section: TestSection
   /** 'paid' mocks show a lock and open for Pro / course students / admins only. */
   access: TestAccess
+  /** Course group slug the admin attached this mock to ('nov' / 'dec'), or null. */
+  courseGroup: string | null
 }
 
 type Catalog = {
@@ -105,6 +107,7 @@ export async function GET(req: NextRequest) {
           publishAt: (c.publish_at as string | null) ?? null,
           section: (c.section === 'free' ? 'free' : 'exams') as TestSection,
           access: (c.access === 'paid' ? 'paid' : 'free') as TestAccess,
+          courseGroup: (c.course_group as string | null) || null,
         },
       ]),
     )
@@ -136,6 +139,7 @@ export async function GET(req: NextRequest) {
           done: doneLabels.has(label),
           section: config?.section ?? 'exams',
           access: config?.access ?? 'free',
+          courseGroup: config?.courseGroup ?? null,
         }
       })
       .filter((t) => includeDrafts || t.published)

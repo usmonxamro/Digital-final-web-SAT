@@ -8,7 +8,7 @@ import { useDashboardData, type TestSummary } from '@/components/marketing/dashb
 import { useUser } from '@/components/marketing/dashboard/user-context'
 import { useSd } from '@/components/marketing/dashboard/sd-ui'
 import { CourseCard } from '@/components/marketing/dashboard/course-card'
-import { COURSE_GROUPS } from '@/lib/course-groups'
+import { COURSE_GROUPS, groupBySlug } from '@/lib/course-groups'
 
 /** "December Intensive — Week 1" → course "December Intensive"; labels without a dash go to "Umumiy vazifalar". */
 function courseOf(label: string): { course: string; task: string } {
@@ -38,7 +38,14 @@ export default function CourseTasksPage() {
     const map = new Map<string, Course>()
     for (const g of COURSE_GROUPS) map.set(g.title.toLowerCase(), { name: g.title, slug: g.slug, tasks: [] })
     for (const t of (tests ?? []).filter((x) => x.placement === 'course_task')) {
-      const { course, task } = courseOf(t.label)
+      // A mock the admin attached to a group goes into that group, whatever its name is.
+      const attached = t.courseGroup ? groupBySlug(t.courseGroup) : null
+      let { course, task } = courseOf(t.label)
+      if (attached) {
+        course = attached.title
+        const prefix = new RegExp(`^${attached.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[—–-]\\s*`, 'i')
+        task = t.label.replace(prefix, '').trim() || t.label
+      }
       const key = course.toLowerCase()
       const c = map.get(key) ?? { name: course, slug: null, tasks: [] }
       c.tasks.push({ task, test: t })

@@ -26,6 +26,8 @@ export type TestSummary = {
   done?: boolean
   section?: 'exams' | 'free'
   access?: 'free' | 'paid'
+  /** Course group slug this mock is attached to (admin), or null. */
+  courseGroup?: string | null
 }
 
 export type Platform = { totalUsers: number | null; ranked: number; rank: number | null; visits?: number | null }
