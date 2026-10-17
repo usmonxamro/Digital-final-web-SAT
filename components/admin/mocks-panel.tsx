@@ -1,21 +1,69 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { BarChart3, CalendarClock, ChevronDown, Loader2, MonitorPlay, Search, Trash2, Users } from 'lucide-react'
+import {
+  BarChart3,
+  CalendarClock,
+  Check,
+  ChevronDown,
+  FolderPlus,
+  GripVertical,
+  Loader2,
+  Lock,
+  MonitorPlay,
+  Pencil,
+  Search,
+  Trash2,
+  Users,
+  X,
+} from 'lucide-react'
 import type { MockTestSummary } from '@/app/api/tests/route'
 import type { MockAttemptRow, MockStat } from '@/app/api/admin/mock-stats/route'
+import type { MockFolder } from '@/app/api/admin/folders/route'
 import { PublishActions } from '@/components/admin/publish-actions'
 import { groupBySlug, groupsOfTask } from '@/lib/course-groups'
 
 type Filter = 'all' | 'published' | 'draft'
+/** 'all' | 'exams' | 'free' | 'paid' | a folder id */
+type Tab = string
 
-/** Admin "Mocklar": every mock with draft state, solve statistics, results and video analysis. */
+const SYSTEM_TABS: { key: Tab; label: string; hint: string }[] = [
+  { key: 'all', label: 'Hammasi', hint: 'Barcha mocklar' },
+  { key: 'exams', label: 'All Past Exams', hint: 'Mockni shu yerga tashlasangiz All Past Exams bo‘limiga o‘tadi' },
+  { key: 'free', label: 'Free Mocks', hint: 'Mockni shu yerga tashlasangiz Free Mocks bo‘limiga o‘tadi' },
+  { key: 'paid', label: 'Pullik', hint: 'Mockni shu yerga tashlasangiz pullik bo‘ladi' },
+]
+
+/**
+ * Admin "Mocklar": every mock with draft state, solve statistics, results and video analysis.
+ * Bo'limlar: All Past Exams / Free Mocks / Pullik and your own folders. A mock always stays in
+ * "Hammasi"; drag it onto a bo'lim, or use the buttons to the right of its name.
+ */
 export function MocksPanel() {
   const [tests, setTests] = useState<MockTestSummary[] | null>(null)
   const [stats, setStats] = useState<Record<string, MockStat>>({})
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState<string | null>(null)
+
+  const [folders, setFolders] = useState<MockFolder[]>([])
+  const [folderHint, setFolderHint] = useState<string | null>(null)
+  const [tab, setTab] = useState<Tab>('all')
+  const [creating, setCreating] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [dragLabel, setDragLabel] = useState<string | null>(null)
+  const [overTab, setOverTab] = useState<Tab | null>(null)
+  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null)
+
+  function loadFolders() {
+    fetch('/api/admin/folders')
+      .then((r) => r.json())
+      .then((d) => {
+        setFolders(d.folders ?? [])
+        setFolderHint(d.error ?? null)
+      })
+      .catch(() => setFolders([]))
+  }
 
   function load() {
     fetch('/api/tests?all=1')
@@ -26,8 +74,109 @@ export function MocksPanel() {
       .then((r) => r.json())
       .then((d) => setStats(Object.fromEntries(((d.stats ?? []) as MockStat[]).map((s) => [s.label, s]))))
       .catch(() => {})
+    loadFolders()
   }
   useEffect(load, [])
+
+  useEffect(() => {
+    if (!note) return
+    const t = setTimeout(() => setNote(null), 3200)
+    return () => clearTimeout(t)
+  }, [note])
+
+  const inTab = (t: MockTestSummary, key: Tab) =>
+    key === 'all' ? true : key === 'exams' ? t.section === 'exams' : key === 'free' ? t.section === 'free' : key === 'paid' ? t.access === 'paid' : t.folderIds.includes(key)
+
+  const tabCount = (key: Tab) => (tests ?? []).filter((t) => inTab(t, key)).length
+  const folderName = (id: string) => folders.find((f) => f.id === id)?.name ?? ''
+
+  /** Change one mock's section / paid flag / folders (optimistic, rolled back on error). */
+  async function patchMock(label: string, patch: Partial<Pick<MockTestSummary, 'section' | 'access' | 'folderIds'>>, okText?: string) {
+    const prev = (tests ?? []).find((t) => t.label === label)
+    if (!prev) return
+    setTests((cur) => (cur ?? []).map((t) => (t.label === label ? { ...t, ...patch } : t)))
+    try {
+      const res = await fetch('/api/admin/test-config', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ testLabel: label, ...patch }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(d.error ?? 'Saqlab bo‘lmadi.')
+      if (okText) setNote({ ok: true, text: okText })
+    } catch (e) {
+      setTests((cur) => (cur ?? []).map((t) => (t.label === label ? prev : t)))
+      setNote({ ok: false, text: e instanceof Error ? e.message : "Server bilan bog'lanib bo'lmadi." })
+    }
+  }
+
+  function toggleFolder(t: MockTestSummary, id: string) {
+    const on = t.folderIds.includes(id)
+    patchMock(t.label, { folderIds: on ? t.folderIds.filter((x) => x !== id) : [...t.folderIds, id] })
+  }
+
+  function dropOn(key: Tab) {
+    const label = dragLabel
+    setDragLabel(null)
+    setOverTab(null)
+    const t = (tests ?? []).find((x) => x.label === label)
+    if (!t || key === 'all') return
+    if (key === 'exams' || key === 'free') {
+      const name = key === 'exams' ? 'All Past Exams' : 'Free Mocks'
+      if (t.section === key) return setNote({ ok: true, text: `"${t.label}" allaqachon ${name} da.` })
+      patchMock(t.label, { section: key }, `"${t.label}" → ${name}`)
+    } else if (key === 'paid') {
+      if (t.access === 'paid') return setNote({ ok: true, text: `"${t.label}" allaqachon pullik.` })
+      patchMock(t.label, { access: 'paid' }, `"${t.label}" → Pullik`)
+    } else {
+      if (t.folderIds.includes(key)) return setNote({ ok: true, text: `"${t.label}" allaqachon "${folderName(key)}" bo‘limida.` })
+      patchMock(t.label, { folderIds: [...t.folderIds, key] }, `"${t.label}" → ${folderName(key)}`)
+    }
+  }
+
+  async function createFolder() {
+    const name = newName.trim()
+    if (!name) return
+    const res = await fetch('/api/admin/folders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    }).catch(() => null)
+    const d = res ? await res.json().catch(() => ({})) : {}
+    if (!res?.ok) return setNote({ ok: false, text: d.error ?? "Server bilan bog'lanib bo'lmadi." })
+    setFolders((f) => [...f, d.folder])
+    setTab(d.folder.id)
+    setNewName('')
+    setCreating(false)
+    setFolderHint(null)
+  }
+
+  async function renameFolder(f: MockFolder) {
+    const name = window.prompt('Bo‘lim yangi nomi:', f.name)?.trim()
+    if (!name || name === f.name) return
+    const res = await fetch('/api/admin/folders', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: f.id, name }),
+    }).catch(() => null)
+    const d = res ? await res.json().catch(() => ({})) : {}
+    if (!res?.ok) return setNote({ ok: false, text: d.error ?? 'Saqlab bo‘lmadi.' })
+    setFolders((cur) => cur.map((x) => (x.id === f.id ? { ...x, name: name.slice(0, 40) } : x)))
+  }
+
+  async function deleteFolder(f: MockFolder) {
+    if (!window.confirm(`"${f.name}" bo'limi o'chirilsinmi? Mocklar o'chmaydi — umumiy ro'yxatda qoladi.`)) return
+    const res = await fetch('/api/admin/folders', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: f.id }),
+    }).catch(() => null)
+    const d = res ? await res.json().catch(() => ({})) : {}
+    if (!res?.ok) return setNote({ ok: false, text: d.error ?? "O'chirib bo'lmadi." })
+    setFolders((cur) => cur.filter((x) => x.id !== f.id))
+    setTests((cur) => (cur ?? []).map((t) => ({ ...t, folderIds: t.folderIds.filter((x) => x !== f.id) })))
+    if (tab === f.id) setTab('all')
+  }
 
   const counts = useMemo(
     () => ({
@@ -39,12 +188,93 @@ export function MocksPanel() {
   )
   const shown = (tests ?? []).filter(
     (t) =>
+      inTab(t, tab) &&
       (filter === 'all' || (filter === 'draft' ? !t.published : t.published)) &&
       t.label.toLowerCase().includes(query.trim().toLowerCase()),
   )
 
+  const tabButton = (key: Tab, label: string, hint: string, opts?: { folder?: MockFolder }) => {
+    const active = tab === key
+    const droppable = key !== 'all'
+    const over = overTab === key && dragLabel !== null
+    return (
+      <span
+        key={key}
+        title={hint}
+        onDragOver={droppable ? (e) => (e.preventDefault(), setOverTab(key)) : undefined}
+        onDragLeave={droppable ? () => setOverTab((o) => (o === key ? null : o)) : undefined}
+        onDrop={droppable ? (e) => (e.preventDefault(), dropOn(key)) : undefined}
+        className={`flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[12.5px] font-bold transition-colors ${
+          over
+            ? 'border-green bg-green-mist text-green-deep ring-2 ring-green/40'
+            : active
+              ? 'border-ink bg-ink text-white'
+              : dragLabel && droppable
+                ? 'border-dashed border-green text-ink-soft'
+                : 'border-line text-ink-soft hover:border-green'
+        }`}
+      >
+        <button type="button" onClick={() => setTab(key)} className="flex items-center gap-1.5">
+          {key === 'paid' && <Lock size={11} />}
+          {label} <span className="opacity-60">{tests ? tabCount(key) : '…'}</span>
+        </button>
+        {opts?.folder && active && (
+          <>
+            <button type="button" onClick={() => renameFolder(opts.folder!)} title="Nomini o'zgartirish" className="ml-1 opacity-70 hover:opacity-100">
+              <Pencil size={11} />
+            </button>
+            <button type="button" onClick={() => deleteFolder(opts.folder!)} title="Bo'limni o'chirish" className="opacity-70 hover:text-red-300">
+              <X size={12} />
+            </button>
+          </>
+        )}
+      </span>
+    )
+  }
+
   return (
     <div>
+      {/* Bo'limlar: system sections + your own folders. Drop a mock onto any of them. */}
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        {SYSTEM_TABS.map((t) => tabButton(t.key, t.label, t.hint))}
+        <span className="mx-1 h-5 w-px bg-line" />
+        {folders.map((f) => tabButton(f.id, f.name, `Mockni shu yerga tashlasangiz "${f.name}" bo‘limiga qo‘shiladi`, { folder: f }))}
+        {creating ? (
+          <span className="flex items-center gap-1">
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') createFolder()
+                if (e.key === 'Escape') setCreating(false)
+              }}
+              maxLength={40}
+              autoFocus
+              placeholder="Bo'lim nomi"
+              className="w-40 rounded-lg border border-green px-2.5 py-1.5 text-[12.5px] focus:outline-none"
+            />
+            <button type="button" onClick={createFolder} disabled={!newName.trim()} className="rounded-lg bg-ink p-1.5 text-white disabled:opacity-40" title="Yaratish">
+              <Check size={14} />
+            </button>
+            <button type="button" onClick={() => setCreating(false)} className="rounded-lg border border-line p-1.5 text-ink-soft" title="Bekor">
+              <X size={14} />
+            </button>
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-dashed border-green px-3 py-1.5 text-[12.5px] font-bold text-green-deep hover:bg-green-mist"
+          >
+            <FolderPlus size={13} /> Bo&apos;lim yaratish
+          </button>
+        )}
+      </div>
+      {folderHint && <div className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-800">{folderHint}</div>}
+      {note && (
+        <div className={`mb-2 rounded-lg px-3 py-2 text-[12.5px] font-semibold ${note.ok ? 'bg-green-mist text-green-deep' : 'bg-red-50 text-red-700'}`}>{note.text}</div>
+      )}
+
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {(
           [
@@ -80,20 +310,36 @@ export function MocksPanel() {
           <Loader2 size={14} className="animate-spin" /> Yuklanmoqda...
         </div>
       ) : shown.length === 0 ? (
-        <p className="text-[13px] text-ink-faint">Mock topilmadi.</p>
+        <p className="text-[13px] text-ink-faint">
+          {tab === 'all' ? 'Mock topilmadi.' : "Bu bo'limda mock yo'q. Mockni yuqoridagi bo'limga sudrab tashlang yoki mock qatoridagi tugmani bosing."}
+        </p>
       ) : (
         <div className="space-y-2.5">
           {shown.map((t) => {
             const s = stats[t.label]
             const isOpen = open === t.label
+            const toggle = () => setOpen(isOpen ? null : t.label)
             return (
-              <div key={t.label} className="overflow-hidden rounded-xl border border-line bg-white">
-                <button
-                  type="button"
-                  onClick={() => setOpen(isOpen ? null : t.label)}
-                  className="flex w-full flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-3 text-left hover:bg-bg-deep/50"
+              <div
+                key={t.label}
+                className={`overflow-hidden rounded-xl border bg-white transition-opacity ${dragLabel === t.label ? 'border-green opacity-60' : 'border-line'}`}
+              >
+                {/* Only this header row is draggable, so the inputs below keep normal text selection. */}
+                <div
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', t.label)
+                    e.dataTransfer.effectAllowed = 'copy'
+                    setDragLabel(t.label)
+                  }}
+                  onDragEnd={() => {
+                    setDragLabel(null)
+                    setOverTab(null)
+                  }}
+                  className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-3 hover:bg-bg-deep/50"
                 >
-                  <div className="min-w-0 flex-1">
+                  <GripVertical size={16} className="shrink-0 cursor-grab text-ink-faint" aria-label="Sudrab bo'limga qo'shish" />
+                  <button type="button" onClick={toggle} className="min-w-0 flex-1 basis-[200px] text-left">
                     <div className="flex flex-wrap items-center gap-1.5 text-[13.5px] font-bold text-ink">
                       {t.label}
                       {!t.published && (
@@ -110,12 +356,6 @@ export function MocksPanel() {
                             minute: '2-digit',
                           })}
                         </span>
-                      )}
-                      {t.section === 'free' && (
-                        <span className="rounded-full bg-orange-500 px-1.5 py-px text-[9.5px] font-extrabold text-white">FREE MOCK</span>
-                      )}
-                      {t.access === 'paid' && (
-                        <span className="rounded-full bg-amber-300 px-1.5 py-px text-[9.5px] font-extrabold text-amber-950">🔒 PULLIK</span>
                       )}
                       {t.placement === 'course_task' && (
                         <span className="rounded-full bg-sky-100 px-1.5 py-px text-[9.5px] font-extrabold text-sky-800">
@@ -139,13 +379,35 @@ export function MocksPanel() {
                       {t.subject === 'full' ? 'Full' : t.subject === 'math' ? 'Math' : 'English'} · R&W {t.readingCount} · Math{' '}
                       {t.mathCount}
                     </div>
+                  </button>
+
+                  {/* Bo'limlarga qo'shish: all in one row, to the right of the name */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <PlaceBtn active={t.access === 'paid'} tone="amber" onClick={() => patchMock(t.label, { access: t.access === 'paid' ? 'free' : 'paid' })} title="Pullik / bepul">
+                      <Lock size={11} /> Pullik
+                    </PlaceBtn>
+                    <PlaceBtn active={t.section === 'free'} tone="orange" onClick={() => t.section !== 'free' && patchMock(t.label, { section: 'free' })} title="Free Mocks bo'limida ko'rsatish">
+                      Free Mock
+                    </PlaceBtn>
+                    <PlaceBtn active={t.section === 'exams'} tone="blue" onClick={() => t.section !== 'exams' && patchMock(t.label, { section: 'exams' })} title="All Past Exams bo'limida ko'rsatish">
+                      All Past Exams
+                    </PlaceBtn>
+                    {folders.length > 0 && <span className="mx-0.5 h-4 w-px bg-line" />}
+                    {folders.map((f) => (
+                      <PlaceBtn key={f.id} active={t.folderIds.includes(f.id)} tone="green" onClick={() => toggleFolder(t, f.id)} title={`"${f.name}" bo'limiga qo'shish / olib tashlash`}>
+                        {t.folderIds.includes(f.id) && <Check size={11} />} {f.name}
+                      </PlaceBtn>
+                    ))}
                   </div>
-                  <Stat icon={<BarChart3 size={13} />} label="yechilgan" value={s?.attempts ?? 0} />
-                  <Stat icon={<Users size={13} />} label="o'quvchi" value={s?.users ?? 0} />
-                  <Stat label="o'rtacha" value={s?.avgScore ?? '—'} />
-                  <Stat label="eng yuqori" value={s?.bestScore ?? '—'} />
-                  <ChevronDown size={16} className={`text-ink-faint transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                </button>
+
+                  <button type="button" onClick={toggle} className="flex items-center gap-4">
+                    <Stat icon={<BarChart3 size={13} />} label="yechilgan" value={s?.attempts ?? 0} />
+                    <Stat icon={<Users size={13} />} label="o'quvchi" value={s?.users ?? 0} />
+                    <Stat label="o'rtacha" value={s?.avgScore ?? '—'} />
+                    <Stat label="eng yuqori" value={s?.bestScore ?? '—'} />
+                    <ChevronDown size={16} className={`text-ink-faint transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
                 {isOpen && (
                   <div className="space-y-4 border-t border-line bg-bg-deep/30 px-4 py-4">
                     <PublishActions testLabel={t.label} onChange={load} />
@@ -167,6 +429,42 @@ export function MocksPanel() {
         </div>
       )}
     </div>
+  )
+}
+
+const TONES = {
+  amber: 'border-amber-400 bg-amber-300 text-amber-950',
+  orange: 'border-orange-500 bg-orange-500 text-white',
+  blue: 'border-blue-600 bg-blue-600 text-white',
+  green: 'border-green bg-green text-white',
+} as const
+
+/** A small on/off pill on a mock's row. */
+function PlaceBtn({
+  active,
+  tone,
+  onClick,
+  title,
+  children,
+}: {
+  active: boolean
+  tone: keyof typeof TONES
+  onClick: () => void
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-pressed={active}
+      onClick={onClick}
+      className={`flex items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-extrabold transition-colors ${
+        active ? TONES[tone] : 'border-line bg-white text-ink-soft hover:border-ink-faint'
+      }`}
+    >
+      {children}
+    </button>
   )
 }
 

@@ -35,6 +35,12 @@ export type TestConfig = {
   recommendedMinutes: number | null
 }
 
+/** Unique, well-formed folder ids (the folders live in mock_folders). */
+function cleanFolderIds(v: unknown): string[] {
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  return Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === 'string' && uuid.test(x)))].slice(0, 50) : []
+}
+
 /** Unique, known group slugs only. */
 function cleanGroups(v: unknown): string[] {
   return Array.isArray(v) ? [...new Set(v.filter((g): g is string => typeof g === 'string' && !!groupBySlug(g)))] : []
@@ -187,15 +193,23 @@ export async function PATCH(req: NextRequest) {
     patch.course_groups = cleanGroups(body.courseGroups)
     patch.course_group = null
   }
+  // The admin's own folders this mock sits in: { folderIds: ['<uuid>', ...] } (empty = none).
+  if (body && 'folderIds' in body) {
+    if (!Array.isArray(body.folderIds)) return NextResponse.json({ error: "Noto'g'ri bo'limlar." }, { status: 400 })
+    patch.folder_ids = cleanFolderIds(body.folderIds)
+  }
   // Suggested time for a task: { recommendedMinutes: number | null }.
   if (body && 'recommendedMinutes' in body) {
     const n = Number(body.recommendedMinutes)
     patch.recommended_minutes = Number.isFinite(n) && n > 0 ? Math.min(Math.round(n), 600) : null
   }
   if (Object.keys(patch).length === 0) return NextResponse.json({ error: "O'zgartirish yo'q." }, { status: 400 })
-  const { error } = await supabaseAdmin().from('test_configs').update(patch).eq('test_label', testLabel)
+  const sb = supabaseAdmin()
+  let { data: hit, error } = await sb.from('test_configs').update(patch).eq('test_label', testLabel).select('test_label')
+  // A mock that has no settings row yet gets one now (every other setting has a default).
+  if (!error && (hit ?? []).length === 0) ({ error } = await sb.from('test_configs').upsert({ test_label: testLabel, ...patch }))
   if (error) {
-    const hint = 'recommended_minutes' in patch ? 'v72' : 'course_groups' in patch ? 'v73' : 'v55'
+    const hint = 'folder_ids' in patch ? 'v78' : 'recommended_minutes' in patch ? 'v72' : 'course_groups' in patch ? 'v73' : 'v55'
     return NextResponse.json(
       { error: `Avval Supabase'da ${hint} SQL'ni ishga tushiring (supabase/schema.sql oxiridagi qism).` },
       { status: 500 },

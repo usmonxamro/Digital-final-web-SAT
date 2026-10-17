@@ -385,3 +385,15 @@ insert into course_group_codes (group_slug, code) values
   ('nov', 'NOYABR-TGHS9G'),
   ('dec', 'DEKABR-NTRA2W')
 on conflict (group_slug) do nothing;
+
+-- v78: your own mock folders ("bo'limlar") in Admin -> Mocklar. A mock can sit in several folders
+-- (drag it onto a folder, or press the folder's button on the mock's row) and always stays in the
+-- general list too. Folders only organise the admin list.
+create table if not exists mock_folders (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  position integer not null default 0,
+  created_at timestamptz not null default now()
+);
+alter table mock_folders enable row level security;
+alter table test_configs add column if not exists folder_ids text[] not null default '{}';

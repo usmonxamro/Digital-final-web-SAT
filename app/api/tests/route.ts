@@ -31,6 +31,8 @@ export type MockTestSummary = {
   courseGroups: string[]
   /** Suggested minutes for a task (shown once at its start), or null. */
   recommendedMinutes: number | null
+  /** The admin's own folders (mock_folders ids) this mock is filed in — admin list only. */
+  folderIds: string[]
 }
 
 type Catalog = {
@@ -112,6 +114,7 @@ export async function GET(req: NextRequest) {
           access: (c.access === 'paid' ? 'paid' : 'free') as TestAccess,
           courseGroups: configGroups(c),
           recommendedMinutes: typeof c.recommended_minutes === 'number' ? (c.recommended_minutes as number) : null,
+          folderIds: Array.isArray(c.folder_ids) ? (c.folder_ids as unknown[]).filter((x): x is string => typeof x === 'string') : [],
         },
       ]),
     )
@@ -145,6 +148,7 @@ export async function GET(req: NextRequest) {
           access: config?.access ?? 'free',
           courseGroups: config?.courseGroups ?? [],
           recommendedMinutes: config?.recommendedMinutes ?? null,
+          folderIds: includeDrafts ? (config?.folderIds ?? []) : [],
         }
       })
       .filter((t) => includeDrafts || t.published)
