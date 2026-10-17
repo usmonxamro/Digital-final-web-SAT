@@ -25,6 +25,9 @@ export type TestSummary = {
   hasVideo?: boolean
   done?: boolean
   section?: 'exams' | 'free'
+  /** Every list the mock is shown in (both 'exams' and 'free' is possible). */
+  sections?: ('exams' | 'free')[]
+  pdfDownload?: boolean
   access?: 'free' | 'paid'
   /** Course groups this mock / task is given to (admin). */
   courseGroups?: string[]

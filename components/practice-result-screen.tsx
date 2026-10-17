@@ -8,6 +8,7 @@ import { ChoiceContent } from '@/components/choice-content'
 import type { Question } from '@/lib/test-data'
 import { VideoAnalysisCta } from '@/components/score-report'
 import { ReportQuestionButton } from '@/components/report-question'
+import { DownloadTestPdfButton } from '@/components/test-pdf'
 
 export type PracticeReviewItem = {
   index: number
@@ -22,11 +23,14 @@ export function PracticeResultScreen({
   elapsedLabel,
   review,
   videoHref,
+  pdfAllowed = false,
 }: {
   testTitle: string
   elapsedLabel: string
   review: PracticeReviewItem[]
   videoHref?: string
+  /** The teacher allowed downloading this set's questions as a PDF. */
+  pdfAllowed?: boolean
 }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const correct = review.filter((r) => r.correct).length
@@ -65,6 +69,13 @@ export function PracticeResultScreen({
               <Minus className="size-4" /> {omitted} o&apos;tkazilgan
             </span>
           </div>
+          {pdfAllowed && review.length > 0 && (
+            <DownloadTestPdfButton
+              className="mt-5 text-center"
+              testTitle={testTitle}
+              items={review.map((r) => ({ index: r.index, question: r.question }))}
+            />
+          )}
           {videoHref && <VideoAnalysisCta href={videoHref} />}
         </div>
 

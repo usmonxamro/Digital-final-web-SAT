@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
-import { Bookmark } from 'lucide-react'
+import { Bookmark, Delete, Keyboard } from 'lucide-react'
 import { Math as MathTex } from '@/components/math'
 import { OptionCard } from '@/components/option-card'
 import { RichText } from '@/components/rich-text'
@@ -150,10 +150,61 @@ function gridPreview(v: string) {
   return v.replace(/%/g, '\\%')
 }
 
+/** Phones / tablets (touch) get the on-screen keypad below; their own number pad has no "−" or "/" key. */
+function useTouchKeypad() {
+  const [touch, setTouch] = useState(false)
+  useEffect(() => {
+    const mqs = [window.matchMedia('(pointer: coarse)'), window.matchMedia('(max-width: 767px)')]
+    const update = () => setTouch(mqs.some((m) => m.matches))
+    update()
+    mqs.forEach((m) => m.addEventListener('change', update))
+    return () => mqs.forEach((m) => m.removeEventListener('change', update))
+  }, [])
+  return touch
+}
+
+/**
+ * Number pad for the student-produced response on touch screens: digits, a real minus key (sign toggle),
+ * decimal point, fraction slash, backspace and clear — everything the SAT answer box accepts, which the
+ * phone's own "decimal" keyboard cannot type (no "−", no "/"). Every key goes through sanitizeGridInput,
+ * so the same rules apply as on a computer keyboard.
+ */
+function GridKeypad({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const press = (ch: string) => onChange(sanitizeGridInput(value + ch))
+  const toggleMinus = () => onChange(sanitizeGridInput(value.startsWith('-') ? value.slice(1) : '-' + value))
+  const base =
+    'flex h-[50px] select-none items-center justify-center rounded-xl border border-[#cfd8d6] text-[22px] font-semibold shadow-[0_1px_0_rgba(0,0,0,.08)] active:translate-y-px active:bg-[#e3f4f1] touch-manipulation'
+  const key = `${base} bg-white text-[#111]`
+  const fn = `${base} bg-[#f3f6f6] text-[#0b4f4a]`
+  const noFocus = (e: React.PointerEvent | React.MouseEvent) => e.preventDefault() // keep the answer box focused
+  const k = (id: string, label: React.ReactNode, onClick: () => void, cls = key, aria?: string, extra = '') => (
+    <button key={id} type="button" onPointerDown={noFocus} onClick={onClick} aria-label={aria} className={`${cls} ${extra}`}>
+      {label}
+    </button>
+  )
+  return (
+    <div role="group" aria-label="Raqamli klaviatura" className="mt-4 grid w-full max-w-[320px] grid-cols-4 gap-2">
+      {['7', '8', '9'].map((d) => k(d, d, () => press(d)))}
+      {k('bs', <Delete className="size-6" />, () => onChange(value.slice(0, -1)), fn, 'O‘chirish (backspace)')}
+      {['4', '5', '6'].map((d) => k(d, d, () => press(d)))}
+      {k('minus', '−', toggleMinus, fn, 'Minus belgisi')}
+      {['1', '2', '3'].map((d) => k(d, d, () => press(d)))}
+      {k('slash', '/', () => press('/'), fn, 'Kasr chizig‘i')}
+      {k('0', '0', () => press('0'))}
+      {k('dot', '.', () => press('.'), fn, 'Kasr nuqta')}
+      {k('clear', 'Tozalash', () => onChange(''), `${fn} !text-[15px]`, 'Hammasini tozalash', 'col-span-2')}
+    </div>
+  )
+}
+
 /** Bluebook-style student-produced response box: a small rounded box with a
- *  writing line inside, and an always-visible "Answer Preview:" underneath. */
-function GridInInput({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
+ *  writing line inside, and an always-visible "Answer Preview:" underneath.
+ *  On touch screens an on-screen number pad (with −, / and .) replaces the phone keyboard. */
+export function GridInInput({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
   const v = value ?? ''
+  const touch = useTouchKeypad()
+  const [system, setSystem] = useState(false) // the student prefers the phone's own keyboard
+  const keypad = touch && !system
   return (
     <div className="flex flex-col">
       <label
@@ -163,8 +214,11 @@ function GridInInput({ value, onChange }: { value?: string; onChange: (v: string
         <input
           id="gridin-answer"
           type="text"
-          inputMode="decimal"
+          // keypad: no phone keyboard pops up; otherwise a full keyboard on touch (it has − and /), numeric on desktop
+          inputMode={keypad ? 'none' : touch ? 'text' : 'decimal'}
           autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
           spellCheck={false}
           aria-label="Answer"
           value={v}
@@ -184,6 +238,18 @@ function GridInInput({ value, onChange }: { value?: string; onChange: (v: string
           </span>
         )}
       </div>
+
+      {keypad && <GridKeypad value={v} onChange={onChange} />}
+      {touch && (
+        <button
+          type="button"
+          onClick={() => setSystem((x) => !x)}
+          className="mt-3 flex w-fit items-center gap-1.5 text-[12.5px] font-semibold text-[#0b4f4a] underline underline-offset-2"
+        >
+          <Keyboard className="size-4" />
+          {keypad ? 'Telefon klaviaturasidan foydalanish' : 'Raqamli klaviaturaga qaytish'}
+        </button>
+      )}
     </div>
   )
 }

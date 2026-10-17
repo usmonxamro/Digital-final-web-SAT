@@ -5,13 +5,14 @@ import { adminErrorResponse } from '@/lib/admin-errors'
 import { releaseDueMocks } from '@/lib/schedule'
 import { isMissingColumn } from '@/lib/db-columns'
 import { groupBySlug, configGroups } from '@/lib/course-groups'
+import { cleanSections, legacySection, rowSections, type MockSection } from '@/lib/mock-sections'
 
 
 export type TestSubject = 'full' | 'math' | 'english'
 export type TestPlacement = 'mock' | 'course_task'
 export type MathLayout = 'modules' | 'sequential'
 /** Where the mock lives: real exam versions vs. the owner's own free-mock section. */
-export type TestSection = 'exams' | 'free'
+export type TestSection = MockSection
 export type TestAccess = 'free' | 'paid'
 
 export type TestConfig = {
@@ -27,8 +28,13 @@ export type TestConfig = {
   published: boolean
   /** Draft goes live automatically at this time (ISO), if scheduled. */
   publishAt: string | null
+  /** First of `sections` (kept for older code). */
   section: TestSection
+  /** Every list the mock is shown in — it can be in All Past Exams AND Free Mocks at once. */
+  sections: TestSection[]
   access: TestAccess
+  /** Students may download the questions as a PDF after finishing (admin's permission, per mock). */
+  pdfDownload: boolean
   /** Course groups the mock / task is given to (slugs). A normal mock stays in the public lists too. */
   courseGroups: string[]
   /** Suggested time (minutes) shown once on a task's start screen; null = none. */
@@ -65,7 +71,16 @@ export async function POST(req: NextRequest) {
   const englishModuleMinutes = Number(body?.englishModuleMinutes) || 32
   const mathModuleMinutes = Number(body?.mathModuleMinutes) || 35
   const mathLayout: MathLayout = body?.mathLayout === 'sequential' ? 'sequential' : 'modules'
-  const section: TestSection | null = body?.section === 'free' ? 'free' : body?.section === 'exams' ? 'exams' : null
+  // `sections` (array) wins; the older single `section` still works.
+  const sections: TestSection[] | null =
+    body && Array.isArray(body.sections)
+      ? cleanSections(body.sections)
+      : body?.section === 'free' || body?.section === 'exams'
+        ? [body.section]
+        : null
+  const pdfDownload: boolean | null = typeof body?.pdfDownload === 'boolean' ? body.pdfDownload : null
+  // Re-saving a module of a mock that already exists must NOT move it back to the default list.
+  const overwritePlacement = body?.overwritePlacement === true
   const access: TestAccess | null = body?.access === 'paid' ? 'paid' : body?.access === 'free' ? 'free' : null
   // Only touched when the caller sends them (a plain settings save never clears a group / time).
   const hasGroup = !!body && 'courseGroups' in body
@@ -84,6 +99,9 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  const { data: existing } = await supabase.from('test_configs').select('test_label').eq('test_label', testLabel).maybeSingle()
+  const placementLocked = !!existing && !overwritePlacement
+
   const row: Record<string, unknown> = {
     test_label: testLabel,
     subject,
@@ -96,8 +114,14 @@ export async function POST(req: NextRequest) {
   // Only touched when the caller says so (new mocks are saved as drafts);
   // a plain settings save never flips a published test back to draft.
   if (typeof body?.published === 'boolean') row.published = body.published
-  if (section) row.section = section
-  if (access) row.access = access
+  if (!placementLocked) {
+    if (sections) {
+      row.sections = sections
+      row.section = legacySection(sections)
+    }
+    if (access) row.access = access
+    if (pdfDownload !== null) row.pdf_download = pdfDownload
+  }
   if (hasGroup) {
     row.course_groups = courseGroups
     row.course_group = null // the older single column is retired
@@ -110,6 +134,13 @@ export async function POST(req: NextRequest) {
     // v36 SQL not run yet — save the settings anyway; the test is simply public.
     delete row.published
     draftUnsupported = true
+    ;({ error } = await supabase.from('test_configs').upsert(row))
+  }
+
+  if (error && ('sections' in row || 'pdf_download' in row) && (isMissingColumn(error, 'sections') || isMissingColumn(error, 'pdf_download'))) {
+    // v79 SQL not run yet — save the rest (the old single `section` column still works).
+    delete row.sections
+    delete row.pdf_download
     ;({ error } = await supabase.from('test_configs').upsert(row))
   }
 
@@ -160,8 +191,10 @@ export async function GET(req: NextRequest) {
       mathLayout: row.math_layout === 'sequential' ? 'sequential' : 'modules',
       published: row.published !== false,
       publishAt: row.publish_at ?? null,
-      section: row.section === 'free' ? 'free' : 'exams',
+      section: rowSections(row)[0] ?? 'exams',
+      sections: rowSections(row),
       access: row.access === 'paid' ? 'paid' : 'free',
+      pdfDownload: row.pdf_download === true,
       courseGroups: configGroups(row),
       recommendedMinutes: typeof row.recommended_minutes === 'number' ? row.recommended_minutes : null,
     }))
@@ -183,7 +216,16 @@ export async function PATCH(req: NextRequest) {
   const testLabel: string | undefined = body?.testLabel?.trim()
   if (!testLabel) return NextResponse.json({ error: 'Test nomi kerak.' }, { status: 400 })
   const patch: Record<string, unknown> = {}
-  if (body?.section === 'free' || body?.section === 'exams') patch.section = body.section
+  // Lists the mock is shown in: { sections: ['exams', 'free'] } — several at once; [] = in no list.
+  if (body && Array.isArray(body.sections)) {
+    const sections = cleanSections(body.sections)
+    patch.sections = sections
+    patch.section = legacySection(sections)
+  } else if (body?.section === 'free' || body?.section === 'exams') {
+    patch.sections = [body.section]
+    patch.section = body.section
+  }
+  if (typeof body?.pdfDownload === 'boolean') patch.pdf_download = body.pdfDownload
   if (body?.access === 'free' || body?.access === 'paid') patch.access = body.access
   // The groups this mock / task is given to: { courseGroups: ['nov', 'dec'] } (empty = none).
   // It only decides where the mock is ALSO shown (My Courses of those groups); it is never hidden
@@ -208,8 +250,23 @@ export async function PATCH(req: NextRequest) {
   let { data: hit, error } = await sb.from('test_configs').update(patch).eq('test_label', testLabel).select('test_label')
   // A mock that has no settings row yet gets one now (every other setting has a default).
   if (!error && (hit ?? []).length === 0) ({ error } = await sb.from('test_configs').upsert({ test_label: testLabel, ...patch }))
+  if (error && 'sections' in patch && !('pdf_download' in patch) && isMissingColumn(error, 'sections') && (patch.sections as string[]).length === 1) {
+    // v79 SQL not run yet: a single list still works through the older `section` column.
+    delete patch.sections
+    ;({ data: hit, error } = await sb.from('test_configs').update(patch).eq('test_label', testLabel).select('test_label'))
+    if (!error && (hit ?? []).length === 0) ({ error } = await sb.from('test_configs').upsert({ test_label: testLabel, ...patch }))
+  }
   if (error) {
-    const hint = 'folder_ids' in patch ? 'v78' : 'recommended_minutes' in patch ? 'v72' : 'course_groups' in patch ? 'v73' : 'v55'
+    const hint =
+      'sections' in patch || 'pdf_download' in patch
+        ? 'v79'
+        : 'folder_ids' in patch
+          ? 'v78'
+          : 'recommended_minutes' in patch
+            ? 'v72'
+            : 'course_groups' in patch
+              ? 'v73'
+              : 'v55'
     return NextResponse.json(
       { error: `Avval Supabase'da ${hint} SQL'ni ishga tushiring (supabase/schema.sql oxiridagi qism).` },
       { status: 500 },

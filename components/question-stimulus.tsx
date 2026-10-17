@@ -33,6 +33,8 @@ type Props = {
   /** Admin preview: blocks become draggable / editable. */
   editable?: boolean
   onEdit?: (edit: LayoutEdit) => void
+  /** Printing / PDF: figures without zoom buttons. */
+  plain?: boolean
 }
 
 /**
@@ -42,7 +44,7 @@ type Props = {
  * another block to put them side by side; ✎ edits text in place (a blank
  * line cuts the block in two), ✂ splits a paragraph into sentences.
  */
-export function QuestionStimulus({ question, withFigure, textClassName, editable, onEdit }: Props) {
+export function QuestionStimulus({ question, withFigure, textClassName, editable, onEdit, plain }: Props) {
   const { blocks, rows } = useMemo(
     () => resolveRows(question, withFigure),
     [question, withFigure],
@@ -207,6 +209,7 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
           src={b.content}
           scale={question.layout?.img?.scale}
           editable={editable}
+          plain={plain}
           onScaleChange={(scale) => commit(rows, blocks, { scale })}
         />
       )

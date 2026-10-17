@@ -397,3 +397,12 @@ create table if not exists mock_folders (
 );
 alter table mock_folders enable row level security;
 alter table test_configs add column if not exists folder_ids text[] not null default '{}';
+
+-- v79: a mock can be in SEVERAL lists at once (All Past Exams AND Free Mocks), and the teacher decides
+-- per mock whether students may download its questions as a PDF after finishing it.
+--   sections     -> {'exams'}, {'free'}, {'exams','free'} or {} (null = old rows: the single `section` column is used)
+--   pdf_download -> true = "Testni yuklab olish (PDF)" button on the score report
+alter table test_configs add column if not exists sections text[];
+alter table test_configs add column if not exists pdf_download boolean not null default false;
+-- Old rows: copy the single list into the new column so both stay in step.
+update test_configs set sections = array[section] where sections is null;

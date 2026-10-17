@@ -5,6 +5,7 @@ import { verifySession, SESSION_COOKIE } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { releaseDueMocks } from '@/lib/schedule'
 import { configGroups } from '@/lib/course-groups'
+import { rowSections } from '@/lib/mock-sections'
 import type { TestSubject, TestPlacement, MathLayout, TestSection, TestAccess } from '@/app/api/admin/test-config/route'
 
 export type MockTestSummary = {
@@ -23,8 +24,12 @@ export type MockTestSummary = {
   publishAt: string | null
   /** The logged-in student has finished this test at least once. */
   done: boolean
-  /** 'exams' = All Past Exams, 'free' = Free Mocks. */
+  /** First of `sections` (older clients). */
   section: TestSection
+  /** Every list the mock is shown in: 'exams' = All Past Exams, 'free' = Free Mocks — both at once is possible. */
+  sections: TestSection[]
+  /** The teacher allowed students to download this mock's questions as a PDF after finishing it. */
+  pdfDownload: boolean
   /** 'paid' mocks show a lock and open for Pro / course students / admins only. */
   access: TestAccess
   /** Course groups this mock / task is given to ('nov' / 'dec'). */
@@ -110,7 +115,8 @@ export async function GET(req: NextRequest) {
           published: c.published !== false,
           hasVideo: !!c.video_id,
           publishAt: (c.publish_at as string | null) ?? null,
-          section: (c.section === 'free' ? 'free' : 'exams') as TestSection,
+          sections: rowSections(c),
+          pdfDownload: c.pdf_download === true,
           access: (c.access === 'paid' ? 'paid' : 'free') as TestAccess,
           courseGroups: configGroups(c),
           recommendedMinutes: typeof c.recommended_minutes === 'number' ? (c.recommended_minutes as number) : null,
@@ -144,7 +150,9 @@ export async function GET(req: NextRequest) {
           hasVideo: config?.hasVideo ?? false,
           publishAt: includeDrafts ? (config?.publishAt ?? null) : null,
           done: doneLabels.has(label),
-          section: config?.section ?? 'exams',
+          section: config?.sections[0] ?? 'exams',
+          sections: config?.sections ?? (['exams'] as TestSection[]),
+          pdfDownload: config?.pdfDownload ?? false,
           access: config?.access ?? 'free',
           courseGroups: config?.courseGroups ?? [],
           recommendedMinutes: config?.recommendedMinutes ?? null,

@@ -10,6 +10,7 @@ import { ChoiceContent } from '@/components/choice-content'
 import { Button } from '@/components/ui/button'
 import { Certificate } from '@/components/certificate'
 import { ReportQuestionButton } from '@/components/report-question'
+import { DownloadTestPdfButton } from '@/components/test-pdf'
 import type { SectionResult } from '@/lib/scoring'
 import type { Question } from '@/lib/test-data'
 
@@ -39,6 +40,8 @@ type ScoreReportProps = {
   showCertificateButton?: boolean
   /** Link to this mock's video analysis, when one exists. */
   videoHref?: string
+  /** The teacher allowed downloading this mock's questions as a PDF. */
+  pdfAllowed?: boolean
 }
 
 function StatusBadge({ item }: { item: ReviewItem }) {
@@ -151,6 +154,7 @@ export function ScoreReport({
   singleSection,
   showCertificateButton = true,
   videoHref,
+  pdfAllowed = false,
 }: ScoreReportProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [showCertificate, setShowCertificate] = useState(false)
@@ -194,6 +198,13 @@ export function ScoreReport({
               Dashboard&apos;ga qaytish
             </Link>
           </div>
+          {pdfAllowed && review.length > 0 && (
+            <DownloadTestPdfButton
+              className="mt-5 text-center"
+              testTitle={testTitle}
+              items={review.map((r) => ({ moduleLabel: r.moduleLabel, sectionKind: r.sectionKind, index: r.index, question: r.question }))}
+            />
+          )}
           {videoHref && <VideoAnalysisCta href={videoHref} />}
         </div>
 

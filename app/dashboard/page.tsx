@@ -10,6 +10,7 @@ import { GhostCards } from '@/components/marketing/dashboard/ghost-cards'
 import { Celebration } from '@/components/marketing/dashboard/celebration'
 import { useI18n } from '@/components/i18n-provider'
 import type { Lang } from '@/lib/i18n'
+import { inSection } from '@/lib/mock-sections'
 
 const TARGET_KEY = 'sd-target-score'
 const WEEKDAYS: Record<Lang, string[]> = {
@@ -115,7 +116,7 @@ export default function DashboardPage() {
     return { best, accuracy: total ? Math.round((correct / total) * 100) : null, count: list.length, lastWeek, days }
   }, [attempts, lang])
 
-  const mocks = useMemo(() => (tests ?? []).filter((t) => t.placement === 'mock' && t.section !== 'free'), [tests])
+  const mocks = useMemo(() => (tests ?? []).filter((t) => t.placement === 'mock' && inSection(t, 'exams')), [tests])
   const exams = useMemo(() => groupExams(mocks).slice(0, 3), [mocks])
   const streak = studyStreak(attempts)
   const progress = stats.best ? Math.min(100, Math.round((stats.best / target) * 100)) : 0

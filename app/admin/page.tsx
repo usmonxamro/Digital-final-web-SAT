@@ -40,7 +40,7 @@ import { ModuleImportCard } from '@/components/admin/module-import-card'
 import { ChoiceImageRow, uploadQuestionImage } from '@/components/admin/choice-image-slot'
 import { AnswerEntry, AnswerSheet, type AnswerSection } from '@/components/admin/answer-entry'
 import { PublishActions } from '@/components/admin/publish-actions'
-import { SectionAccessPicker, newMockOptions, type Access, type Section } from '@/components/admin/section-access'
+import { SectionAccessPicker, newMockOptions, type Placement } from '@/components/admin/section-access'
 import { validateQuestions } from '@/lib/admin-schema'
 import { parseLatexQuestions, type LatexImportWarning } from '@/lib/latex-import'
 import { parseTableQuestions, TABLE_TEMPLATE_CSV, type TableImportWarning } from '@/lib/table-import'
@@ -94,8 +94,9 @@ async function saveTestConfig(opts: {
         subject: opts.subject,
         scored: true,
         placement: 'mock',
-        section: newMockOptions.section,
+        sections: newMockOptions.sections,
         access: newMockOptions.access,
+        pdfDownload: newMockOptions.pdf,
         englishModuleMinutes: 32,
         mathModuleMinutes: 35,
         mathLayout: opts.mathLayout ?? 'modules',
@@ -211,16 +212,18 @@ function MockNameField({ value, onChange }: { value: string; onChange: (v: strin
 
 /** "Where does this mock go, and is it free?" — applies to the next mock saved below. */
 function NewMockPlacement() {
-  const [v, setV] = useState<{ section: Section; access: Access }>({ section: newMockOptions.section, access: newMockOptions.access })
+  const [v, setV] = useState<Placement>({ sections: newMockOptions.sections, access: newMockOptions.access, pdf: newMockOptions.pdf })
   return (
     <div className="mb-5 rounded-3xl border border-line bg-white p-4 shadow-[0_6px_24px_rgba(0,0,0,.04)]">
       <div className="mb-2.5 text-[12px] font-extrabold uppercase tracking-wide text-ink-faint">Bo&apos;lim va kirish rejimi</div>
       <SectionAccessPicker
-        section={v.section}
+        sections={v.sections}
         access={v.access}
+        pdf={v.pdf}
         onChange={(n) => {
-          newMockOptions.section = n.section
+          newMockOptions.sections = n.sections
           newMockOptions.access = n.access
+          newMockOptions.pdf = n.pdf
           setV(n)
         }}
       />
@@ -505,7 +508,7 @@ function TaskForm() {
           subject,
           scored: false,
           placement: 'course_task',
-          section: 'exams',
+          sections: ['exams'],
           access: 'free',
           courseGroups: groups,
           recommendedMinutes: mins > 0 ? mins : null,

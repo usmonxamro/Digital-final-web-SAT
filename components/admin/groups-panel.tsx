@@ -6,6 +6,7 @@ import type { MockTestSummary } from '@/app/api/tests/route'
 import type { GroupStats } from '@/app/api/admin/groups/route'
 import type { GroupMember } from '@/app/api/admin/groups/members/route'
 import { COURSE_GROUPS, groupsOfTask } from '@/lib/course-groups'
+import { inSection } from '@/lib/mock-sections'
 
 /**
  * Admin "Guruhlar": pick a group (Noyabr / Dekabr) and see what it has been given, how many of its
@@ -264,7 +265,7 @@ function Badges({ t }: { t: MockTestSummary }) {
       ) : (
         <span className="rounded-full bg-violet-100 px-1.5 py-px text-[9.5px] font-extrabold text-violet-800">MOCK</span>
       )}
-      {t.placement === 'mock' && t.section === 'free' && (
+      {t.placement === 'mock' && inSection(t, 'free') && (
         <span className="rounded-full bg-orange-500 px-1.5 py-px text-[9.5px] font-extrabold text-white">FREE MOCK</span>
       )}
       {!t.published && <span className="rounded-full bg-amber-400 px-1.5 py-px text-[9.5px] font-extrabold text-amber-950">DRAFT</span>}

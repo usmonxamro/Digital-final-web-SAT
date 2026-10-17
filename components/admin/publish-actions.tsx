@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { SectionAccessPicker, type Access, type Section } from '@/components/admin/section-access'
+import { SectionAccessPicker, type Placement } from '@/components/admin/section-access'
 import { AlertTriangle, CalendarClock, ExternalLink, EyeOff, Globe, GraduationCap, Loader2, X } from 'lucide-react'
 import { COURSE_GROUPS, groupsOfTask } from '@/lib/course-groups'
 
@@ -26,7 +26,7 @@ export function PublishActions({
   const [shown, setShown] = useState(false)
   const [publishAt, setPublishAt] = useState<string | null>(null)
   const [when, setWhen] = useState('')
-  const [placement, setPlacement] = useState<{ section: Section; access: Access } | null>(null)
+  const [placement, setPlacement] = useState<Placement | null>(null)
   const [placing, setPlacing] = useState(false)
   // Course groups the mock is given to (null = still loading).
   const [groups, setGroups] = useState<string[] | null>(null)
@@ -50,7 +50,11 @@ export function PublishActions({
           setMinutes(m)
           setSavedMinutes(m)
           setGroups(groupsOfTask(testLabel, d.config?.courseGroups))
-          setPlacement({ section: d.config?.section === 'free' ? 'free' : 'exams', access: d.config?.access === 'paid' ? 'paid' : 'free' })
+          setPlacement({
+            sections: Array.isArray(d.config?.sections) ? d.config.sections : ['exams'],
+            access: d.config?.access === 'paid' ? 'paid' : 'free',
+            pdf: d.config?.pdfDownload === true,
+          })
         }
       })
       .catch(() => {
@@ -63,7 +67,7 @@ export function PublishActions({
     }
   }, [testLabel])
 
-  async function place(v: { section: Section; access: Access }) {
+  async function place(v: Placement) {
     const before = placement
     setPlacement(v)
     setPlacing(true)
@@ -72,7 +76,7 @@ export function PublishActions({
       const res = await fetch('/api/admin/test-config', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ testLabel, ...v }),
+        body: JSON.stringify({ testLabel, sections: v.sections, access: v.access, pdfDownload: v.pdf }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -227,7 +231,7 @@ export function PublishActions({
         <div className="flex flex-wrap items-center gap-2">{body}</div>
         {placement && (
           <div className="mt-3">
-            <SectionAccessPicker section={placement.section} access={placement.access} onChange={place} busy={placing} />
+            <SectionAccessPicker sections={placement.sections} access={placement.access} pdf={placement.pdf} onChange={place} busy={placing} />
           </div>
         )}
         {groups !== null && (

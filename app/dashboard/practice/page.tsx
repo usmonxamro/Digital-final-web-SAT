@@ -7,6 +7,7 @@ import { ArrowRight, Sparkles, BookOpen, Calculator, CheckCircle2, Crown, Lock, 
 import { useDashboardData, type TestSummary } from '@/components/marketing/dashboard/dashboard-data'
 import { groupExams, type ExamGroup } from '@/lib/exam-groups'
 import { GhostCards } from '@/components/marketing/dashboard/ghost-cards'
+import { inSection } from '@/lib/mock-sections'
 
 type Quota = {
   usedToday: number
@@ -77,7 +78,7 @@ export default function PracticePage() {
       .catch(() => {})
   }, [])
 
-  const mocks = useMemo(() => (tests ?? []).filter((t) => t.placement === 'mock' && t.section !== 'free'), [tests])
+  const mocks = useMemo(() => (tests ?? []).filter((t) => t.placement === 'mock' && inSection(t, 'exams')), [tests])
   const groups = useMemo(() => groupExams(mocks), [mocks])
   const years = useMemo(() => [...new Set(groups.map((g) => g.year).filter(Boolean) as string[])].sort().reverse(), [groups])
   const visible = groups.filter(

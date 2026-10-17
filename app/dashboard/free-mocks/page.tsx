@@ -8,6 +8,7 @@ import { Calculator, CheckCircle2, Crown, Lock, PenLine, Play, Sparkles, Timer }
 import { useDashboardData, type TestSummary } from '@/components/marketing/dashboard/dashboard-data'
 import { useUser } from '@/components/marketing/dashboard/user-context'
 import { useSd } from '@/components/marketing/dashboard/sd-ui'
+import { inSection } from '@/lib/mock-sections'
 
 type Filter = 'all' | 'math' | 'english' | 'full'
 
@@ -31,7 +32,7 @@ export default function FreeMocksPage() {
   // Paid mocks open for Pro (incl. the free trial) and course students; admins count as course students.
   const unlocked = user.plan === 'premium' || user.courseMember !== false
 
-  const mocks = useMemo(() => (tests ?? []).filter((t) => t.placement === 'mock' && t.section === 'free'), [tests])
+  const mocks = useMemo(() => (tests ?? []).filter((t) => t.placement === 'mock' && inSection(t, 'free')), [tests])
   const shown = mocks.filter((t) => filter === 'all' || t.subject === filter)
   const paid = mocks.filter((t) => t.access === 'paid').length
   const free = mocks.length - paid

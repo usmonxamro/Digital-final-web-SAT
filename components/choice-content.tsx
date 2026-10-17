@@ -30,8 +30,11 @@ export function ChoiceImage({
   dim,
   editable,
   onScaleChange,
+  plain,
 }: {
   src: string
+  /** PDF: load the picture with CORS so it can be drawn into the page image. */
+  plain?: boolean
   /** Admin-chosen size multiplier (layout.choiceImg[id].scale). */
   scale?: number
   /** 'sm' = small thumbnail for admin lists. */
@@ -93,6 +96,7 @@ export function ChoiceImage({
           ref={imgRef}
           src={src}
           alt="Javob varianti rasmi"
+          crossOrigin={plain ? 'anonymous' : undefined}
           draggable={false}
           onLoad={(e) =>
             setNatural({ w: e.currentTarget.naturalWidth || limW, h: e.currentTarget.naturalHeight || limH })
@@ -163,8 +167,10 @@ export function ChoiceContent({
   scale,
   editable,
   onScaleChange,
+  plain,
 }: {
   choice: Choice
+  plain?: boolean
   size?: 'sm' | 'md'
   dim?: boolean
   scale?: number
@@ -174,7 +180,7 @@ export function ChoiceContent({
   return (
     <span className="flex min-w-0 max-w-full flex-col items-start gap-1.5">
       {choice.image && (
-        <ChoiceImage src={choice.image} size={size} dim={dim} scale={scale} editable={editable} onScaleChange={onScaleChange} />
+        <ChoiceImage src={choice.image} size={size} dim={dim} scale={scale} editable={editable} onScaleChange={onScaleChange} plain={plain} />
       )}
       {choice.tex ? <Math tex={choice.tex} /> : choice.text ? <MixedText text={choice.text} /> : null}
     </span>

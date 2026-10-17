@@ -37,12 +37,15 @@ export function QuestionImage({
   scale = 1,
   editable,
   onScaleChange,
+  plain,
 }: {
   src: string
   /** Admin-chosen default size multiplier (layout.img.scale). */
   scale?: number
   editable?: boolean
   onScaleChange?: (scale: number) => void
+  /** Printing / PDF: just the figure — no zoom buttons, no scroll box. */
+  plain?: boolean
 }) {
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null)
   const [zoom, setZoom] = useState(1)
@@ -155,13 +158,14 @@ export function QuestionImage({
           onPointerUp={onPanEnd}
           onPointerCancel={onPanEnd}
           className={`max-w-full overflow-auto [scrollbar-width:thin] ${!editable && zoom > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
-          style={{ maxHeight: editable ? undefined : '70vh' }}
+          style={{ maxHeight: editable || plain ? undefined : '70vh' }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             ref={imgRef}
             src={src}
             alt="Savolga tegishli rasm"
+            crossOrigin={plain ? 'anonymous' : undefined}
             onLoad={(e) => setNatural({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
             style={{
               width: width ? `${width}px` : undefined,
@@ -197,6 +201,7 @@ export function QuestionImage({
         )}
       </div>
         {/* − / + stacked in a column at the right, beside the figure (never over it) */}
+        {!plain && (
         <div
           className={`flex shrink-0 flex-col items-center gap-1 transition-opacity ${
             editable ? 'opacity-100' : 'opacity-60 hover:opacity-100 group-hover/img:opacity-100'
@@ -229,6 +234,7 @@ export function QuestionImage({
             </ZoomBtn>
           )}
         </div>
+        )}
       </div>
     </div>
   )

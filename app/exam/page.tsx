@@ -52,6 +52,7 @@ function ExamEngine({
   startId,
   allowOvertime,
   recommendedMinutes,
+  pdfAllowed,
 }: {
   /** From /api/exam/start — the grading request must present it. */
   startId?: string | null
@@ -59,6 +60,8 @@ function ExamEngine({
   allowOvertime?: boolean
   /** Task: suggested minutes, shown once on the start screen. */
   recommendedMinutes?: number | null
+  /** The teacher allowed downloading this mock's questions as a PDF after it is finished. */
+  pdfAllowed?: boolean
   modules: TestModule[]
   testTitle: string
   scoringMode: ScoringMode
@@ -556,6 +559,7 @@ function ExamEngine({
           elapsedLabel={elapsedLabel}
           review={results.practiceReview}
           videoHref={videoReady ? videoHref : undefined}
+          pdfAllowed={pdfAllowed}
         />
       )
     }
@@ -573,6 +577,7 @@ function ExamEngine({
         singleSection={scoringMode === 'single' ? singleSubjectKind : undefined}
         showCertificateButton
         videoHref={videoReady ? videoHref : undefined}
+        pdfAllowed={pdfAllowed}
       />
     )
   }
@@ -851,6 +856,7 @@ type LoadedExam = {
   timerMode: TimerMode
   allowOvertime?: boolean
   recommendedMinutes?: number | null
+  pdfAllowed?: boolean
 }
 
 function PageInner() {
@@ -953,6 +959,7 @@ function PageInner() {
               // A timed mock the teacher put into a course group may be continued past 00:00.
               allowOvertime: !isCourseTask && (config?.courseGroups?.length ?? 0) > 0,
               recommendedMinutes: config?.recommendedMinutes ?? null,
+              pdfAllowed: config?.pdfDownload === true || !!preview,
             })
           }
         } catch {
@@ -1008,6 +1015,7 @@ function PageInner() {
       startId={loaded.startId}
       allowOvertime={loaded.allowOvertime}
       recommendedMinutes={loaded.recommendedMinutes}
+      pdfAllowed={loaded.pdfAllowed}
     />
   )
 }
