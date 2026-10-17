@@ -115,7 +115,7 @@ export default function DashboardPage() {
     return { best, accuracy: total ? Math.round((correct / total) * 100) : null, count: list.length, lastWeek, days }
   }, [attempts, lang])
 
-  const mocks = useMemo(() => (tests ?? []).filter((t) => t.placement === 'mock' && t.section !== 'free'), [tests])
+  const mocks = useMemo(() => (tests ?? []).filter((t) => t.placement === 'mock' && !t.courseGroup && t.section !== 'free'), [tests])
   const exams = useMemo(() => groupExams(mocks).slice(0, 3), [mocks])
   const streak = studyStreak(attempts)
   const progress = stats.best ? Math.min(100, Math.round((stats.best / target) * 100)) : 0

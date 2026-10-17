@@ -4,14 +4,21 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Highlighter, LogOut, Maximize, MoreVertical, StickyNote } from 'lucide-react'
 
 function formatTime(totalSeconds: number) {
-  const m = Math.floor(totalSeconds / 60)
-  const s = totalSeconds % 60
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  // Negative = overtime (the student chose to keep working after the time ran out).
+  const neg = totalSeconds < 0
+  const abs = Math.abs(totalSeconds)
+  const m = Math.floor(abs / 60)
+  const s = abs % 60
+  return `${neg ? '−' : ''}${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
 type ExamHeaderProps = {
   label: string
   seconds: number
+  /** Stopwatch (tasks): counts up, never turns red. */
+  countUp?: boolean
+  /** The time ran out and the student kept going — the clock shows minus time. */
+  overtime?: boolean
   /** Show Calculator + Reference tools (math modules only). */
   mathTools: boolean
   calculatorOpen: boolean
@@ -39,6 +46,8 @@ function usePopover() {
 export function ExamHeader({
   label,
   seconds,
+  countUp = false,
+  overtime = false,
   mathTools,
   calculatorOpen,
   referenceOpen,
@@ -48,7 +57,7 @@ export function ExamHeader({
   onExit,
 }: ExamHeaderProps) {
   const [hidden, setHidden] = useState(false)
-  const low = seconds <= 60
+  const low = !countUp && seconds <= 60
   const dir = usePopover()
   const more = usePopover()
 
@@ -98,6 +107,9 @@ export function ExamHeader({
           <span className={`text-[15px] font-bold leading-tight tabular-nums tracking-wide sm:text-[22px] ${low ? 'text-red-600' : 'text-[#111]'}`}>
             {hidden ? '••:••' : formatTime(seconds)}
           </span>
+          {overtime && !hidden && (
+            <span className="text-[10px] font-bold uppercase leading-tight tracking-wide text-red-600 sm:text-[11px]">Qo&apos;shimcha vaqt</span>
+          )}
           <button
             type="button"
             onClick={() => setHidden((h) => !h)}

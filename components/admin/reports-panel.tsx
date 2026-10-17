@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AlertTriangle, CheckCircle2, Loader2, Send, Trash2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Check, Copy, Loader2, Send, Trash2 } from 'lucide-react'
 import type { ReportRow } from '@/app/api/admin/reports/route'
 
 /** Admin "Xato xabarlari": questions students flagged after a mock; the reply lands in their bell. */
-export function ReportsPanel() {
+export function ReportsPanel({ onChanged }: { onChanged?: () => void }) {
   const [rows, setRows] = useState<ReportRow[] | null>(null)
   const [needSql, setNeedSql] = useState(false)
   const [drafts, setDrafts] = useState<Record<string, string>>({})
@@ -16,6 +16,7 @@ export function ReportsPanel() {
     const d = await fetch('/api/admin/reports').then((r) => r.json()).catch(() => null)
     setRows(d?.items ?? [])
     setNeedSql(!!d?.migrationNeeded)
+    onChanged?.()
   }
   useEffect(() => {
     load()
@@ -31,6 +32,11 @@ export function ReportsPanel() {
     setBusy(null)
     if (!res.ok) return setErr((e) => ({ ...e, [id]: d.error ?? 'Xato' }))
     setDrafts((x) => ({ ...x, [id]: '' }))
+    load()
+  }
+
+  async function resolve(id: string) {
+    await fetch('/api/admin/reports', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, resolve: true }) })
     load()
   }
 
@@ -57,7 +63,8 @@ export function ReportsPanel() {
           <div key={r.id} className={`rounded-xl border bg-white p-4 ${r.status === 'open' ? 'border-green' : 'border-line'}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="text-[13px] font-extrabold text-ink">
-                {r.name || 'Noma’lum'} <span className="ml-1 font-semibold text-ink-soft">· {r.test_label}{r.q_number ? ` · Q${r.q_number}` : ''}</span>
+                {r.status === 'open' && <span className="mr-1.5 rounded-full bg-red-500 px-1.5 py-px text-[9.5px] font-extrabold text-white">YANGI</span>}
+                {r.name || 'Noma’lum'} <span className="ml-1 font-semibold text-ink-soft">· {r.test_label}{r.q_number ? ` · ${r.q_number}-savol` : ''}</span>
                 {r.module_label && <span className="ml-1 text-[11.5px] font-semibold text-ink-faint">({r.module_label})</span>}
               </div>
               <div className="flex items-center gap-2 text-[11.5px] text-ink-faint">
@@ -77,13 +84,23 @@ export function ReportsPanel() {
               </div>
             </div>
             {r.prompt && <p className="mt-2 rounded-lg bg-bg px-3 py-2 text-[12px] text-ink-soft">{r.prompt}</p>}
+            {r.question_id && (
+              <button
+                type="button"
+                onClick={() => navigator.clipboard?.writeText(r.question_id!).catch(() => {})}
+                title="Savol ID sini nusxalash — Testni tahrirlash → ID bo'yicha qidirish"
+                className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-ink-faint hover:text-ink"
+              >
+                <Copy size={11} /> Savol ID: <span className="font-mono">{r.question_id}</span>
+              </button>
+            )}
             <p className="mt-2 whitespace-pre-wrap text-[13px] text-ink">{r.message}</p>
             {r.reply && (
               <p className="mt-2 whitespace-pre-wrap rounded-lg bg-green-mist px-3 py-2 text-[12.5px] text-green-deep">
                 <b>Javobingiz:</b> {r.reply}
               </p>
             )}
-            <div className="mt-3 flex gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               <input
                 value={drafts[r.id] ?? ''}
                 onChange={(e) => setDrafts((x) => ({ ...x, [r.id]: e.target.value }))}
@@ -98,6 +115,15 @@ export function ReportsPanel() {
               >
                 {busy === r.id ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />} Yuborish
               </button>
+              {r.status === 'open' && (
+                <button
+                  onClick={() => resolve(r.id)}
+                  title="Javob yozmasdan, hal qilindi deb belgilash"
+                  className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-[12.5px] font-bold text-ink-soft hover:border-green"
+                >
+                  <Check size={14} /> Hal qilindi
+                </button>
+              )}
             </div>
             {err[r.id] && <p className="mt-1.5 text-[12px] font-semibold text-red-600">{err[r.id]}</p>}
           </div>

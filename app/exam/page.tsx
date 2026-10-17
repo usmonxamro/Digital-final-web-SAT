@@ -11,6 +11,7 @@ import { useIsMobile } from '@/lib/use-is-mobile'
 import { useStableCallback } from '@/lib/use-stable-callback'
 import { ReferenceSheet, REFERENCE_DEFAULT_WIDTH, REFERENCE_GAP } from '@/components/reference-sheet'
 import { PreviewBar } from '@/components/preview-bar'
+import { ReportQuestionButton } from '@/components/report-question'
 import type { LayoutEdit } from '@/components/question-stimulus'
 import { TransitionScreen } from '@/components/transition-screen'
 import { ScoreReport, type ReviewItem } from '@/components/score-report'
@@ -49,9 +50,15 @@ function ExamEngine({
   timerMode,
   preview,
   startId,
+  allowOvertime,
+  recommendedMinutes,
 }: {
   /** From /api/exam/start — the grading request must present it. */
   startId?: string | null
+  /** Course-group mock: when the time runs out the student may keep going (the clock turns negative). */
+  allowOvertime?: boolean
+  /** Task: suggested minutes, shown once on the start screen. */
+  recommendedMinutes?: number | null
   modules: TestModule[]
   testTitle: string
   scoringMode: ScoringMode
@@ -66,6 +73,9 @@ function ExamEngine({
   const [phase, setPhase] = useState<Phase>(preview ? 'testing' : 'moduleIntro')
   const [current, setCurrent] = useState(0)
   const [timeLeft, setTimeLeft] = useState(timerMode === 'countdown' ? modules[0].durationSec : 0)
+  // Time ran out in a course-group mock: ask once whether to keep going; "yes" → overtime (minus clock).
+  const [overtimePrompt, setOvertimePrompt] = useState(false)
+  const [overtime, setOvertime] = useState(false)
   const [calculatorOpen, setCalculatorOpen] = useState(false)
   // Where the Desmos panel sits — the question text shifts to the right of it.
   const [calcShift, setCalcShift] = useState(CONTENT_SHIFT)
@@ -206,18 +216,24 @@ function ExamEngine({
   }, [answers, flags, activeModule])
 
   // Timer — counts down for normal tests, counts up (stopwatch, never auto-submits) for course tasks.
+  // Course-group mocks: at 00:00 the clock stops and asks; "continue" keeps counting into minus time.
   useEffect(() => {
     if (phase !== 'testing' || preview) return
-    if (timerMode === 'countdown' && timeLeft <= 0) {
+    if (timerMode === 'countdown' && timeLeft <= 0 && !overtime) {
+      if (allowOvertime) {
+        if (!overtimePrompt) setOvertimePrompt(true)
+        return
+      }
       finishModule()
       return
     }
+    if (overtimePrompt) return
     const t = setInterval(() => {
-      setTimeLeft((s) => (timerMode === 'countdown' ? Math.max(0, s - 1) : s + 1))
+      setTimeLeft((s) => (timerMode === 'countdown' ? (overtime ? s - 1 : Math.max(0, s - 1)) : s + 1))
     }, 1000)
     return () => clearInterval(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, timeLeft, timerMode])
+  }, [phase, timeLeft, timerMode, overtime, overtimePrompt])
 
   // Computed once the exam reaches the report phase — shared by the on-screen
   // result screen and the background submission to /api/results below.
@@ -401,6 +417,8 @@ function ExamEngine({
     setReferenceOpen(false)
     setModuleIdx(idx)
     setCurrent(0)
+    setOvertime(false)
+    setOvertimePrompt(false)
     setTimeLeft(timerMode === 'countdown' ? modules[idx].durationSec : 0)
     setPhase('testing')
   }
@@ -414,6 +432,7 @@ function ExamEngine({
     }
     setCalculatorOpen(false)
     setReferenceOpen(false)
+    setOvertimePrompt(false)
     const isLastModule = moduleIdx === modules.length - 1
 
     if (isLastModule) {
@@ -463,13 +482,14 @@ function ExamEngine({
         : modules.length === 2
           ? `Siz ${modules[0].kind === 'math' ? 'Math' : 'Reading and Writing'} bo'yicha 2 modulni bajarasiz. Har bir modul vaqt bilan cheklangan.`
           : timerMode === 'countup'
-            ? "Bu vazifada vaqt cheklovi yo'q — taymer yuqoriga sanaydi. O'zingiz tayyor bo'lganda yakunlaysiz."
+            ? "Bu vazifada vaqt cheklovi yo'q — taymer yuqoriga sanaydi, qancha vaqt ketganini ko'rib turasiz. O'zingiz tayyor bo'lganda yakunlaysiz."
             : "Siz bir qator savolni bajarasiz. Vaqt tugaganda modul avtomatik yakunlanadi."
     return (
       <TransitionScreen
         variant="start"
         title={testTitle}
         subtitle={subtitle}
+        badge={timerMode === 'countup' && recommendedMinutes ? `Tavsiya etilgan vaqt: ${recommendedMinutes} daqiqa` : undefined}
         onContinue={() => startModule(0)}
       />
     )
@@ -597,6 +617,8 @@ function ExamEngine({
       <ExamHeader
         label={activeModule.label}
         seconds={timeLeft}
+        countUp={timerMode === 'countup'}
+        overtime={overtime}
         mathTools={activeModule.kind === 'math'}
         calculatorOpen={calculatorOpen}
         referenceOpen={referenceOpen}
@@ -607,7 +629,7 @@ function ExamEngine({
       />
 
       <div
-        className="flex min-h-0 flex-1 transition-[margin-left,margin-right] duration-700 ease-[cubic-bezier(.4,0,.2,1)]"
+        className="relative flex min-h-0 flex-1 transition-[margin-left,margin-right] duration-700 ease-[cubic-bezier(.4,0,.2,1)]"
         style={{
           marginLeft: calculatorOpen && !isMobile ? calcShift : 0,
           marginRight: referenceOpen && !isMobile ? refShift : 0,
@@ -617,6 +639,18 @@ function ExamEngine({
           paddingBottom: isMobile && referenceOpen ? '60dvh' : calculatorOpen && isMobile ? (sheetPx ?? MOBILE_SHEET_HEIGHT) : 0,
         }}
       >
+        {/* "Xatosi bormi?" — left edge of the question area (computer), follows the calculator when it docks. */}
+        {!preview && (
+          <div className="absolute left-0 top-1/3 z-20">
+            <ReportQuestionButton
+              variant="tab"
+              testLabel={testTitle}
+              moduleLabel={activeModule.shortLabel}
+              qNumber={current + 1}
+              question={baseQuestion}
+            />
+          </div>
+        )}
         <main className="min-h-0 min-w-0 flex-1">
           <QuestionView
             module={activeModule}
@@ -655,6 +689,38 @@ function ExamEngine({
         bottomOffset={footerH}
         onWidthChange={(w) => setRefShift(w + REFERENCE_GAP)}
       />
+
+      {overtimePrompt && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl" role="alertdialog" aria-modal="true">
+            <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-full bg-amber-50 text-3xl">⏰</div>
+            <h3 className="text-lg font-extrabold text-[#0f172a]">Vaqt tugadi</h3>
+            <p className="mt-1.5 text-sm text-[#475569]">
+              Ishlashni davom ettirishni xohlaysizmi? Davom etsangiz, test yopilmaydi — taymer minus vaqtga qarab sanaydi va
+              qancha ortiqcha vaqt ketganini ko&apos;rasiz. O&apos;zingiz tayyor bo&apos;lganda yakunlaysiz.
+            </p>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => {
+                  setOvertime(true)
+                  setOvertimePrompt(false)
+                }}
+                className="h-11 flex-1 rounded-xl bg-[#0e7c75] text-sm font-bold text-white hover:bg-[#0a625c]"
+              >
+                Davom etish
+              </button>
+              <button
+                type="button"
+                onClick={finishModule}
+                className="h-11 flex-1 rounded-xl border border-[#e2e8f0] text-sm font-bold text-[#475569] hover:border-red-300 hover:text-red-600"
+              >
+                Yakunlash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div ref={footerRef} className="shrink-0">
       <ExamFooter
@@ -783,6 +849,8 @@ type LoadedExam = {
   scoringMode: ScoringMode
   singleSubjectKind?: SectionKind
   timerMode: TimerMode
+  allowOvertime?: boolean
+  recommendedMinutes?: number | null
 }
 
 function PageInner() {
@@ -875,7 +943,17 @@ function PageInner() {
                   : 'Bu test uchun hali yetarli savol yuklanmagan.',
             })
           } else {
-            setLoaded({ modules: built, scoringMode, singleSubjectKind, timerMode, preview, startId })
+            setLoaded({
+              modules: built,
+              scoringMode,
+              singleSubjectKind,
+              timerMode,
+              preview,
+              startId,
+              // A timed mock the teacher put into a course group may be continued past 00:00.
+              allowOvertime: !isCourseTask && !!config?.courseGroup,
+              recommendedMinutes: config?.recommendedMinutes ?? null,
+            })
           }
         } catch {
           setLoadError({ message: "Testni yuklab bo'lmadi. Internet aloqasini tekshiring." })
@@ -928,6 +1006,8 @@ function PageInner() {
       timerMode={loaded.timerMode}
       preview={loaded.preview}
       startId={loaded.startId}
+      allowOvertime={loaded.allowOvertime}
+      recommendedMinutes={loaded.recommendedMinutes}
     />
   )
 }

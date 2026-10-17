@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
   // Course tasks: only students of that course group (or admins).
   {
     const { data: cfg } = await supabase.from('test_configs').select('*').eq('test_label', testLabel).maybeSingle()
-    if (cfg?.placement === 'course_task' && !(await adminIdentity().catch(() => null))) {
+    if ((cfg?.placement === 'course_task' || cfg?.course_group) && !(await adminIdentity().catch(() => null))) {
       const { data: u } = await supabase.from('users').select('*').eq('id', session.userId).maybeSingle()
       const access = u ? await courseAccessFor(supabase, u) : null
       if (!access || !canOpenTask(testLabel, access, (cfg.course_group as string | null) ?? null)) {
@@ -89,7 +89,8 @@ export async function POST(req: NextRequest) {
   let kind: 'mock' | 'task' | 'admin' = isAdmin ? 'admin' : 'mock'
   if (!isAdmin) {
     const { data: cfg } = await supabase.from('test_configs').select('*').eq('test_label', testLabel).maybeSingle()
-    if (cfg?.placement === 'course_task') kind = 'task'
+    // Group mocks and tasks are assigned by the teacher: they don't use up the daily mock limit.
+    if (cfg?.placement === 'course_task' || cfg?.course_group) kind = 'task'
   }
 
   if (kind === 'mock') {

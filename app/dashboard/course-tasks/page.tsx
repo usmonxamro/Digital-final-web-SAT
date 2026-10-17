@@ -37,7 +37,7 @@ export default function CourseTasksPage() {
     // The defined groups are always listed (even before their first task); other task groups follow.
     const map = new Map<string, Course>()
     for (const g of COURSE_GROUPS) map.set(g.title.toLowerCase(), { name: g.title, slug: g.slug, tasks: [] })
-    for (const t of (tests ?? []).filter((x) => x.placement === 'course_task')) {
+    for (const t of (tests ?? []).filter((x) => x.placement === 'course_task' || !!x.courseGroup)) {
       // A mock the admin attached to a group goes into that group, whatever its name is.
       const attached = t.courseGroup ? groupBySlug(t.courseGroup) : null
       let { course, task } = courseOf(t.label)
@@ -88,10 +88,11 @@ export default function CourseTasksPage() {
           </div>
           <span className="sd-pill">A&apos;zo</span>
         </div>
-        <p className="sd-note">Guruhingizning mashg&apos;ulotlari va vazifalari. Vaqt cheklovi yo&apos;q — taymer sarflangan vaqtingizni sanab boradi.</p>
+        <p className="sd-note">Guruhingizning mashg&apos;ulotlari va vazifalari. Vazifalarda vaqt cheklovi yo&apos;q — taymer sarflangan vaqtingizni sanab boradi; vaqtli mocklarda vaqt tugasa, davom etish yoki yakunlashni tanlaysiz.</p>
         {current.tasks.map(({ task, test: t }, i) => {
-          const count = t.subject === 'math' ? t.mathCount : t.readingCount
+          const count = t.subject === 'full' ? t.readingCount + t.mathCount : t.subject === 'math' ? t.mathCount : t.readingCount
           const ready = count >= 1
+          const isTask = t.placement === 'course_task'
           return (
             <div key={t.label} className={`sd-detail-card ${ready ? '' : 'sd-soon'}`}>
               <div className="sd-version-badge">{String(i + 1).padStart(2, '0')}</div>
@@ -99,7 +100,9 @@ export default function CourseTasksPage() {
                 <strong>{task}</strong>
                 <div className="sd-chips">
                   <span className="sd-chip">
-                    <Clock /> {count} savol · vaqt cheklovsiz
+                    <Clock /> {count} savol
+                    {isTask ? ' · vaqt cheklovsiz' : ' · vaqtli mock'}
+                    {isTask && t.recommendedMinutes ? ` · tavsiya: ${t.recommendedMinutes} daq` : ''}
                   </span>
                 </div>
               </div>

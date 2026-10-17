@@ -356,3 +356,8 @@ alter table question_reports enable row level security;
 -- "SAT November 800/800 — Week 1", belongs to that group). A value is a slug from lib/course-groups.ts
 -- ('nov', 'dec'); such a mock is shown in My Courses of that group only.
 alter table test_configs add column if not exists course_group text;
+
+-- v72: recommended time for a "vazifa" (unscored, any number of questions, count-up timer).
+-- NULL = nothing recommended. The student sees it once, on the start screen ("Tavsiya etilgan vaqt: 50 daqiqa").
+-- (The course_group column from v68 is also needed: run v68 first if you have not.)
+alter table test_configs add column if not exists recommended_minutes integer;

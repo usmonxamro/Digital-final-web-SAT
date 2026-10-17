@@ -11,6 +11,7 @@ export type ReportRow = {
   test_label: string
   module_label: string
   q_number: number | null
+  question_id: string | null
   prompt: string
   message: string
   status: 'open' | 'answered'
@@ -19,15 +20,23 @@ export type ReportRow = {
   created_at: string
 }
 
-export async function GET() {
+/** GET → the list. GET ?count=1 → { open } = how many reports still wait (the red badge on the admin tab). */
+export async function GET(req: NextRequest) {
   try {
     await requireAdmin()
   } catch (e) {
     return adminErrorResponse(e)
   }
+  if (req.nextUrl.searchParams.get('count') === '1') {
+    const { count, error } = await supabaseAdmin()
+      .from('question_reports')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'open')
+    return NextResponse.json({ open: error ? 0 : (count ?? 0) })
+  }
   const { data, error } = await supabaseAdmin()
     .from('question_reports')
-    .select('id, user_id, name, test_label, module_label, q_number, prompt, message, status, reply, replied_at, created_at')
+    .select('id, user_id, name, test_label, module_label, q_number, question_id, prompt, message, status, reply, replied_at, created_at')
     .order('created_at', { ascending: false })
     .limit(200)
   if (error) return NextResponse.json({ items: [], migrationNeeded: isMissingTable(error) })
@@ -42,6 +51,12 @@ export async function PATCH(req: NextRequest) {
     return adminErrorResponse(e)
   }
   const b = await req.json().catch(() => ({}))
+  // { id, resolve: true } — "hal qilindi": the admin fixed it and needs no reply (clears the badge).
+  if (typeof b?.id === 'string' && b.resolve === true) {
+    const { error } = await supabaseAdmin().from('question_reports').update({ status: 'answered' }).eq('id', b.id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
   const reply = typeof b?.reply === 'string' ? b.reply.trim().slice(0, 1500) : ''
   if (typeof b?.id !== 'string' || !reply) return NextResponse.json({ error: 'Javob matnini yozing.' }, { status: 400 })
   const sb = supabaseAdmin()

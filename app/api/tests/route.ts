@@ -28,6 +28,8 @@ export type MockTestSummary = {
   access: TestAccess
   /** Course group slug the admin attached this mock to ('nov' / 'dec'), or null. */
   courseGroup: string | null
+  /** Suggested minutes for a task (shown once at its start), or null. */
+  recommendedMinutes: number | null
 }
 
 type Catalog = {
@@ -108,6 +110,7 @@ export async function GET(req: NextRequest) {
           section: (c.section === 'free' ? 'free' : 'exams') as TestSection,
           access: (c.access === 'paid' ? 'paid' : 'free') as TestAccess,
           courseGroup: (c.course_group as string | null) || null,
+          recommendedMinutes: typeof c.recommended_minutes === 'number' ? (c.recommended_minutes as number) : null,
         },
       ]),
     )
@@ -140,6 +143,7 @@ export async function GET(req: NextRequest) {
           section: config?.section ?? 'exams',
           access: config?.access ?? 'free',
           courseGroup: config?.courseGroup ?? null,
+          recommendedMinutes: config?.recommendedMinutes ?? null,
         }
       })
       .filter((t) => includeDrafts || t.published)

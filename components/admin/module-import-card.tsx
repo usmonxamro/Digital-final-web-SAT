@@ -33,7 +33,8 @@ export function ModuleImportCard({
   onChange,
 }: {
   title: string
-  expectedCount: number
+  /** Exact number of questions this box expects; null/undefined = any number. */
+  expectedCount?: number | null
   initialRaw?: string
   onChange: (questions: Question[] | null) => void
 }) {
@@ -122,7 +123,7 @@ export function ModuleImportCard({
       <textarea
         value={raw}
         onChange={(e) => setRaw(e.target.value)}
-        placeholder={`[{ "prompt": "...", "choices": [...], "correct": "A" }, ...]  (${expectedCount} ta savol)`}
+        placeholder={`[{ "prompt": "...", "choices": [...], "correct": "A" }, ...]  (${expectedCount ? `${expectedCount} ta savol` : 'istalgancha savol'})`}
         rows={8}
         className="w-full font-mono text-[12px] px-3 py-2.5 rounded-lg border border-line bg-white focus:outline-none focus:border-green resize-y"
       />
@@ -132,7 +133,7 @@ export function ModuleImportCard({
           {isValid && parsed.data ? (
             <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-green-deep flex-wrap">
               <CheckCircle2 size={14} /> {parsed.data.length} ta savol to&apos;g&apos;ri formatda
-              {parsed.data.length !== expectedCount && (
+              {!!expectedCount && parsed.data.length !== expectedCount && (
                 <span className="text-amber-600 font-normal">(kutilgan: {expectedCount} ta)</span>
               )}
               <span className="text-amber-600 font-normal">

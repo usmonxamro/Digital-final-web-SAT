@@ -28,6 +28,7 @@ export type TestSummary = {
   access?: 'free' | 'paid'
   /** Course group slug this mock is attached to (admin), or null. */
   courseGroup?: string | null
+  recommendedMinutes?: number | null
 }
 
 export type Platform = { totalUsers: number | null; ranked: number; rank: number | null; visits?: number | null }

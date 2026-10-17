@@ -119,13 +119,17 @@ export function MocksPanel() {
                       )}
                       {t.placement === 'course_task' && (
                         <span className="rounded-full bg-sky-100 px-1.5 py-px text-[9.5px] font-extrabold text-sky-800">
-                          VAZIFA
-                          {(() => {
-                            const g = groupBySlug(t.courseGroup ?? '') ?? groupBySlug(groupOfLabel(t.label) ?? '')
-                            return g ? ` · ${g.short.toUpperCase()}` : ''
-                          })()}
+                          VAZIFA{t.recommendedMinutes ? ` · ${t.recommendedMinutes} daq` : ''}
                         </span>
                       )}
+                      {(() => {
+                        const g = groupBySlug(t.courseGroup ?? '') ?? (t.placement === 'course_task' ? groupBySlug(groupOfLabel(t.label) ?? '') : null)
+                        return g ? (
+                          <span className="rounded-full bg-indigo-100 px-1.5 py-px text-[9.5px] font-extrabold text-indigo-800">
+                            GURUH · {g.short.toUpperCase()}
+                          </span>
+                        ) : null
+                      })()}
                       {t.hasVideo && (
                         <span className="flex items-center gap-0.5 rounded-full bg-orange-100 px-1.5 py-px text-[9.5px] font-extrabold text-orange-800">
                           <MonitorPlay size={10} /> VIDEO

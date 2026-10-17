@@ -14,6 +14,8 @@ type ModuleStartProps = {
   variant: 'start'
   title: string
   subtitle: string
+  /** A highlighted chip under the subtitle (e.g. the suggested time of a task). */
+  badge?: string
   onContinue: () => void
 }
 
@@ -45,16 +47,18 @@ export function TransitionScreen(props: ModuleStartProps | BreakProps | AutoNext
   if (props.variant === 'autoNext') {
     return <AutoNextScreen onProceed={props.onProceed} seconds={props.seconds ?? 3} />
   }
-  return <ModuleStartScreen title={props.title} subtitle={props.subtitle} onContinue={props.onContinue} />
+  return <ModuleStartScreen title={props.title} subtitle={props.subtitle} badge={props.badge} onContinue={props.onContinue} />
 }
 
 function ModuleStartScreen({
   title,
   subtitle,
+  badge,
   onContinue,
 }: {
   title: string
   subtitle: string
+  badge?: string
   onContinue: () => void
 }) {
   return (
@@ -64,6 +68,9 @@ function ModuleStartScreen({
       </span>
       <h1 className="mt-6 text-2xl font-bold text-[#0b4f4a]">{title}</h1>
       <p className="mt-2 max-w-md text-sm text-[#475569]">{subtitle}</p>
+      {badge && (
+        <p className="mt-4 rounded-full border border-[#0e7c75]/30 bg-[#e7f3f1] px-4 py-1.5 text-sm font-bold text-[#0b4f4a]">{badge}</p>
+      )}
       <Button
         onClick={onContinue}
         className="mt-8 rounded-md bg-[#0e7c75] px-8 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0a625c]"

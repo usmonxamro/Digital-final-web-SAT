@@ -31,6 +31,8 @@ export type TestConfig = {
   access: TestAccess
   /** Course group slug the mock is attached to, or null. */
   courseGroup: string | null
+  /** Suggested time (minutes) shown once on a task's start screen; null = none. */
+  recommendedMinutes: number | null
 }
 
 export async function POST(req: NextRequest) {
@@ -54,6 +56,12 @@ export async function POST(req: NextRequest) {
   const mathLayout: MathLayout = body?.mathLayout === 'sequential' ? 'sequential' : 'modules'
   const section: TestSection | null = body?.section === 'free' ? 'free' : body?.section === 'exams' ? 'exams' : null
   const access: TestAccess | null = body?.access === 'paid' ? 'paid' : body?.access === 'free' ? 'free' : null
+  // Only touched when the caller sends them (a plain settings save never clears a group / time).
+  const hasGroup = !!body && 'courseGroup' in body
+  const courseGroup: string | null = typeof body?.courseGroup === 'string' && groupBySlug(body.courseGroup) ? body.courseGroup : null
+  const hasRec = !!body && 'recommendedMinutes' in body
+  const recRaw = Number(body?.recommendedMinutes)
+  const recommendedMinutes: number | null = Number.isFinite(recRaw) && recRaw > 0 ? Math.min(Math.round(recRaw), 600) : null
 
   let supabase
   try {
@@ -79,6 +87,8 @@ export async function POST(req: NextRequest) {
   if (typeof body?.published === 'boolean') row.published = body.published
   if (section) row.section = section
   if (access) row.access = access
+  if (hasGroup) row.course_group = courseGroup
+  if (hasRec) row.recommended_minutes = recommendedMinutes
 
   let { error } = await supabase.from('test_configs').upsert(row)
   let draftUnsupported = false
@@ -96,6 +106,12 @@ export async function POST(req: NextRequest) {
     ;({ error } = await supabase.from('test_configs').upsert(row))
   }
 
+  if (error && (isMissingColumn(error, 'course_group') || isMissingColumn(error, 'recommended_minutes'))) {
+    return NextResponse.json(
+      { error: "Avval Supabase'da v68 va v72 SQL'ni ishga tushiring (supabase/schema.sql oxiridagi qismlar)." },
+      { status: 500 },
+    )
+  }
   if (error) {
     return NextResponse.json({ error: `Sozlamani saqlashda xatolik: ${error.message}` }, { status: 500 })
   }
@@ -133,6 +149,7 @@ export async function GET(req: NextRequest) {
       section: row.section === 'free' ? 'free' : 'exams',
       access: row.access === 'paid' ? 'paid' : 'free',
       courseGroup: (row.course_group as string | null) || null,
+      recommendedMinutes: typeof row.recommended_minutes === 'number' ? row.recommended_minutes : null,
     }))
 
     return NextResponse.json(testLabel ? { config: configs[0] ?? null } : { configs })
@@ -155,23 +172,23 @@ export async function PATCH(req: NextRequest) {
   if (body?.section === 'free' || body?.section === 'exams') patch.section = body.section
   if (body?.access === 'free' || body?.access === 'paid') patch.access = body.access
   // Attach to / detach from a course group: { courseGroup: 'nov' | 'dec' | null }.
-  // Attached = a course task (shown in My Courses of that group only); detached = a normal mock again.
+  // Only decides WHERE the mock shows (My Courses of that group); its own rules
+  // (timed + scored, or an untimed "vazifa") stay exactly as they were.
   if (body && 'courseGroup' in body) {
     const g = body.courseGroup
-    if (g === null || g === '') {
-      patch.course_group = null
-      patch.placement = 'mock'
-    } else if (typeof g === 'string' && groupBySlug(g)) {
-      patch.course_group = g
-      patch.placement = 'course_task'
-    } else {
-      return NextResponse.json({ error: "Noma'lum guruh." }, { status: 400 })
-    }
+    if (g === null || g === '') patch.course_group = null
+    else if (typeof g === 'string' && groupBySlug(g)) patch.course_group = g
+    else return NextResponse.json({ error: "Noma'lum guruh." }, { status: 400 })
+  }
+  // Suggested time for a task: { recommendedMinutes: number | null }.
+  if (body && 'recommendedMinutes' in body) {
+    const n = Number(body.recommendedMinutes)
+    patch.recommended_minutes = Number.isFinite(n) && n > 0 ? Math.min(Math.round(n), 600) : null
   }
   if (Object.keys(patch).length === 0) return NextResponse.json({ error: "O'zgartirish yo'q." }, { status: 400 })
   const { error } = await supabaseAdmin().from('test_configs').update(patch).eq('test_label', testLabel)
   if (error) {
-    const hint = 'course_group' in patch ? 'v68' : 'v55'
+    const hint = 'recommended_minutes' in patch ? 'v72' : 'course_group' in patch ? 'v68' : 'v55'
     return NextResponse.json(
       { error: `Avval Supabase'da ${hint} SQL'ni ishga tushiring (supabase/schema.sql oxiridagi qism).` },
       { status: 500 },

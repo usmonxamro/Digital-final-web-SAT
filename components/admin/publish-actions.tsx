@@ -31,6 +31,11 @@ export function PublishActions({
   // Course group the mock is attached to ('' = not attached).
   const [group, setGroup] = useState<string | null>(null)
   const [grouping, setGrouping] = useState(false)
+  // "Vazifa" (untimed task): its suggested time can be edited here.
+  const [isTask, setIsTask] = useState(false)
+  const [minutes, setMinutes] = useState('')
+  const [savedMinutes, setSavedMinutes] = useState('')
+  const [savingMin, setSavingMin] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -40,7 +45,11 @@ export function PublishActions({
         if (!cancelled) {
           setPublished(d.config?.published ?? true)
           setPublishAt(d.config?.publishAt ?? null)
-          setGroup(d.config?.courseGroup ?? (d.config?.placement === 'course_task' ? groupOfLabel(testLabel) : null) ?? '')
+          setIsTask(d.config?.placement === 'course_task')
+          const m = d.config?.recommendedMinutes ? String(d.config.recommendedMinutes) : ''
+          setMinutes(m)
+          setSavedMinutes(m)
+          setGroup(d.config?.courseGroup ?? groupOfLabel(testLabel) ?? '')
           setPlacement({ section: d.config?.section === 'free' ? 'free' : 'exams', access: d.config?.access === 'paid' ? 'paid' : 'free' })
         }
       })
@@ -103,6 +112,28 @@ export function PublishActions({
       setError("Server bilan bog'lanib bo'lmadi.")
     } finally {
       setGrouping(false)
+    }
+  }
+
+  async function saveMinutes() {
+    setSavingMin(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/admin/test-config', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ testLabel, recommendedMinutes: minutes ? Number(minutes) : null }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) setError(data.error ?? 'Saqlab bo‘lmadi.')
+      else {
+        setSavedMinutes(minutes)
+        onChange?.(published ?? true)
+      }
+    } catch {
+      setError("Server bilan bog'lanib bo'lmadi.")
+    } finally {
+      setSavingMin(false)
     }
   }
 
@@ -217,9 +248,34 @@ export function PublishActions({
               ))}
             </div>
             <p className="mt-1.5 text-[11px] text-ink-faint">
-              Guruhga biriktirilgan mock faqat shu guruh o&apos;quvchilarining <b>My Courses</b> bo&apos;limida vazifa sifatida ko&apos;rinadi
-              (vaqt cheklovsiz) va oddiy mocklar ro&apos;yxatidan chiqadi. &quot;Biriktirilmagan&quot; — oddiy mockka qaytaradi.
+              Guruhga biriktirilgan mock faqat shu guruh o&apos;quvchilarining <b>My Courses</b> bo&apos;limida ko&apos;rinadi va oddiy
+              mocklar ro&apos;yxatidan chiqadi.{' '}
+              {isTask
+                ? "Bu vazifa: ballsiz, vaqt cheklovsiz (taymer yuqoriga sanaydi)."
+                : "Mock o'z qoidasi bilan qoladi: vaqtli va ballik. Vaqt tugaganda o'quvchidan davom etishni xohlash-xohlamasligi so'raladi, davom etsa taymer minusga qarab sanaydi."}{' '}
+              &quot;Biriktirilmagan&quot; — oddiy mockka qaytaradi.
             </p>
+            {isTask && (
+              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">
+                <label className="text-[12px] font-bold text-ink-soft">Tavsiya etilgan vaqt (daqiqa):</label>
+                <input
+                  value={minutes}
+                  onChange={(e) => setMinutes(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
+                  inputMode="numeric"
+                  placeholder="yo'q"
+                  className="w-20 rounded-md border border-line px-2 py-1 text-[12.5px] focus:border-green focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={saveMinutes}
+                  disabled={savingMin || minutes === savedMinutes}
+                  className="rounded-md bg-ink px-3 py-1.5 text-[12px] font-bold text-white disabled:opacity-40"
+                >
+                  {savingMin ? <Loader2 size={12} className="animate-spin" /> : 'Saqlash'}
+                </button>
+                <span className="text-[11px] text-ink-faint">O&apos;quvchiga boshlashda bir marta ko&apos;rsatiladi.</span>
+              </div>
+            )}
           </div>
         )}
         {published === false && (

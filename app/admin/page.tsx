@@ -28,6 +28,7 @@ import {
   Bell,
   Flag,
   X,
+  ClipboardList,
 } from 'lucide-react'
 import { AdminGate } from '@/components/admin/admin-gate'
 import { MocksPanel } from '@/components/admin/mocks-panel'
@@ -43,6 +44,7 @@ import { parseLatexQuestions, type LatexImportWarning } from '@/lib/latex-import
 import { parseTableQuestions, TABLE_TEMPLATE_CSV, type TableImportWarning } from '@/lib/table-import'
 import type { Question, SectionKind } from '@/lib/test-data'
 import type { MockTestSummary } from '@/app/api/tests/route'
+import { COURSE_GROUPS } from '@/lib/course-groups'
 
 /* ------------------------------- shared bits ------------------------------ */
 
@@ -465,11 +467,169 @@ function EnglishMockForm() {
   )
 }
 
+/* ------------------------------ Task (vazifa) form -------------------------- */
+
+/**
+ * A "vazifa": any number of questions, no 800/1600 score, no fixed time. The student's clock
+ * counts UP. An optional suggested time ("Tavsiya etilgan vaqt") is shown once on the start screen.
+ * It is attached to a course group right here (or left unattached and attached later in Mocklar).
+ */
+function TaskForm() {
+  const [name, setName] = useState('')
+  const [subject, setSubject] = useState<'math' | 'english'>('math')
+  const [group, setGroup] = useState('')
+  const [minutes, setMinutes] = useState('')
+  const [questions, setQuestions] = useState<Question[] | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
+  const [savedLabel, setSavedLabel] = useState<string | null>(null)
+
+  const ready = name.trim() && questions && questions.length > 0
+  const kind: SectionKind = subject === 'math' ? 'math' : 'reading'
+
+  async function handleSave() {
+    if (!ready || !questions) return
+    setSaving(true)
+    setResult(null)
+    setSavedLabel(null)
+    const label = name.trim()
+    const mins = Number(minutes)
+    try {
+      const res = await fetch('/api/admin/test-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          testLabel: label,
+          subject,
+          scored: false,
+          placement: 'course_task',
+          section: 'exams',
+          access: 'free',
+          courseGroup: group || null,
+          recommendedMinutes: mins > 0 ? mins : null,
+          // Saved as a draft: check it with "Check it now", then Publish.
+          published: false,
+        }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setResult({ ok: false, message: d.error ?? 'Sozlamani saqlab bo‘lmadi.' })
+        setSaving(false)
+        return
+      }
+    } catch {
+      setResult({ ok: false, message: "Server bilan bog'lanib bo'lmadi." })
+      setSaving(false)
+      return
+    }
+    const r = await saveModule({ kind, questions, testLabel: label })
+    setResult(
+      r.ok
+        ? {
+            ok: true,
+            message: `"${label}" vazifasi saqlandi — ${questions.length} ta savol${group ? `, guruh: ${COURSE_GROUPS.find((g) => g.slug === group)?.title}` : ''}. Hozircha DRAFT.`,
+          }
+        : r,
+    )
+    if (r.ok) setSavedLabel(label)
+    setSaving(false)
+  }
+
+  return (
+    <div>
+      <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-[12.5px] leading-relaxed text-sky-900">
+        <b>Vazifa</b> — savollar soni istalgancha (44 bo&apos;lishi shart emas). Ball (800/1600) hisoblanmaydi, faqat to&apos;g&apos;ri/xato ko&apos;rsatiladi.
+        Vaqt cheklanmaydi: o&apos;quvchida taymer <b>yuqoriga</b> sanab, nechi daqiqa ketganini ko&apos;rsatib turadi.
+      </div>
+
+      <MockNameField value={name} onChange={setName} />
+
+      <div className="mb-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <div className="mb-1.5 text-[12px] font-bold text-ink-soft">Fan</div>
+          <div className="flex gap-2">
+            {(
+              [
+                ['math', 'Math'],
+                ['english', 'English (R&W)'],
+              ] as const
+            ).map(([v, l]) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setSubject(v)}
+                className={`flex-1 rounded-lg border px-3 py-2 text-[12.5px] font-semibold transition-colors ${
+                  subject === v ? 'border-ink bg-ink text-white' : 'border-line text-ink-soft hover:border-green'
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-[12px] font-bold text-ink-soft">Tavsiya etilgan vaqt (daqiqa, ixtiyoriy)</label>
+          <input
+            value={minutes}
+            onChange={(e) => setMinutes(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
+            inputMode="numeric"
+            placeholder="Masalan: 50"
+            className="w-full rounded-[9px] border border-line px-3 py-2 text-[13.5px] focus:border-green focus:outline-none"
+          />
+          <p className="mt-1 text-[11px] text-ink-faint">O&apos;quvchi boshlaganda bir marta &quot;Tavsiya etilgan vaqt: 50 daqiqa&quot; deb ko&apos;rsatiladi. Majburiy emas.</p>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <div className="mb-1.5 text-[12px] font-bold text-ink-soft">Qaysi guruhga biriktiriladi</div>
+        <div className="flex flex-wrap gap-2">
+          {[{ slug: '', title: 'Hozircha biriktirmayman' }, ...COURSE_GROUPS].map((g) => (
+            <button
+              key={g.slug || 'none'}
+              type="button"
+              onClick={() => setGroup(g.slug)}
+              aria-pressed={group === g.slug}
+              className={`rounded-lg border px-3 py-1.5 text-[12px] font-bold transition-colors ${
+                group === g.slug ? 'border-sky-600 bg-sky-600 text-white' : 'border-line text-ink-soft hover:border-sky-400'
+              }`}
+            >
+              {g.title}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <ModuleImportCard
+          title={`${subject === 'math' ? 'Math' : 'English'} savollari — istalgancha sonda (JSON)`}
+          expectedCount={null}
+          onChange={setQuestions}
+        />
+      </div>
+
+      <button
+        onClick={handleSave}
+        disabled={!ready || saving}
+        className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-[linear-gradient(135deg,var(--green-deep),var(--green)_65%,var(--green-bright))] py-3 text-[14px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {saving ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+        {saving ? 'Saqlanmoqda...' : 'Vazifani saqlash'}
+      </button>
+      <ResultBanner result={result} />
+      {savedLabel && <PostSaveAnswerEntry testLabel={savedLabel} targets={[{ kind, label: `${subject === 'math' ? 'Math' : 'English'} (barcha savollar)` }]} />}
+    </div>
+  )
+}
+
 /* ------------------------------ Edit test browser --------------------------- */
 
 type ModuleTarget = { kind: SectionKind; moduleNumber?: 1 | 2; label: string }
 
 function modulesFor(test: MockTestSummary): ModuleTarget[] {
+  // A task / unscored practice set is one flat list of any length (no modules).
+  if (test.subject !== 'full' && (test.placement === 'course_task' || !test.scored)) {
+    return [{ kind: test.subject === 'math' ? 'math' : 'reading', label: 'Vazifa savollari (istalgancha)' }]
+  }
   if (test.subject === 'full') {
     return [
       { kind: 'reading', moduleNumber: 1, label: 'Eng 1-Modul' },
@@ -608,7 +768,7 @@ function TestEditorModal({ test, onClose, onChanged }: { test: MockTestSummary; 
                 <ModuleImportCard
                   key={`${test.label}-${keyOf(m.target)}`}
                   title={`${m.target.label} — joriy savollar`}
-                  expectedCount={m.target.kind === 'math' ? (m.target.moduleNumber ? 22 : 44) : 27}
+                  expectedCount={test.placement === 'course_task' || !test.scored ? null : m.target.kind === 'math' ? (m.target.moduleNumber ? 22 : 44) : 27}
                   initialRaw={m.initialRaw}
                   onChange={(q) => setCurrent((c) => ({ ...c, [keyOf(m.target)]: q }))}
                 />
@@ -685,7 +845,9 @@ function EditTestBrowser() {
                   )}
                 </div>
                 <div className="text-[11.5px] text-ink-faint">
-                  {t.subject === 'full'
+                  {t.placement === 'course_task'
+                    ? `Vazifa · ${t.subject === 'math' ? t.mathCount : t.readingCount} ta savol${t.courseGroup ? ` · ${t.courseGroup}` : ''}`
+                    : t.subject === 'full'
                     ? `R&W ${t.readingCount} · Math ${t.mathCount}`
                     : t.subject === 'math'
                       ? `Math ${t.mathCount} ta (${t.mathLayout === 'sequential' ? 'ketma-ket' : '2 modulli'})`
@@ -1054,7 +1216,7 @@ function SkillBankImport() {
 
 /* ------------------------------------ page ---------------------------------- */
 
-type Tab = 'mocks' | 'new' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support' | 'notify' | 'reports'
+type Tab = 'mocks' | 'new' | 'task' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support' | 'notify' | 'reports'
 type NewMockType = 'full' | 'math' | 'english' | null
 
 export default function AdminPage() {
@@ -1068,6 +1230,22 @@ export default function AdminPage() {
 function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void }) {
   const [tab, setTab] = useState<Tab>('mocks')
   const [newMockType, setNewMockType] = useState<NewMockType>(null)
+  // Students' error reports still waiting for the admin (red badge on the tab).
+  const [openReports, setOpenReports] = useState(0)
+  function refreshReportCount() {
+    fetch('/api/admin/reports?count=1')
+      .then((r) => r.json())
+      .then((d) => setOpenReports(typeof d?.open === 'number' ? d.open : 0))
+      .catch(() => {})
+  }
+  useEffect(() => {
+    refreshReportCount()
+    const t = setInterval(refreshReportCount, 30_000)
+    return () => clearInterval(t)
+  }, [])
+  useEffect(() => {
+    document.title = openReports > 0 ? `(${openReports}) Admin panel` : 'Admin panel'
+  }, [openReports])
 
   return (
     <div className="min-h-screen bg-bg">
@@ -1109,13 +1287,20 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
         <div className="flex flex-wrap gap-2 mb-6">
           <TabButton icon={<LayoutList size={15} />} label="Mocklar" active={tab === 'mocks'} onClick={() => setTab('mocks')} />
           <TabButton icon={<ListChecks size={15} />} label="Yangi mock qo'shish" active={tab === 'new'} onClick={() => setTab('new')} />
+          <TabButton icon={<ClipboardList size={15} />} label="Vazifa qo'shish" active={tab === 'task'} onClick={() => setTab('task')} />
           <TabButton icon={<PenSquare size={15} />} label="Testni tahrirlash" active={tab === 'edit'} onClick={() => setTab('edit')} />
           <TabButton icon={<UploadCloud size={15} />} label="Savol banki" active={tab === 'bank'} onClick={() => setTab('bank')} />
           <TabButton icon={<BarChart3 size={15} />} label="Statistika" active={tab === 'stats'} onClick={() => setTab('stats')} />
           <TabButton icon={<Users size={15} />} label="Foydalanuvchilar" active={tab === 'users'} onClick={() => setTab('users')} />
           <TabButton icon={<MessageSquare size={15} />} label="Xabarlar" active={tab === 'support'} onClick={() => setTab('support')} />
           <TabButton icon={<Bell size={15} />} label="Bildirishnoma" active={tab === 'notify'} onClick={() => setTab('notify')} />
-          <TabButton icon={<Flag size={15} />} label="Xato xabarlari" active={tab === 'reports'} onClick={() => setTab('reports')} />
+          <TabButton
+            icon={<Flag size={15} />}
+            label="Xato xabarlari"
+            badge={openReports}
+            active={tab === 'reports'}
+            onClick={() => setTab('reports')}
+          />
           <TabButton icon={<ShieldCheck size={15} />} label="Adminlar" active={tab === 'admins'} onClick={() => setTab('admins')} />
         </div>
 
@@ -1128,7 +1313,7 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
         {tab === 'stats' && <StatsPanel />}
         {tab === 'support' && <SupportPanel />}
         {tab === 'notify' && <NotifyPanel />}
-        {tab === 'reports' && <ReportsPanel />}
+        {tab === 'reports' && <ReportsPanel onChanged={refreshReportCount} />}
         {tab === 'users' && <UsersPanel isOwner={isOwner} />}
 
         {tab === 'admins' && (
@@ -1176,6 +1361,12 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
           </div>
         )}
 
+        {tab === 'task' && (
+          <div className="bg-white border border-line rounded-2xl p-5">
+            <TaskForm />
+          </div>
+        )}
+
         {tab === 'edit' && (
           <div className="bg-white border border-line rounded-2xl p-5">
             <EditTestBrowser />
@@ -1197,11 +1388,14 @@ function TabButton({
   label,
   active,
   onClick,
+  badge = 0,
 }: {
   icon: React.ReactNode
   label: string
   active: boolean
   onClick: () => void
+  /** Red counter (e.g. new error reports). */
+  badge?: number
 }) {
   return (
     <button
@@ -1211,6 +1405,11 @@ function TabButton({
       }`}
     >
       {icon} {label}
+      {badge > 0 && (
+        <span className="ml-0.5 min-w-[18px] rounded-full bg-red-500 px-1.5 py-px text-center text-[10.5px] font-extrabold leading-4 text-white">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </button>
   )
 }

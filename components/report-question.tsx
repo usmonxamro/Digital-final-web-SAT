@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, Flag, Loader2, X } from 'lucide-react'
 import type { Question } from '@/lib/test-data'
@@ -11,17 +11,29 @@ export function ReportQuestionButton({
   moduleLabel,
   qNumber,
   question,
+  variant = 'icon',
 }: {
   testLabel: string
   moduleLabel?: string
   qNumber: number
   question: Question
+  /** 'icon' = small square (results screens); 'tab' = vertical tab on the left edge (computer, during the exam). */
+  variant?: 'icon' | 'tab'
 }) {
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [sent, setSent] = useState(false)
+
+  // A new question = a fresh report form (the thank-you state belongs to the previous question).
+  const qid = question.id ?? `${moduleLabel ?? ''}:${qNumber}`
+  useEffect(() => {
+    setSent(false)
+    setText('')
+    setErr('')
+    setOpen(false)
+  }, [qid])
 
   async function send() {
     if (busy || text.trim().length < 3) return
@@ -52,20 +64,42 @@ export function ReportQuestionButton({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          setOpen(true)
-        }}
-        title="Savolda xato bormi? Xabar bering"
-        aria-label="Savolda xato haqida xabar berish"
-        className={`flex size-8 shrink-0 items-center justify-center rounded-lg border transition-colors ${
-          sent ? 'border-green-300 bg-green-50 text-green-700' : 'border-[#e2e8f0] bg-white text-[#94a3b8] hover:border-orange-300 hover:text-orange-500'
-        }`}
-      >
-        {sent ? <Check className="size-4" /> : <Flag className="size-4" />}
-      </button>
+      {variant === 'tab' ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            setOpen(true)
+          }}
+          title="Savolda xato bormi? Xabar bering"
+          aria-label="Savolda xato haqida xabar berish"
+          className={`group hidden lg:flex flex-col items-center gap-2 rounded-r-xl border border-l-0 px-1.5 py-3 shadow-sm transition-colors ${
+            sent
+              ? 'border-green-300 bg-green-50 text-green-700'
+              : 'border-[#e2e8f0] bg-white/95 text-[#64748b] hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600'
+          }`}
+        >
+          {sent ? <Check className="size-4" /> : <Flag className="size-4" />}
+          <span className="text-[11.5px] font-bold tracking-wide [writing-mode:vertical-rl] rotate-180">
+            {sent ? 'Yuborildi' : 'Xatosi bormi?'}
+          </span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            setOpen(true)
+          }}
+          title="Savolda xato bormi? Xabar bering"
+          aria-label="Savolda xato haqida xabar berish"
+          className={`flex size-8 shrink-0 items-center justify-center rounded-lg border transition-colors ${
+            sent ? 'border-green-300 bg-green-50 text-green-700' : 'border-[#e2e8f0] bg-white text-[#94a3b8] hover:border-orange-300 hover:text-orange-500'
+          }`}
+        >
+          {sent ? <Check className="size-4" /> : <Flag className="size-4" />}
+        </button>
+      )}
       {open && typeof document !== 'undefined' && createPortal(
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
