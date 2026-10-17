@@ -5,6 +5,7 @@ import { adminErrorResponse } from '@/lib/admin-errors'
 import { validateQuestions } from '@/lib/admin-schema'
 import { rescoreAttemptsForQuestion } from '@/lib/rescoring'
 import type { Question } from '@/lib/test-data'
+import { invalidateCounts } from '@/lib/mock-catalog'
 
 
 /**
@@ -62,6 +63,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  invalidateCounts()
   try {
     await requireAdmin()
   } catch (e) {
@@ -131,6 +133,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  invalidateCounts()
   try {
     await requireAdmin()
   } catch (e) {

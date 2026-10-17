@@ -5,9 +5,11 @@ import { adminErrorResponse } from '@/lib/admin-errors'
 import { isMissingColumn } from '@/lib/db-columns'
 import { validateQuestions } from '@/lib/admin-schema'
 import type { Question, SectionKind } from '@/lib/test-data'
+import { invalidateCounts } from '@/lib/mock-catalog'
 
 
 export async function POST(req: NextRequest) {
+  invalidateCounts()
   try {
     await requireAdmin()
   } catch (e) {

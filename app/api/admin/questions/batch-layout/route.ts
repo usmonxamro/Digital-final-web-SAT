@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { isMissingColumn, MIGRATION_HINT } from '@/lib/db-columns'
 import { sanitizeLayout, type QuestionLayout } from '@/lib/question-layout'
+import { invalidateCounts } from '@/lib/mock-catalog'
 
 type Item = { id: string; prompt: string; layout: QuestionLayout | null }
 
@@ -22,6 +23,7 @@ function parseItem(raw: unknown): Item | null {
  * because the layout's p0..pn ids are the prompt's chunks.
  */
 export async function POST(req: NextRequest) {
+  invalidateCounts()
   try {
     await requireAdmin()
   } catch (e) {

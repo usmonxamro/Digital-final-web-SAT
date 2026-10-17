@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
+import { invalidateCounts } from '@/lib/mock-catalog'
 
 /**
  * Delete a whole mock: { testLabel, deleteResults?: boolean }.
@@ -9,6 +10,7 @@ import { adminErrorResponse } from '@/lib/admin-errors'
  * Students' past results are kept unless deleteResults is true.
  */
 export async function DELETE(req: NextRequest) {
+  invalidateCounts()
   try {
     await requireAdmin()
   } catch (e) {

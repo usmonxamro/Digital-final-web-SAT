@@ -1362,17 +1362,22 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
           <TabButton icon={<ShieldCheck size={15} />} label="Adminlar" active={tab === 'admins'} onClick={() => setTab('admins')} />
         </div>
 
-        {tab === 'mocks' && (
+        {/* Visited tabs stay mounted (just hidden): switching back is instant — no reload, nothing lost. */}
+        <KeepAlive active={tab === 'mocks'}>
           <div className="bg-white border border-line rounded-2xl p-5">
-            <MocksPanel />
+            <MocksPanel visible={tab === 'mocks'} />
           </div>
-        )}
+        </KeepAlive>
 
-        {tab === 'stats' && <StatsPanel />}
+        <KeepAlive active={tab === 'stats'}>
+          <StatsPanel />
+        </KeepAlive>
         {tab === 'support' && <SupportPanel />}
         {tab === 'notify' && <NotifyPanel />}
         {tab === 'reports' && <ReportsPanel onChanged={refreshReportCount} />}
-        {tab === 'users' && <UsersPanel isOwner={isOwner} />}
+        <KeepAlive active={tab === 'users'}>
+          <UsersPanel isOwner={isOwner} />
+        </KeepAlive>
 
         {tab === 'admins' && (
           <div className="bg-white border border-line rounded-2xl p-5">
@@ -1425,13 +1430,15 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
           </div>
         )}
 
-        {tab === 'groups' && <GroupsPanel />}
+        <KeepAlive active={tab === 'groups'}>
+          <GroupsPanel />
+        </KeepAlive>
 
-        {tab === 'edit' && (
+        <KeepAlive active={tab === 'edit'}>
           <div className="bg-white border border-line rounded-2xl p-5">
             <EditTestBrowser />
           </div>
-        )}
+        </KeepAlive>
 
         {tab === 'bank' && (
           <div className="bg-white border border-line rounded-2xl p-5">
@@ -1441,6 +1448,16 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
       </div>
     </div>
   )
+}
+
+/** Mounts its children the first time the tab is opened, then only hides them — no re-fetch on every visit. */
+function KeepAlive({ active, children }: { active: boolean; children: React.ReactNode }) {
+  const [seen, setSeen] = useState(active)
+  useEffect(() => {
+    if (active) setSeen(true)
+  }, [active])
+  if (!seen && !active) return null
+  return <div hidden={!active}>{children}</div>
 }
 
 function TabButton({

@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { rescoreAttemptsForQuestion } from '@/lib/rescoring'
 import type { ChoiceId, Question } from '@/lib/test-data'
+import { invalidateCounts } from '@/lib/mock-catalog'
 
 const VALID_CHOICE_IDS: ChoiceId[] = ['A', 'B', 'C', 'D']
 
@@ -18,6 +19,7 @@ type AnswerPatch = { id: string; correct?: ChoiceId; correctValue?: string }
  * answer key actually changed.
  */
 export async function POST(req: NextRequest) {
+  invalidateCounts()
   try {
     await requireAdmin()
   } catch (e) {

@@ -497,22 +497,48 @@ function saveBlob(blob: Blob, name: string) {
 /**
  * The button shown on a finished mock's result screen — only when the teacher allowed it for this mock.
  */
-export function DownloadTestPdfButton({ testTitle, items, className }: { testTitle: string; items: PdfItem[]; className?: string }) {
-  const [state, setState] = useState<'idle' | 'busy' | 'done' | 'error'>('idle')
-  const [progress, setProgress] = useState({ done: 0, total: items.length + 1 })
+export function DownloadTestPdfButton({
+  testTitle,
+  items,
+  loadItems,
+  label,
+  className,
+  compact,
+}: {
+  testTitle: string
+  /** Questions already in hand (student result screen)… */
+  items?: PdfItem[]
+  /** …or fetched when the button is pressed (admin list). */
+  loadItems?: () => Promise<PdfItem[]>
+  label?: string
+  className?: string
+  /** Small pill instead of the big button (admin rows). */
+  compact?: boolean
+}) {
+  const [state, setState] = useState<'idle' | 'loading' | 'busy' | 'done' | 'error'>('idle')
+  const [progress, setProgress] = useState({ done: 0, total: (items?.length ?? 0) + 1 })
+  const [errText, setErrText] = useState('PDF yaratib bo‘lmadi. Qayta urinib ko‘ring.')
   const running = useRef(false)
 
   async function run() {
     if (running.current) return
     running.current = true
-    setState('busy')
-    setProgress({ done: 0, total: items.length + 1 })
+    setState(loadItems ? 'loading' : 'busy')
     try {
-      const blob = await buildTestPdf({ testTitle, items, onProgress: (done, total) => setProgress({ done, total }) })
+      const list = items ?? (await loadItems!())
+      if (list.length === 0) {
+        setErrText('Bu mockda savol topilmadi.')
+        setState('error')
+        return
+      }
+      setProgress({ done: 0, total: list.length + 1 })
+      setState('busy')
+      const blob = await buildTestPdf({ testTitle, items: list, onProgress: (done, total) => setProgress({ done, total }) })
       saveBlob(blob, fileNameOf(testTitle))
       setState('done')
     } catch (e) {
       console.error('Test PDF failed', e)
+      setErrText('PDF yaratib bo‘lmadi. Qayta urinib ko‘ring.')
       setState('error')
     } finally {
       running.current = false
@@ -520,25 +546,44 @@ export function DownloadTestPdfButton({ testTitle, items, className }: { testTit
   }
 
   const pct = Math.round((progress.done / Math.max(1, progress.total)) * 100)
+  const working = state === 'busy' || state === 'loading'
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={run}
+        disabled={working}
+        title={state === 'error' ? errText : 'Mockning savollarini PDF qilib yuklab olish (har sahifada bitta savol)'}
+        className={`flex items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-extrabold transition-colors disabled:cursor-wait ${
+          state === 'error' ? 'border-red-300 bg-red-50 text-red-700' : 'border-violet-300 bg-white text-violet-700 hover:bg-violet-50'
+        } ${className ?? ''}`}
+      >
+        {working ? <Loader2 size={11} className="animate-spin" /> : <FileDown size={11} />}
+        {state === 'loading' ? 'Yuklanmoqda…' : state === 'busy' ? `${pct}%` : state === 'error' ? 'Xato — qayta' : state === 'done' ? 'Yana yuklab olish' : label ?? 'PDF yuklab olish'}
+      </button>
+    )
+  }
+
   return (
     <div className={className}>
       <button
         type="button"
         onClick={run}
-        disabled={state === 'busy'}
+        disabled={working}
         className="relative inline-flex min-w-[260px] items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#7c3aed,#6366f1)] px-6 py-3 text-[15px] font-extrabold text-white shadow-[0_8px_22px_rgba(99,102,241,.38)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait disabled:hover:translate-y-0"
       >
         {state === 'busy' && <span aria-hidden className="absolute inset-y-0 left-0 bg-white/20 transition-[width] duration-300" style={{ width: `${pct}%` }} />}
         <span className="relative inline-flex items-center gap-2.5">
-          {state === 'busy' ? <Loader2 className="size-5 animate-spin" /> : <FileDown className="size-5" />}
-          {state === 'busy' ? `PDF tayyorlanmoqda… ${pct}%` : state === 'done' ? 'Yana yuklab olish (PDF)' : 'Testni yuklab olish (PDF)'}
+          {working ? <Loader2 className="size-5 animate-spin" /> : <FileDown className="size-5" />}
+          {state === 'loading' ? 'Savollar yuklanmoqda…' : state === 'busy' ? `PDF tayyorlanmoqda… ${pct}%` : state === 'done' ? 'Yana yuklab olish (PDF)' : label ?? 'Testni yuklab olish (PDF)'}
         </span>
       </button>
       {state === 'busy' && <p className="mt-2 text-xs font-semibold text-[#64748b]">Iltimos, sahifani yopmang — savollar sahifa-sahifa tayyorlanmoqda.</p>}
       {state === 'done' && <p className="mt-2 text-xs font-semibold text-green-700">Tayyor! Fayl yuklab olindi.</p>}
       {state === 'error' && (
         <p className="mt-2 flex items-center justify-center gap-1 text-xs font-semibold text-red-600">
-          <AlertTriangle className="size-3.5" /> PDF yaratib bo‘lmadi. Qayta urinib ko‘ring.
+          <AlertTriangle className="size-3.5" /> {errText}
         </p>
       )}
     </div>

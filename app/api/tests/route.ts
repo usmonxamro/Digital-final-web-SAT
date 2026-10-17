@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { verifySession, SESSION_COOKIE } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { releaseDueMocks } from '@/lib/schedule'
+import { loadCounts } from '@/lib/mock-catalog'
 import { configGroups } from '@/lib/course-groups'
 import { rowSections } from '@/lib/mock-sections'
 import type { TestSubject, TestPlacement, MathLayout, TestSection, TestAccess } from '@/app/api/admin/test-config/route'
@@ -38,55 +39,10 @@ export type MockTestSummary = {
   recommendedMinutes: number | null
   /** The admin's own folders (mock_folders ids) this mock is filed in — admin list only. */
   folderIds: string[]
-}
-
-type Catalog = {
-  byLabel: Map<string, { readingCount: number; mathCount: number }>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  configRows: any[]
-}
-
-// The mock catalogue (question counts per test + test settings) is the same for
-// every student, but building it means scanning every question row. With
-// thousands of questions that was done on EVERY dashboard / practice page load.
-// Keep it in memory for a few seconds instead — one scan serves many students.
-const CATALOG_TTL_MS = 20_000
-let catalogCache: { at: number; data: Catalog } | null = null
-let catalogInflight: Promise<Catalog> | null = null
-
-async function loadCatalog(supabase: ReturnType<typeof supabaseAdmin>, fresh = false): Promise<Catalog> {
-  if (!fresh && catalogCache && Date.now() - catalogCache.at < CATALOG_TTL_MS) return catalogCache.data
-  if (!fresh && catalogInflight) return catalogInflight
-  catalogInflight = (async () => {
-    await releaseDueMocks(supabase)
-    const configPromise = supabase.from('test_configs').select('*')
-    // Supabase returns at most 1000 rows per request — page through them all.
-    const byLabel: Catalog['byLabel'] = new Map()
-    const PAGE = 1000
-    for (let from = 0; ; from += PAGE) {
-      const { data } = await supabase
-        .from('questions')
-        .select('kind, test_label')
-        .not('test_label', 'is', null)
-        .order('id', { ascending: true })
-        .range(from, from + PAGE - 1)
-      for (const row of data ?? []) {
-        const label = row.test_label as string
-        const bucket = byLabel.get(label) ?? { readingCount: 0, mathCount: 0 }
-        if (row.kind === 'reading') bucket.readingCount++
-        else if (row.kind === 'math') bucket.mathCount++
-        byLabel.set(label, bucket)
-      }
-      if (!data || data.length < PAGE) break
-    }
-    const { data: configRows } = await configPromise
-    const result: Catalog = { byLabel, configRows: configRows ?? [] }
-    catalogCache = { at: Date.now(), data: result }
-    return result
-  })().finally(() => {
-    catalogInflight = null
-  })
-  return catalogInflight
+  /** The admin's own order (v80); lower comes first, null = not placed yet. */
+  sortOrder: number | null
+  /** When the mock's settings row was created (ISO) — admin list "newest first"; null for old rows. */
+  createdAt: string | null
 }
 
 export async function GET(req: NextRequest) {
@@ -102,7 +58,12 @@ export async function GET(req: NextRequest) {
   }
   try {
     const supabase = supabaseAdmin()
-    const { byLabel, configRows } = await loadCatalog(supabase, includeDrafts)
+    // Counts (cached, fetched in parallel) and the settings rows (always fresh) load side by side.
+    const fresh = includeDrafts && req.nextUrl.searchParams.get('fresh') === '1'
+    const countsPromise = loadCounts(supabase, fresh)
+    await releaseDueMocks(supabase) // drafts whose time has come go live BEFORE the settings are read
+    const [byLabel, { data: configData }] = await Promise.all([countsPromise, supabase.from('test_configs').select('*')])
+    const configRows = configData ?? []
 
     const configByLabel = new Map(
       configRows.map((c) => [
@@ -121,6 +82,8 @@ export async function GET(req: NextRequest) {
           courseGroups: configGroups(c),
           recommendedMinutes: typeof c.recommended_minutes === 'number' ? (c.recommended_minutes as number) : null,
           folderIds: Array.isArray(c.folder_ids) ? (c.folder_ids as unknown[]).filter((x): x is string => typeof x === 'string') : [],
+          sortOrder: typeof c.sort_order === 'number' ? (c.sort_order as number) : null,
+          createdAt: (c.created_at as string | null) ?? null,
         },
       ]),
     )
@@ -157,10 +120,13 @@ export async function GET(req: NextRequest) {
           courseGroups: config?.courseGroups ?? [],
           recommendedMinutes: config?.recommendedMinutes ?? null,
           folderIds: includeDrafts ? (config?.folderIds ?? []) : [],
+          sortOrder: config?.sortOrder ?? null,
+          createdAt: includeDrafts ? (config?.createdAt ?? null) : null,
         }
       })
       .filter((t) => includeDrafts || t.published)
-      .sort((a, b) => a.label.localeCompare(b.label))
+      // The admin's own order first (v80), the rest A–Z.
+      .sort((a, b) => (a.sortOrder ?? 1e12) - (b.sortOrder ?? 1e12) || a.label.localeCompare(b.label))
 
     return NextResponse.json({ tests })
   } catch {

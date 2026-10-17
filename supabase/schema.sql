@@ -406,3 +406,7 @@ alter table test_configs add column if not exists sections text[];
 alter table test_configs add column if not exists pdf_download boolean not null default false;
 -- Old rows: copy the single list into the new column so both stay in step.
 update test_configs set sections = array[section] where sections is null;
+
+-- v80: your own mock order (Admin -> Mocklar -> "Qo'lda" sorting: drag or press the arrows).
+-- Lower number comes first; null = not placed yet (those follow, A-Z). Free Mocks for students follows it too.
+alter table test_configs add column if not exists sort_order integer;
