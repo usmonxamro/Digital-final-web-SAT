@@ -4,6 +4,7 @@ import { use, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react'
 import { Math as MathTex, MixedText } from '@/components/math'
+import { ChoiceImage } from '@/components/choice-content'
 import { isCorrectAnswer } from '@/lib/test-data'
 import { skillPracticePool, SKILL_DOMAINS, type SkillDomain } from '@/lib/skill-practice-data'
 
@@ -180,7 +181,10 @@ export default function SkillDrillPage({ params }: { params: Promise<{ domain: s
                   >
                     {c.id}
                   </span>
-                  {c.tex ? <MathTex tex={c.tex} /> : c.text}
+                  <span className="flex min-w-0 flex-col items-start gap-1.5">
+                    {c.image && <ChoiceImage src={c.image} />}
+                    {c.tex ? <MathTex tex={c.tex} /> : c.text}
+                  </span>
                 </button>
               )
             })}

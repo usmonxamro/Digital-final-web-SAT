@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Eye, EyeOff, ImagePlus, Loader2, X } from 'lucide-react'
 import { validateQuestions, countUnanswered } from '@/lib/admin-schema'
 import { Math as MathTex } from '@/components/math'
+import { ChoiceContent } from '@/components/choice-content'
+import { ChoiceImageRow, uploadQuestionImage } from '@/components/admin/choice-image-slot'
 import type { Question } from '@/lib/test-data'
 
 /**
@@ -53,6 +55,20 @@ export function ModuleImportCard({
       return {}
     }
   })
+  /** Pictures of answer options, keyed by question key + option id. */
+  const [choiceImages, setChoiceImages] = useState<Record<string, string>>(() => {
+    if (!initialRaw.trim()) return {}
+    try {
+      const arr = JSON.parse(initialRaw) as Question[]
+      const seeded: Record<string, string> = {}
+      const ks = makeKeys(arr)
+      arr.forEach((q, i) => q?.choices?.forEach((c) => c?.image && (seeded[`${ks[i]}\u0001${c.id}`] = c.image)))
+      return seeded
+    } catch {
+      return {}
+    }
+  })
+  const [choiceBusy, setChoiceBusy] = useState<string | null>(null)
   const [openSlot, setOpenSlot] = useState<number | null>(null)
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -67,21 +83,31 @@ export function ModuleImportCard({
     }
   }, [raw])
 
+  const keys = useMemo(() => (Array.isArray(parsed.data) ? makeKeys(parsed.data) : []), [parsed.data])
+
+  /** The pasted questions with the uploaded option pictures put into their choices. */
+  const withChoiceImages = useMemo(() => {
+    if (!Array.isArray(parsed.data)) return parsed.data
+    return parsed.data.map((q, i) =>
+      q && Array.isArray(q.choices)
+        ? { ...q, choices: q.choices.map((c) => ({ ...c, image: choiceImages[`${keys[i]}\u0001${c?.id}`] })) }
+        : q,
+    )
+  }, [parsed.data, choiceImages, keys])
+
   const errors = useMemo(
-    () => (parsed.data ? validateQuestions(parsed.data, { requireAnswers: false }) : []),
-    [parsed.data],
+    () => (withChoiceImages ? validateQuestions(withChoiceImages, { requireAnswers: false }) : []),
+    [withChoiceImages],
   )
   const isValid = !parsed.error && parsed.data !== null && errors.length === 0
   const unanswered = useMemo(() => (isValid && parsed.data ? countUnanswered(parsed.data) : 0), [isValid, parsed.data])
   const [showPreview, setShowPreview] = useState(false)
 
-  const keys = useMemo(() => (parsed.data ? makeKeys(parsed.data) : []), [parsed.data])
-
   const merged = useMemo(() => {
-    if (!isValid || !parsed.data) return null
-    return parsed.data.map((q, i) => (images[keys[i]] ? { ...q, image: images[keys[i]] } : { ...q, image: undefined }))
+    if (!isValid || !Array.isArray(withChoiceImages)) return null
+    return withChoiceImages.map((q, i) => (images[keys[i]] ? { ...q, image: images[keys[i]] } : { ...q, image: undefined }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isValid, raw, images, keys])
+  }, [isValid, raw, images, keys, choiceImages])
 
   useEffect(() => {
     onChange(merged)
@@ -107,6 +133,27 @@ export function ModuleImportCard({
     } finally {
       setUploadingSlot(null)
     }
+  }
+
+  async function handleChoiceUpload(index: number, id: string, file: File) {
+    setChoiceBusy(id)
+    setUploadError(null)
+    try {
+      const url = await uploadQuestionImage(file)
+      setChoiceImages((m) => ({ ...m, [`${keys[index]}\u0001${id}`]: url }))
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : 'Yuklashda xatolik yuz berdi.')
+    } finally {
+      setChoiceBusy(null)
+    }
+  }
+
+  function clearChoiceImage(index: number, id: string) {
+    setChoiceImages((m) => {
+      const next = { ...m }
+      delete next[`${keys[index]}\u0001${id}`]
+      return next
+    })
   }
 
   function clearImage(index: number) {
@@ -156,7 +203,7 @@ export function ModuleImportCard({
         </div>
       )}
 
-      {isValid && parsed.data && parsed.data.length > 0 && (
+      {Array.isArray(parsed.data) && parsed.data.length > 0 && parsed.data.every((q) => q && typeof q === 'object') && (
         <div className="mt-3">
           <div className="text-[11.5px] font-bold text-ink-faint mb-1.5">
             Chizmasi bor savolni tanlang (bosilmagan savollar &quot;chizmasiz&quot; deb qoladi):
@@ -175,7 +222,8 @@ export function ModuleImportCard({
                       : 'border-line text-ink-soft hover:border-green'
                 }`}
               >
-                {images[keys[i]] && <CheckCircle2 size={11} />} {i + 1}-savol
+                {(images[keys[i]] || Object.keys(choiceImages).some((k) => k.startsWith(`${keys[i]}\u0001`))) && <CheckCircle2 size={11} />}{' '}
+                {i + 1}-savol
               </button>
             ))}
           </div>
@@ -217,6 +265,25 @@ export function ModuleImportCard({
             </div>
           )}
 
+          {openSlot !== null &&
+            parsed.data &&
+            (parsed.data[openSlot]?.type ?? 'mcq') === 'mcq' &&
+            (() => {
+              const q = parsed.data[openSlot]
+              const ids = q.choices?.length ? q.choices.map((c) => c.id) : ['A', 'B', 'C', 'D']
+              const urls: Record<string, string | undefined> = {}
+              ids.forEach((id) => (urls[id] = choiceImages[`${keys[openSlot]}\u0001${id}`]))
+              return (
+                <ChoiceImageRow
+                  ids={ids}
+                  urls={urls}
+                  busyId={choiceBusy}
+                  onFile={(id, file) => handleChoiceUpload(openSlot, id, file)}
+                  onClear={(id) => clearChoiceImage(openSlot, id)}
+                />
+              )
+            })()}
+
           {uploadError && (
             <div className="flex items-start gap-1.5 text-[12px] text-red-600 mt-2">
               <AlertTriangle size={12} className="mt-0.5 shrink-0" /> {uploadError}
@@ -256,7 +323,7 @@ function QuestionPreviewRow({ question, index }: { question: Question; index: nu
             }`}
           >
             <span className="font-bold">{c.id}</span>
-            {c.tex ? <MathTex tex={c.tex} /> : <span>{c.text}</span>}
+            <ChoiceContent choice={c} size="sm" />
           </div>
         ))}
       </div>

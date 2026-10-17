@@ -11,6 +11,8 @@ export type Choice = {
   text?: string
   /** LaTeX answer rendered with KaTeX. */
   tex?: string
+  /** URL of a picture shown as (or with) this answer — e.g. a graph or diagram option. */
+  image?: string
 }
 
 export type Question = {

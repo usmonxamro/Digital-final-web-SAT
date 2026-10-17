@@ -1,6 +1,6 @@
 'use client'
 
-import { Math, MixedText } from '@/components/math'
+import { ChoiceContent } from '@/components/choice-content'
 import type { Choice } from '@/lib/test-data'
 
 type OptionCardProps = {
@@ -63,7 +63,7 @@ export function OptionCard({
               : { color: '#111' }
           }
         >
-          {option.tex ? <Math tex={option.tex} /> : <MixedText text={option.text ?? ''} />}
+          <ChoiceContent choice={option} dim={eliminated} />
         </span>
       </button>
 

@@ -6,6 +6,7 @@ import { Check, X, Minus, ChevronDown, Award, ArrowLeft, Home, Play } from 'luci
 import { RichText } from '@/components/rich-text'
 import { QuestionImage } from '@/components/question-image'
 import { Math, MixedText } from '@/components/math'
+import { ChoiceContent } from '@/components/choice-content'
 import { Button } from '@/components/ui/button'
 import { Certificate } from '@/components/certificate'
 import { ReportQuestionButton } from '@/components/report-question'
@@ -109,7 +110,7 @@ function QuestionDetail({ item }: { item: ReviewItem }) {
                 <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-current text-[11px] font-bold">
                   {c.id}
                 </span>
-                <span>{c.tex ? <Math tex={c.tex} /> : <MixedText text={c.text ?? ''} />}</span>
+                <ChoiceContent choice={c} />
                 {isCorrect && <span className="ml-auto text-xs font-semibold">To&apos;g&apos;ri javob</span>}
                 {isChosen && !isCorrect && <span className="ml-auto text-xs font-semibold">Sizning javobingiz</span>}
               </div>

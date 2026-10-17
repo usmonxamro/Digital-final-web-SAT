@@ -47,8 +47,8 @@ export function validateQuestions(raw: unknown, opts?: { requireAnswers?: boolea
           if (!c || !VALID_CHOICE_IDS.includes(c.id as ChoiceId)) {
             errors.push({ index: i, message: `${n}-savol, ${ci + 1}-variant: "id" A/B/C/D dan biri bo'lishi kerak.` })
           }
-          if (!c?.text && !c?.tex) {
-            errors.push({ index: i, message: `${n}-savol, ${ci + 1}-variant: "text" yoki "tex" matni yo'q.` })
+          if (!c?.text && !c?.tex && !c?.image) {
+            errors.push({ index: i, message: `${n}-savol, ${ci + 1}-variant: "text", "tex" yoki "image" (rasm) yo'q — javob faqat rasm bo'lsa, rasmni yuklang.` })
           }
         })
       }

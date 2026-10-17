@@ -37,6 +37,7 @@ import { StatsPanel } from '@/components/admin/stats-panel'
 import { UsersPanel } from '@/components/admin/users-panel'
 import { AdminsPanel } from '@/components/admin/admins-panel'
 import { ModuleImportCard } from '@/components/admin/module-import-card'
+import { ChoiceImageRow, uploadQuestionImage } from '@/components/admin/choice-image-slot'
 import { AnswerEntry, AnswerSheet, type AnswerSection } from '@/components/admin/answer-entry'
 import { PublishActions } from '@/components/admin/publish-actions'
 import { SectionAccessPicker, newMockOptions, type Access, type Section } from '@/components/admin/section-access'
@@ -1015,6 +1016,7 @@ function QuestionIdLookup() {
             rows={10}
             className="w-full font-mono text-[12px] px-3.5 py-3 rounded-[10px] border border-line bg-bg focus:outline-none focus:border-green resize-y"
           />
+          <ChoiceImagesEditor raw={raw} setRaw={setRaw} />
           <div className="flex gap-2 mt-3">
             <button
               onClick={handleSave}
@@ -1032,6 +1034,52 @@ function QuestionIdLookup() {
             </button>
           </div>
           <ResultBanner result={result} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Under the JSON of one question: upload / remove the pictures of its answer options (writes them into the JSON). */
+function ChoiceImagesEditor({ raw, setRaw }: { raw: string; setRaw: (s: string) => void }) {
+  const [busy, setBusy] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  let q: Question | null = null
+  try {
+    q = JSON.parse(raw) as Question
+  } catch {
+    q = null
+  }
+  if (!q || (q.type ?? 'mcq') !== 'mcq' || !Array.isArray(q.choices) || q.choices.length === 0) return null
+  const cur: Question = q
+
+  const urls: Record<string, string | undefined> = {}
+  cur.choices!.forEach((c) => (urls[c.id] = c.image))
+
+  function setImage(id: string, url: string | undefined) {
+    const next = { ...cur, choices: cur.choices!.map((c) => (c.id === id ? { ...c, image: url } : c)) }
+    setRaw(JSON.stringify(next, null, 2))
+  }
+
+  async function upload(id: string, file: File) {
+    setBusy(id)
+    setError(null)
+    try {
+      setImage(id, await uploadQuestionImage(file))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Yuklashda xatolik yuz berdi.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <div>
+      <ChoiceImageRow ids={cur.choices!.map((c) => c.id)} urls={urls} busyId={busy} onFile={upload} onClear={(id) => setImage(id, undefined)} />
+      {error && (
+        <div className="flex items-start gap-1.5 text-[12px] text-red-600 mt-2">
+          <AlertTriangle size={12} className="mt-0.5 shrink-0" /> {error}
         </div>
       )}
     </div>

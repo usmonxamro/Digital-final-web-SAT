@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Check, X, Minus, ChevronDown } from 'lucide-react'
 import { Math as MathTex, MixedText } from '@/components/math'
+import { ChoiceContent } from '@/components/choice-content'
 import type { Question } from '@/lib/test-data'
 import { VideoAnalysisCta } from '@/components/score-report'
 import { ReportQuestionButton } from '@/components/report-question'
@@ -134,7 +135,7 @@ export function PracticeResultScreen({
                                 <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-current text-[11px] font-bold">
                                   {c.id}
                                 </span>
-                                <span>{c.tex ? <MathTex tex={c.tex} /> : <MixedText text={c.text ?? ''} />}</span>
+                                <ChoiceContent choice={c} />
                                 {isCorrect && <span className="ml-auto text-xs font-semibold">To&apos;g&apos;ri javob</span>}
                                 {isChosen && !isCorrect && <span className="ml-auto text-xs font-semibold">Sizning javobingiz</span>}
                               </div>
