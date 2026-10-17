@@ -353,3 +353,28 @@ html[data-sp-theme='dark'] .admin-root select{background-color:#0f1512;color:var
 
 /* Phones: formulas in the exam follow the 1px smaller text */
 @media (max-width: 639px) { .exam-text .katex { font-size: 1.08em; } }
+
+
+/* "Xatosi bormi?" tab: on the first questions it glows amber slowly (2 x 2.5s = 5s) so the student notices it. */
+@keyframes report-glow {
+  0%, 100% {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-color: #e2e8f0;
+    color: #64748b;
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+  50% {
+    background-color: #fef3c7;
+    border-color: #f59e0b;
+    color: #b45309;
+    box-shadow: 0 0 0 7px rgba(245, 158, 11, 0.28);
+  }
+}
+.report-glow {
+  animation: report-glow 2.5s ease-in-out 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .report-glow {
+    animation: none;
+  }
+}

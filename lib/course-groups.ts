@@ -24,18 +24,27 @@ export function groupOfLabel(label: string): string | null {
 
 export type CourseAccess = { all: boolean; groups: string[] }
 
-/**
- * The group a course task belongs to: the one the admin attached it to
- * (test_configs.course_group), else the one its label starts with.
- */
-export function groupOfTask(label: string, courseGroup?: string | null): string | null {
-  if (courseGroup && groupBySlug(courseGroup)) return courseGroup
-  return groupOfLabel(label)
+/** Group slugs stored on a test_configs row (v73 array; falls back to the older single v68 column). */
+export function configGroups(row: Record<string, unknown> | null | undefined): string[] {
+  if (!row) return []
+  const raw = 'course_groups' in row ? row.course_groups : row.course_group ? [row.course_group] : []
+  return (Array.isArray(raw) ? raw : []).filter((g): g is string => typeof g === 'string' && !!groupBySlug(g))
 }
 
-/** May this student open a course task with this label (and admin-chosen group, if any)? */
-export function canOpenTask(label: string, a: CourseAccess, courseGroup?: string | null): boolean {
+/**
+ * The groups a course task belongs to: the ones the admin attached it to,
+ * else the one its label starts with ("SAT November 800/800 — Week 1").
+ */
+export function groupsOfTask(label: string, courseGroups?: string[] | null): string[] {
+  const own = (courseGroups ?? []).filter((g) => !!groupBySlug(g))
+  if (own.length) return own
+  const g = groupOfLabel(label)
+  return g ? [g] : []
+}
+
+/** May this student open a course task (a "vazifa") with this label and these admin-chosen groups? */
+export function canOpenTask(label: string, a: CourseAccess, courseGroups?: string[] | null): boolean {
   if (a.all) return true
-  const g = groupOfTask(label, courseGroup)
-  return g ? a.groups.includes(g) : a.groups.length > 0
+  const gs = groupsOfTask(label, courseGroups)
+  return gs.length ? gs.some((g) => a.groups.includes(g)) : a.groups.length > 0
 }

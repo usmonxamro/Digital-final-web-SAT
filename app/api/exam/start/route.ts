@@ -8,7 +8,7 @@ import { isMissingTable } from '@/lib/db-errors'
 import { adminIdentity } from '@/lib/admin-auth'
 import { planInfo } from '@/lib/plan'
 import { courseAccessFor } from '@/lib/course-access'
-import { canOpenTask } from '@/lib/course-groups'
+import { canOpenTask, configGroups } from '@/lib/course-groups'
 
 /** How long an unfinished start can be resumed (page reload) without using up another mock. */
 const RESUME_HOURS = 3
@@ -56,10 +56,10 @@ export async function POST(req: NextRequest) {
   // Course tasks: only students of that course group (or admins).
   {
     const { data: cfg } = await supabase.from('test_configs').select('*').eq('test_label', testLabel).maybeSingle()
-    if ((cfg?.placement === 'course_task' || cfg?.course_group) && !(await adminIdentity().catch(() => null))) {
+    if (cfg?.placement === 'course_task' && !(await adminIdentity().catch(() => null))) {
       const { data: u } = await supabase.from('users').select('*').eq('id', session.userId).maybeSingle()
       const access = u ? await courseAccessFor(supabase, u) : null
-      if (!access || !canOpenTask(testLabel, access, (cfg.course_group as string | null) ?? null)) {
+      if (!access || !canOpenTask(testLabel, access, configGroups(cfg))) {
         return NextResponse.json(
           { error: "Bu vazifa faqat kurs guruhi o'quvchilari uchun. Telegram botdan olgan kodingizni Kurslar bo'limida kiriting.", code: 'COURSE' },
           { status: 403 },
@@ -89,8 +89,7 @@ export async function POST(req: NextRequest) {
   let kind: 'mock' | 'task' | 'admin' = isAdmin ? 'admin' : 'mock'
   if (!isAdmin) {
     const { data: cfg } = await supabase.from('test_configs').select('*').eq('test_label', testLabel).maybeSingle()
-    // Group mocks and tasks are assigned by the teacher: they don't use up the daily mock limit.
-    if (cfg?.placement === 'course_task' || cfg?.course_group) kind = 'task'
+    if (cfg?.placement === 'course_task') kind = 'task'
   }
 
   if (kind === 'mock') {

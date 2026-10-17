@@ -77,7 +77,7 @@ export default function PracticePage() {
       .catch(() => {})
   }, [])
 
-  const mocks = useMemo(() => (tests ?? []).filter((t) => t.placement === 'mock' && !t.courseGroup && t.section !== 'free'), [tests])
+  const mocks = useMemo(() => (tests ?? []).filter((t) => t.placement === 'mock' && t.section !== 'free'), [tests])
   const groups = useMemo(() => groupExams(mocks), [mocks])
   const years = useMemo(() => [...new Set(groups.map((g) => g.year).filter(Boolean) as string[])].sort().reverse(), [groups])
   const visible = groups.filter(

@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { verifySession, SESSION_COOKIE } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { releaseDueMocks } from '@/lib/schedule'
+import { configGroups } from '@/lib/course-groups'
 import type { TestSubject, TestPlacement, MathLayout, TestSection, TestAccess } from '@/app/api/admin/test-config/route'
 
 export type MockTestSummary = {
@@ -26,8 +27,8 @@ export type MockTestSummary = {
   section: TestSection
   /** 'paid' mocks show a lock and open for Pro / course students / admins only. */
   access: TestAccess
-  /** Course group slug the admin attached this mock to ('nov' / 'dec'), or null. */
-  courseGroup: string | null
+  /** Course groups this mock / task is given to ('nov' / 'dec'). */
+  courseGroups: string[]
   /** Suggested minutes for a task (shown once at its start), or null. */
   recommendedMinutes: number | null
 }
@@ -109,7 +110,7 @@ export async function GET(req: NextRequest) {
           publishAt: (c.publish_at as string | null) ?? null,
           section: (c.section === 'free' ? 'free' : 'exams') as TestSection,
           access: (c.access === 'paid' ? 'paid' : 'free') as TestAccess,
-          courseGroup: (c.course_group as string | null) || null,
+          courseGroups: configGroups(c),
           recommendedMinutes: typeof c.recommended_minutes === 'number' ? (c.recommended_minutes as number) : null,
         },
       ]),
@@ -142,7 +143,7 @@ export async function GET(req: NextRequest) {
           done: doneLabels.has(label),
           section: config?.section ?? 'exams',
           access: config?.access ?? 'free',
-          courseGroup: config?.courseGroup ?? null,
+          courseGroups: config?.courseGroups ?? [],
           recommendedMinutes: config?.recommendedMinutes ?? null,
         }
       })

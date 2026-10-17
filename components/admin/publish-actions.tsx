@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { SectionAccessPicker, type Access, type Section } from '@/components/admin/section-access'
 import { AlertTriangle, CalendarClock, ExternalLink, EyeOff, Globe, GraduationCap, Loader2, X } from 'lucide-react'
-import { COURSE_GROUPS, groupOfLabel } from '@/lib/course-groups'
+import { COURSE_GROUPS, groupsOfTask } from '@/lib/course-groups'
 
 /**
  * "Check it now" + "Publish" for one mock.
@@ -28,8 +28,8 @@ export function PublishActions({
   const [when, setWhen] = useState('')
   const [placement, setPlacement] = useState<{ section: Section; access: Access } | null>(null)
   const [placing, setPlacing] = useState(false)
-  // Course group the mock is attached to ('' = not attached).
-  const [group, setGroup] = useState<string | null>(null)
+  // Course groups the mock is given to (null = still loading).
+  const [groups, setGroups] = useState<string[] | null>(null)
   const [grouping, setGrouping] = useState(false)
   // "Vazifa" (untimed task): its suggested time can be edited here.
   const [isTask, setIsTask] = useState(false)
@@ -49,7 +49,7 @@ export function PublishActions({
           const m = d.config?.recommendedMinutes ? String(d.config.recommendedMinutes) : ''
           setMinutes(m)
           setSavedMinutes(m)
-          setGroup(d.config?.courseGroup ?? groupOfLabel(testLabel) ?? '')
+          setGroups(groupsOfTask(testLabel, d.config?.courseGroups))
           setPlacement({ section: d.config?.section === 'free' ? 'free' : 'exams', access: d.config?.access === 'paid' ? 'paid' : 'free' })
         }
       })
@@ -89,26 +89,29 @@ export function PublishActions({
     }
   }
 
-  async function attach(slug: string) {
-    const before = group
-    setGroup(slug)
+  /** Give the mock to / take it away from one group (a mock can be in several). */
+  async function toggleGroup(slug: string) {
+    if (!groups) return
+    const before = groups
+    const next = groups.includes(slug) ? groups.filter((g) => g !== slug) : [...groups, slug]
+    setGroups(next)
     setGrouping(true)
     setError(null)
     try {
       const res = await fetch('/api/admin/test-config', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ testLabel, courseGroup: slug || null }),
+        body: JSON.stringify({ testLabel, courseGroups: next }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setGroup(before)
+        setGroups(before)
         setError(data.error ?? 'Saqlab bo‘lmadi.')
       } else {
         onChange?.(published ?? true)
       }
     } catch {
-      setGroup(before)
+      setGroups(before)
       setError("Server bilan bog'lanib bo'lmadi.")
     } finally {
       setGrouping(false)
@@ -227,33 +230,36 @@ export function PublishActions({
             <SectionAccessPicker section={placement.section} access={placement.access} onChange={place} busy={placing} />
           </div>
         )}
-        {group !== null && (
+        {groups !== null && (
           <div className={`mt-3 rounded-lg border border-line bg-white p-3 ${grouping ? 'pointer-events-none opacity-60' : ''}`}>
             <div className="mb-2 flex items-center gap-1.5 text-[12.5px] font-extrabold text-ink">
-              <GraduationCap size={14} className="text-sky-600" /> Kurs guruhi (My Courses)
+              <GraduationCap size={14} className="text-sky-600" /> Kurs guruhlari (My Courses)
             </div>
             <div className="flex flex-wrap gap-2">
-              {[{ slug: '', title: 'Biriktirilmagan' }, ...COURSE_GROUPS].map((g) => (
-                <button
-                  key={g.slug || 'none'}
-                  type="button"
-                  onClick={() => g.slug !== group && attach(g.slug)}
-                  aria-pressed={group === g.slug}
-                  className={`rounded-lg border px-3 py-1.5 text-[12px] font-bold transition-colors ${
-                    group === g.slug ? 'border-sky-600 bg-sky-600 text-white' : 'border-line text-ink-soft hover:border-sky-400'
-                  }`}
-                >
-                  {g.title}
-                </button>
-              ))}
+              {COURSE_GROUPS.map((g) => {
+                const on = groups.includes(g.slug)
+                return (
+                  <button
+                    key={g.slug}
+                    type="button"
+                    onClick={() => toggleGroup(g.slug)}
+                    aria-pressed={on}
+                    className={`rounded-lg border px-3 py-1.5 text-[12px] font-bold transition-colors ${
+                      on ? 'border-sky-600 bg-sky-600 text-white' : 'border-line text-ink-soft hover:border-sky-400'
+                    }`}
+                  >
+                    {on ? '✓ ' : ''}
+                    {g.title}
+                  </button>
+                )
+              })}
             </div>
             <p className="mt-1.5 text-[11px] text-ink-faint">
-              Guruhga biriktirilgan mock faqat shu guruh o&apos;quvchilarining <b>My Courses</b> bo&apos;limida ko&apos;rinadi va oddiy
-              mocklar ro&apos;yxatidan chiqadi.{' '}
+              Bir nechta guruhni tanlash mumkin. Guruhga berilgan mock o&apos;sha guruh o&apos;quvchilarining <b>My Courses</b> bo&apos;limida
+              ham ko&apos;rinadi
               {isTask
-                ? "Bu vazifa: ballsiz, vaqt cheklovsiz (taymer yuqoriga sanaydi)."
-                : "Mock o'z qoidasi bilan qoladi: vaqtli va ballik. Vaqt tugaganda o'quvchidan davom etishni xohlash-xohlamasligi so'raladi, davom etsa taymer minusga qarab sanaydi."}{' '}
-              &quot;Biriktirilmagan&quot; — oddiy mockka qaytaradi.
+                ? '. Bu vazifa: ballsiz, vaqt cheklovsiz (taymer yuqoriga sanaydi) va faqat guruh o‘quvchilariga ochiq.'
+                : ", oddiy mocklar ro'yxatidan esa yo'qolmaydi (yuqoridagi bo'lim — All Past Exams / Free Mocks — o'zgarmaydi). Vaqt tugaganda o'quvchidan davom etishni xohlash-xohlamasligi so'raladi, davom etsa taymer minusga qarab sanaydi."}
             </p>
             {isTask && (
               <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">

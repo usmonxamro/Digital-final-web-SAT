@@ -5,7 +5,7 @@ import { BarChart3, CalendarClock, ChevronDown, Loader2, MonitorPlay, Search, Tr
 import type { MockTestSummary } from '@/app/api/tests/route'
 import type { MockAttemptRow, MockStat } from '@/app/api/admin/mock-stats/route'
 import { PublishActions } from '@/components/admin/publish-actions'
-import { groupBySlug, groupOfLabel } from '@/lib/course-groups'
+import { groupBySlug, groupsOfTask } from '@/lib/course-groups'
 
 type Filter = 'all' | 'published' | 'draft'
 
@@ -122,14 +122,13 @@ export function MocksPanel() {
                           VAZIFA{t.recommendedMinutes ? ` · ${t.recommendedMinutes} daq` : ''}
                         </span>
                       )}
-                      {(() => {
-                        const g = groupBySlug(t.courseGroup ?? '') ?? (t.placement === 'course_task' ? groupBySlug(groupOfLabel(t.label) ?? '') : null)
-                        return g ? (
-                          <span className="rounded-full bg-indigo-100 px-1.5 py-px text-[9.5px] font-extrabold text-indigo-800">
-                            GURUH · {g.short.toUpperCase()}
+                      {groupsOfTask(t.label, t.courseGroups)
+                        .filter((slug) => t.placement === 'course_task' || t.courseGroups.includes(slug))
+                        .map((slug) => (
+                          <span key={slug} className="rounded-full bg-indigo-100 px-1.5 py-px text-[9.5px] font-extrabold text-indigo-800">
+                            GURUH · {(groupBySlug(slug)?.short ?? slug).toUpperCase()}
                           </span>
-                        ) : null
-                      })()}
+                        ))}
                       {t.hasVideo && (
                         <span className="flex items-center gap-0.5 rounded-full bg-orange-100 px-1.5 py-px text-[9.5px] font-extrabold text-orange-800">
                           <MonitorPlay size={10} /> VIDEO

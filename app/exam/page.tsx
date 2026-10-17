@@ -639,18 +639,18 @@ function ExamEngine({
           paddingBottom: isMobile && referenceOpen ? '60dvh' : calculatorOpen && isMobile ? (sheetPx ?? MOBILE_SHEET_HEIGHT) : 0,
         }}
       >
-        {/* "Xatosi bormi?" — left edge of the question area (computer), follows the calculator when it docks. */}
-        {!preview && (
-          <div className="absolute left-0 top-1/3 z-20">
-            <ReportQuestionButton
-              variant="tab"
-              testLabel={testTitle}
-              moduleLabel={activeModule.shortLabel}
-              qNumber={current + 1}
-              question={baseQuestion}
-            />
-          </div>
-        )}
+        {/* "Xatosi bormi?" — left edge of the question area (computer), follows the calculator when it docks. Same for students and the admin preview. */}
+        <div className="absolute left-0 top-1/3 z-20">
+          <ReportQuestionButton
+            variant="tab"
+            // The first 3 questions of the test: glow for ~5 s on arrival so the student finds the tab.
+            pulse={moduleIdx === 0 && current < 3}
+            testLabel={testTitle}
+            moduleLabel={activeModule.shortLabel}
+            qNumber={current + 1}
+            question={baseQuestion}
+          />
+        </div>
         <main className="min-h-0 min-w-0 flex-1">
           <QuestionView
             module={activeModule}
@@ -951,7 +951,7 @@ function PageInner() {
               preview,
               startId,
               // A timed mock the teacher put into a course group may be continued past 00:00.
-              allowOvertime: !isCourseTask && !!config?.courseGroup,
+              allowOvertime: !isCourseTask && (config?.courseGroups?.length ?? 0) > 0,
               recommendedMinutes: config?.recommendedMinutes ?? null,
             })
           }

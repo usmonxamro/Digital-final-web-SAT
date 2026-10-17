@@ -26,8 +26,8 @@ export type TestSummary = {
   done?: boolean
   section?: 'exams' | 'free'
   access?: 'free' | 'paid'
-  /** Course group slug this mock is attached to (admin), or null. */
-  courseGroup?: string | null
+  /** Course groups this mock / task is given to (admin). */
+  courseGroups?: string[]
   recommendedMinutes?: number | null
 }
 

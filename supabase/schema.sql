@@ -361,3 +361,10 @@ alter table test_configs add column if not exists course_group text;
 -- NULL = nothing recommended. The student sees it once, on the start screen ("Tavsiya etilgan vaqt: 50 daqiqa").
 -- (The course_group column from v68 is also needed: run v68 first if you have not.)
 alter table test_configs add column if not exists recommended_minutes integer;
+
+-- v73: a mock / task can belong to SEVERAL course groups at once (Admin -> Guruhlar, or the mock's
+-- own settings). Replaces the single course_group column of v68 (old values are copied over).
+-- Being in a group does NOT hide a normal mock from "All Past Exams" / "Free Mocks".
+alter table test_configs add column if not exists course_groups text[] not null default '{}';
+update test_configs set course_groups = array[course_group]
+  where course_group is not null and course_group <> '' and course_groups = '{}';

@@ -8,15 +8,9 @@ import { useDashboardData, type TestSummary } from '@/components/marketing/dashb
 import { useUser } from '@/components/marketing/dashboard/user-context'
 import { useSd } from '@/components/marketing/dashboard/sd-ui'
 import { CourseCard } from '@/components/marketing/dashboard/course-card'
-import { COURSE_GROUPS, groupBySlug } from '@/lib/course-groups'
+import { COURSE_GROUPS, groupsOfTask } from '@/lib/course-groups'
 
-/** "December Intensive — Week 1" → course "December Intensive"; labels without a dash go to "Umumiy vazifalar". */
-function courseOf(label: string): { course: string; task: string } {
-  const m = label.match(/^(.{3,}?)\s+[—–-]\s+(.+)$/)
-  return m ? { course: m[1].trim(), task: m[2].trim() } : { course: 'Umumiy vazifalar', task: label }
-}
-
-type Course = { name: string; slug: string | null; tasks: { task: string; test: TestSummary }[] }
+type Course = { name: string; slug: string; tasks: { task: string; test: TestSummary }[] }
 
 export default function CourseTasksPage() {
   const { tests } = useDashboardData()
@@ -33,30 +27,20 @@ export default function CourseTasksPage() {
     setOpen(new URLSearchParams(window.location.search).get('course'))
   }, [])
 
+  // Only the defined groups (Noyabr / Dekabr) are listed. A task or mock shows up in a group when the
+  // admin gave it to that group (a mock can be in several groups), or — for older tasks — when its
+  // name starts with the group's title. Anything not given to a group is simply not shown here.
   const courses = useMemo<Course[]>(() => {
-    // The defined groups are always listed (even before their first task); other task groups follow.
-    const map = new Map<string, Course>()
-    for (const g of COURSE_GROUPS) map.set(g.title.toLowerCase(), { name: g.title, slug: g.slug, tasks: [] })
-    for (const t of (tests ?? []).filter((x) => x.placement === 'course_task' || !!x.courseGroup)) {
-      // A mock the admin attached to a group goes into that group, whatever its name is.
-      const attached = t.courseGroup ? groupBySlug(t.courseGroup) : null
-      let { course, task } = courseOf(t.label)
-      if (attached) {
-        course = attached.title
-        const prefix = new RegExp(`^${attached.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[—–-]\\s*`, 'i')
-        task = t.label.replace(prefix, '').trim() || t.label
-      }
-      const key = course.toLowerCase()
-      const c = map.get(key) ?? { name: course, slug: null, tasks: [] }
-      c.tasks.push({ task, test: t })
-      map.set(key, c)
-    }
-    const defined = COURSE_GROUPS.map((g) => map.get(g.title.toLowerCase())!)
-    const others = [...map.values()].filter((c) => !c.slug).sort((a, b) => a.name.localeCompare(b.name))
-    return [...defined, ...others]
+    return COURSE_GROUPS.map((g) => {
+      const prefix = new RegExp(`^${g.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[—–-]\\s*`, 'i')
+      const tasks = (tests ?? [])
+        .filter((t) => groupsOfTask(t.label, t.courseGroups).includes(g.slug) && (t.placement === 'course_task' || !!t.courseGroups?.includes(g.slug)))
+        .map((t) => ({ task: t.label.replace(prefix, '').trim() || t.label, test: t }))
+      return { name: g.title, slug: g.slug, tasks }
+    })
   }, [tests])
 
-  const unlocked = (c: Course) => (c.slug ? access.all || access.groups.includes(c.slug) : member)
+  const unlocked = (c: Course) => access.all || access.groups.includes(c.slug)
   const current = open ? courses.find((c) => c.name === open && unlocked(c)) ?? null : null
 
   function pick(c: Course) {

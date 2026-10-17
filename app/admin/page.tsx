@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { SupportPanel } from '@/components/admin/support-panel'
 import { NotifyPanel } from '@/components/admin/notify-panel'
 import { ReportsPanel } from '@/components/admin/reports-panel'
+import { GroupsPanel } from '@/components/admin/groups-panel'
 import { ThemeSwitch } from '@/components/marketing/theme-switch'
 import {
   ArrowLeft,
@@ -477,7 +478,7 @@ function EnglishMockForm() {
 function TaskForm() {
   const [name, setName] = useState('')
   const [subject, setSubject] = useState<'math' | 'english'>('math')
-  const [group, setGroup] = useState('')
+  const [groups, setGroups] = useState<string[]>([])
   const [minutes, setMinutes] = useState('')
   const [questions, setQuestions] = useState<Question[] | null>(null)
   const [saving, setSaving] = useState(false)
@@ -505,7 +506,7 @@ function TaskForm() {
           placement: 'course_task',
           section: 'exams',
           access: 'free',
-          courseGroup: group || null,
+          courseGroups: groups,
           recommendedMinutes: mins > 0 ? mins : null,
           // Saved as a draft: check it with "Check it now", then Publish.
           published: false,
@@ -527,7 +528,7 @@ function TaskForm() {
       r.ok
         ? {
             ok: true,
-            message: `"${label}" vazifasi saqlandi — ${questions.length} ta savol${group ? `, guruh: ${COURSE_GROUPS.find((g) => g.slug === group)?.title}` : ''}. Hozircha DRAFT.`,
+            message: `"${label}" vazifasi saqlandi — ${questions.length} ta savol${groups.length ? `, guruh: ${groups.map((g) => COURSE_GROUPS.find((c) => c.slug === g)?.title).join(' + ')}` : ''}. Hozircha DRAFT.`,
           }
         : r,
     )
@@ -581,22 +582,27 @@ function TaskForm() {
       </div>
 
       <div className="mb-4">
-        <div className="mb-1.5 text-[12px] font-bold text-ink-soft">Qaysi guruhga biriktiriladi</div>
+        <div className="mb-1.5 text-[12px] font-bold text-ink-soft">Qaysi guruh(lar)ga beriladi (bir nechtasini tanlash mumkin)</div>
         <div className="flex flex-wrap gap-2">
-          {[{ slug: '', title: 'Hozircha biriktirmayman' }, ...COURSE_GROUPS].map((g) => (
-            <button
-              key={g.slug || 'none'}
-              type="button"
-              onClick={() => setGroup(g.slug)}
-              aria-pressed={group === g.slug}
-              className={`rounded-lg border px-3 py-1.5 text-[12px] font-bold transition-colors ${
-                group === g.slug ? 'border-sky-600 bg-sky-600 text-white' : 'border-line text-ink-soft hover:border-sky-400'
-              }`}
-            >
-              {g.title}
-            </button>
-          ))}
+          {COURSE_GROUPS.map((g) => {
+            const on = groups.includes(g.slug)
+            return (
+              <button
+                key={g.slug}
+                type="button"
+                onClick={() => setGroups((cur) => (on ? cur.filter((x) => x !== g.slug) : [...cur, g.slug]))}
+                aria-pressed={on}
+                className={`rounded-lg border px-3 py-1.5 text-[12px] font-bold transition-colors ${
+                  on ? 'border-sky-600 bg-sky-600 text-white' : 'border-line text-ink-soft hover:border-sky-400'
+                }`}
+              >
+                {on ? '✓ ' : ''}
+                {g.title}
+              </button>
+            )
+          })}
         </div>
+        <p className="mt-1 text-[11px] text-ink-faint">Hech biri tanlanmasa, vazifa hech kimga ko&apos;rinmaydi — keyin Guruhlar bo&apos;limidan berasiz.</p>
       </div>
 
       <div className="mb-4">
@@ -846,7 +852,7 @@ function EditTestBrowser() {
                 </div>
                 <div className="text-[11.5px] text-ink-faint">
                   {t.placement === 'course_task'
-                    ? `Vazifa · ${t.subject === 'math' ? t.mathCount : t.readingCount} ta savol${t.courseGroup ? ` · ${t.courseGroup}` : ''}`
+                    ? `Vazifa · ${t.subject === 'math' ? t.mathCount : t.readingCount} ta savol${t.courseGroups?.length ? ` · ${t.courseGroups.join(' + ')}` : ''}`
                     : t.subject === 'full'
                     ? `R&W ${t.readingCount} · Math ${t.mathCount}`
                     : t.subject === 'math'
@@ -1216,7 +1222,7 @@ function SkillBankImport() {
 
 /* ------------------------------------ page ---------------------------------- */
 
-type Tab = 'mocks' | 'new' | 'task' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support' | 'notify' | 'reports'
+type Tab = 'mocks' | 'new' | 'task' | 'groups' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support' | 'notify' | 'reports'
 type NewMockType = 'full' | 'math' | 'english' | null
 
 export default function AdminPage() {
@@ -1288,6 +1294,7 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
           <TabButton icon={<LayoutList size={15} />} label="Mocklar" active={tab === 'mocks'} onClick={() => setTab('mocks')} />
           <TabButton icon={<ListChecks size={15} />} label="Yangi mock qo'shish" active={tab === 'new'} onClick={() => setTab('new')} />
           <TabButton icon={<ClipboardList size={15} />} label="Vazifa qo'shish" active={tab === 'task'} onClick={() => setTab('task')} />
+          <TabButton icon={<Users size={15} />} label="Guruhlar" active={tab === 'groups'} onClick={() => setTab('groups')} />
           <TabButton icon={<PenSquare size={15} />} label="Testni tahrirlash" active={tab === 'edit'} onClick={() => setTab('edit')} />
           <TabButton icon={<UploadCloud size={15} />} label="Savol banki" active={tab === 'bank'} onClick={() => setTab('bank')} />
           <TabButton icon={<BarChart3 size={15} />} label="Statistika" active={tab === 'stats'} onClick={() => setTab('stats')} />
@@ -1366,6 +1373,8 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
             <TaskForm />
           </div>
         )}
+
+        {tab === 'groups' && <GroupsPanel />}
 
         {tab === 'edit' && (
           <div className="bg-white border border-line rounded-2xl p-5">

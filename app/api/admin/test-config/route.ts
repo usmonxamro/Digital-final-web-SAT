@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { releaseDueMocks } from '@/lib/schedule'
 import { isMissingColumn } from '@/lib/db-columns'
-import { groupBySlug } from '@/lib/course-groups'
+import { groupBySlug, configGroups } from '@/lib/course-groups'
 
 
 export type TestSubject = 'full' | 'math' | 'english'
@@ -29,10 +29,15 @@ export type TestConfig = {
   publishAt: string | null
   section: TestSection
   access: TestAccess
-  /** Course group slug the mock is attached to, or null. */
-  courseGroup: string | null
+  /** Course groups the mock / task is given to (slugs). A normal mock stays in the public lists too. */
+  courseGroups: string[]
   /** Suggested time (minutes) shown once on a task's start screen; null = none. */
   recommendedMinutes: number | null
+}
+
+/** Unique, known group slugs only. */
+function cleanGroups(v: unknown): string[] {
+  return Array.isArray(v) ? [...new Set(v.filter((g): g is string => typeof g === 'string' && !!groupBySlug(g)))] : []
 }
 
 export async function POST(req: NextRequest) {
@@ -57,8 +62,8 @@ export async function POST(req: NextRequest) {
   const section: TestSection | null = body?.section === 'free' ? 'free' : body?.section === 'exams' ? 'exams' : null
   const access: TestAccess | null = body?.access === 'paid' ? 'paid' : body?.access === 'free' ? 'free' : null
   // Only touched when the caller sends them (a plain settings save never clears a group / time).
-  const hasGroup = !!body && 'courseGroup' in body
-  const courseGroup: string | null = typeof body?.courseGroup === 'string' && groupBySlug(body.courseGroup) ? body.courseGroup : null
+  const hasGroup = !!body && 'courseGroups' in body
+  const courseGroups = cleanGroups(body?.courseGroups)
   const hasRec = !!body && 'recommendedMinutes' in body
   const recRaw = Number(body?.recommendedMinutes)
   const recommendedMinutes: number | null = Number.isFinite(recRaw) && recRaw > 0 ? Math.min(Math.round(recRaw), 600) : null
@@ -87,7 +92,10 @@ export async function POST(req: NextRequest) {
   if (typeof body?.published === 'boolean') row.published = body.published
   if (section) row.section = section
   if (access) row.access = access
-  if (hasGroup) row.course_group = courseGroup
+  if (hasGroup) {
+    row.course_groups = courseGroups
+    row.course_group = null // the older single column is retired
+  }
   if (hasRec) row.recommended_minutes = recommendedMinutes
 
   let { error } = await supabase.from('test_configs').upsert(row)
@@ -106,9 +114,9 @@ export async function POST(req: NextRequest) {
     ;({ error } = await supabase.from('test_configs').upsert(row))
   }
 
-  if (error && (isMissingColumn(error, 'course_group') || isMissingColumn(error, 'recommended_minutes'))) {
+  if (error && (isMissingColumn(error, 'course_groups') || isMissingColumn(error, 'course_group') || isMissingColumn(error, 'recommended_minutes'))) {
     return NextResponse.json(
-      { error: "Avval Supabase'da v68 va v72 SQL'ni ishga tushiring (supabase/schema.sql oxiridagi qismlar)." },
+      { error: "Avval Supabase'da v73 va v72 SQL'ni ishga tushiring (supabase/schema.sql oxiridagi qismlar)." },
       { status: 500 },
     )
   }
@@ -148,7 +156,7 @@ export async function GET(req: NextRequest) {
       publishAt: row.publish_at ?? null,
       section: row.section === 'free' ? 'free' : 'exams',
       access: row.access === 'paid' ? 'paid' : 'free',
-      courseGroup: (row.course_group as string | null) || null,
+      courseGroups: configGroups(row),
       recommendedMinutes: typeof row.recommended_minutes === 'number' ? row.recommended_minutes : null,
     }))
 
@@ -171,14 +179,13 @@ export async function PATCH(req: NextRequest) {
   const patch: Record<string, unknown> = {}
   if (body?.section === 'free' || body?.section === 'exams') patch.section = body.section
   if (body?.access === 'free' || body?.access === 'paid') patch.access = body.access
-  // Attach to / detach from a course group: { courseGroup: 'nov' | 'dec' | null }.
-  // Only decides WHERE the mock shows (My Courses of that group); its own rules
-  // (timed + scored, or an untimed "vazifa") stay exactly as they were.
-  if (body && 'courseGroup' in body) {
-    const g = body.courseGroup
-    if (g === null || g === '') patch.course_group = null
-    else if (typeof g === 'string' && groupBySlug(g)) patch.course_group = g
-    else return NextResponse.json({ error: "Noma'lum guruh." }, { status: 400 })
+  // The groups this mock / task is given to: { courseGroups: ['nov', 'dec'] } (empty = none).
+  // It only decides where the mock is ALSO shown (My Courses of those groups); it is never hidden
+  // from the normal lists and keeps its own rules (timed + scored, or an untimed "vazifa").
+  if (body && 'courseGroups' in body) {
+    if (!Array.isArray(body.courseGroups)) return NextResponse.json({ error: "Noto'g'ri guruhlar." }, { status: 400 })
+    patch.course_groups = cleanGroups(body.courseGroups)
+    patch.course_group = null
   }
   // Suggested time for a task: { recommendedMinutes: number | null }.
   if (body && 'recommendedMinutes' in body) {
@@ -188,7 +195,7 @@ export async function PATCH(req: NextRequest) {
   if (Object.keys(patch).length === 0) return NextResponse.json({ error: "O'zgartirish yo'q." }, { status: 400 })
   const { error } = await supabaseAdmin().from('test_configs').update(patch).eq('test_label', testLabel)
   if (error) {
-    const hint = 'recommended_minutes' in patch ? 'v72' : 'course_group' in patch ? 'v68' : 'v55'
+    const hint = 'recommended_minutes' in patch ? 'v72' : 'course_groups' in patch ? 'v73' : 'v55'
     return NextResponse.json(
       { error: `Avval Supabase'da ${hint} SQL'ni ishga tushiring (supabase/schema.sql oxiridagi qism).` },
       { status: 500 },

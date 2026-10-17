@@ -12,6 +12,7 @@ export function ReportQuestionButton({
   qNumber,
   question,
   variant = 'icon',
+  pulse = false,
 }: {
   testLabel: string
   moduleLabel?: string
@@ -19,6 +20,8 @@ export function ReportQuestionButton({
   question: Question
   /** 'icon' = small square (results screens); 'tab' = vertical tab on the left edge (computer, during the exam). */
   variant?: 'icon' | 'tab'
+  /** Glow amber for ~5 s so the student notices the tab (the exam turns it on for the first questions). */
+  pulse?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
@@ -66,18 +69,20 @@ export function ReportQuestionButton({
     <>
       {variant === 'tab' ? (
         <button
+          // Re-keyed per question so the glow restarts every time the student arrives at one of the first questions.
+          key={qid}
           type="button"
           onClick={(e) => {
             e.stopPropagation()
             setOpen(true)
           }}
-          title="Savolda xato bormi? Xabar bering"
+          title="Shu savolda xato yoki kamchilik bormi? Xabar bering"
           aria-label="Savolda xato haqida xabar berish"
           className={`group hidden lg:flex flex-col items-center gap-2 rounded-r-xl border border-l-0 px-1.5 py-3 shadow-sm transition-colors ${
             sent
               ? 'border-green-300 bg-green-50 text-green-700'
               : 'border-[#e2e8f0] bg-white/95 text-[#64748b] hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600'
-          }`}
+          } ${pulse && !sent ? 'report-glow' : ''}`}
         >
           {sent ? <Check className="size-4" /> : <Flag className="size-4" />}
           <span className="text-[11.5px] font-bold tracking-wide [writing-mode:vertical-rl] rotate-180">
@@ -122,7 +127,7 @@ export function ReportQuestionButton({
               </div>
             ) : (
               <>
-                <h3 className="pr-8 text-lg font-extrabold text-[#0f172a]">Savolda xato bormi?</h3>
+                <h3 className="pr-8 text-lg font-extrabold text-[#0f172a]">Shu savolda xato yoki kamchilik bormi?</h3>
                 <p className="mt-1 text-xs text-[#64748b]">
                   {testLabel} · Q{qNumber}
                   {moduleLabel ? ` · ${moduleLabel}` : ''}
@@ -133,7 +138,7 @@ export function ReportQuestionButton({
                   rows={4}
                   maxLength={1500}
                   autoFocus
-                  placeholder="Nima noto‘g‘ri deb o‘ylaysiz? (masalan: javob kaliti xato, rasm ko‘rinmayapti, savol matnida xato...)"
+                  placeholder="Nima noto‘g‘ri deb o‘ylaysiz? (masalan: javob kaliti xato, rasm ko‘rinmayapti, savol matnida yoki variantlarda xato...)"
                   className="mt-3 w-full rounded-xl border border-[#e2e8f0] p-3 text-sm outline-none focus:border-[#16a34a]"
                 />
                 {err && <p className="mt-2 text-xs font-semibold text-red-600">{err}</p>}
