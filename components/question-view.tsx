@@ -336,6 +336,9 @@ function QuestionViewImpl({
           serif={module.kind === 'reading'}
           onSelect={() => onSelect(opt.id)}
           onToggleEliminate={() => onToggleEliminate(opt.id)}
+          imageScale={question.layout?.choiceImg?.[opt.id]?.scale}
+          editImage={editLayout}
+          onImageScaleChange={(s) => setChoiceImageScale(opt.id, s)}
         />
       ))}
     </div>
@@ -354,7 +357,13 @@ function QuestionViewImpl({
   function setImageScale(scale: number) {
     if (!onLayoutEdit) return
     const { blocks, rows } = resolveRows(question, module.kind === 'math')
-    onLayoutEdit(serializeLayout(blocks, rows, { scale }, question.layout?.styles))
+    onLayoutEdit(serializeLayout(blocks, rows, { scale }, question.layout?.styles, question.layout?.choiceImg))
+  }
+  function setChoiceImageScale(id: string, scale: number) {
+    if (!onLayoutEdit) return
+    const { blocks, rows } = resolveRows(question, module.kind === 'math')
+    const next = { ...(question.layout?.choiceImg ?? {}), [id]: { scale } }
+    onLayoutEdit(serializeLayout(blocks, rows, question.layout?.img, question.layout?.styles, next))
   }
   const image = question.image ? (
     <QuestionImage

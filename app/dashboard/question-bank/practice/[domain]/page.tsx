@@ -182,7 +182,7 @@ export default function SkillDrillPage({ params }: { params: Promise<{ domain: s
                     {c.id}
                   </span>
                   <span className="flex min-w-0 flex-col items-start gap-1.5">
-                    {c.image && <ChoiceImage src={c.image} />}
+                    {c.image && <ChoiceImage src={c.image} scale={question.layout?.choiceImg?.[c.id]?.scale} />}
                     {c.tex ? <MathTex tex={c.tex} /> : c.text}
                   </span>
                 </button>

@@ -12,6 +12,10 @@ type OptionCardProps = {
   serif?: boolean
   onSelect: () => void
   onToggleEliminate: () => void
+  /** Size multiplier of this option's picture (admin-chosen), and — in the admin preview — how to change it. */
+  imageScale?: number
+  editImage?: boolean
+  onImageScaleChange?: (scale: number) => void
 }
 
 export function OptionCard({
@@ -22,6 +26,9 @@ export function OptionCard({
   serif = false,
   onSelect,
   onToggleEliminate,
+  imageScale,
+  editImage,
+  onImageScaleChange,
 }: OptionCardProps) {
   return (
     <div className="flex items-center gap-2">
@@ -63,7 +70,7 @@ export function OptionCard({
               : { color: '#111' }
           }
         >
-          <ChoiceContent choice={option} dim={eliminated} />
+          <ChoiceContent choice={option} dim={eliminated} scale={imageScale} editable={editImage} onScaleChange={onImageScaleChange} />
         </span>
       </button>
 

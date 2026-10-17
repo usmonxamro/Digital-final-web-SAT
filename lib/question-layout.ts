@@ -28,6 +28,8 @@ export type QuestionLayout = {
   rows: string[][]
   /** Figure's default size, × its automatic size (set by the admin in the preview). */
   img?: { scale: number }
+  /** Default size of each answer option's picture (A–D), × its automatic size, set in the preview. */
+  choiceImg?: Record<string, { scale: number }>
   /** Keyed by block id (p0…, img, eq0…). */
   styles?: Record<string, BlockStyle>
 }
@@ -61,11 +63,23 @@ export function cleanStyle(raw: unknown): BlockStyle | undefined {
   return Object.keys(out).length ? out : undefined
 }
 
+/** Keeps only A–D entries with a real (non-neutral) scale. */
+export function cleanChoiceImg(raw: unknown): Record<string, { scale: number }> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const out: Record<string, { scale: number }> = {}
+  for (const id of ['A', 'B', 'C', 'D']) {
+    const v = (raw as Record<string, { scale?: unknown } | undefined>)[id]
+    const scale = clampN(v?.scale, STYLE_LIMITS.scale, 2)
+    if (scale !== undefined && Math.abs(scale - 1) > 0.001) out[id] = { scale: Math.max(0.3, scale) }
+  }
+  return Object.keys(out).length ? out : undefined
+}
+
 /** Validates a layout coming from the browser (API side). */
 export function sanitizeLayout(raw: unknown): QuestionLayout | null | undefined {
   if (raw === null) return null
   if (!raw || typeof raw !== 'object') return undefined
-  const l = raw as { rows?: unknown; img?: { scale?: unknown }; styles?: unknown }
+  const l = raw as { rows?: unknown; img?: { scale?: unknown }; choiceImg?: unknown; styles?: unknown }
   if (!Array.isArray(l.rows)) return undefined
   const rows: string[][] = []
   for (const row of l.rows) {
@@ -75,6 +89,8 @@ export function sanitizeLayout(raw: unknown): QuestionLayout | null | undefined 
   const layout: QuestionLayout = { v: 1, rows }
   const scale = clampN(l.img?.scale, STYLE_LIMITS.scale, 2)
   if (scale !== undefined && Math.abs(scale - 1) > 0.001) layout.img = { scale: Math.max(0.3, scale) }
+  const choiceImg = cleanChoiceImg(l.choiceImg)
+  if (choiceImg) layout.choiceImg = choiceImg
   if (l.styles && typeof l.styles === 'object') {
     const styles: Record<string, BlockStyle> = {}
     for (const [id, st] of Object.entries(l.styles as Record<string, unknown>).slice(0, 200)) {
@@ -210,6 +226,7 @@ export function serializeLayout(
   rows: string[][],
   img?: { scale: number },
   styles?: Record<string, BlockStyle>,
+  choiceImg?: Record<string, { scale: number }>,
 ): { prompt: string; layout: QuestionLayout } {
   const chunks: string[] = []
   const outRows: string[][] = []
@@ -252,6 +269,8 @@ export function serializeLayout(
   const layout: QuestionLayout = { v: 1, rows: outRows }
   if (img && Math.abs(img.scale - 1) > 0.001) layout.img = { scale: img.scale }
   if (Object.keys(outStyles).length) layout.styles = outStyles
+  const cImg = cleanChoiceImg(choiceImg)
+  if (cImg) layout.choiceImg = cImg
   return { prompt: chunks.join('\n\n'), layout }
 }
 

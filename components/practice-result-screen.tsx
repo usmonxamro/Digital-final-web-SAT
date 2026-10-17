@@ -135,7 +135,7 @@ export function PracticeResultScreen({
                                 <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-current text-[11px] font-bold">
                                   {c.id}
                                 </span>
-                                <ChoiceContent choice={c} />
+                                <ChoiceContent choice={c} scale={item.question.layout?.choiceImg?.[c.id]?.scale} />
                                 {isCorrect && <span className="ml-auto text-xs font-semibold">To&apos;g&apos;ri javob</span>}
                                 {isChosen && !isCorrect && <span className="ml-auto text-xs font-semibold">Sizning javobingiz</span>}
                               </div>

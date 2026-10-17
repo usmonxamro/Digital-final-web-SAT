@@ -70,7 +70,7 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
     nextStyles: Record<string, BlockStyle> = styles,
   ) {
     if (!onEdit) return
-    onEdit(serializeLayout(nextBlocks, nextRows, img, nextStyles))
+    onEdit(serializeLayout(nextBlocks, nextRows, img, nextStyles, question.layout?.choiceImg))
   }
 
   /* ------------------- fine-tuning: margins, shift, size ------------------- */
