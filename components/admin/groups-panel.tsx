@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Check, CheckCircle2, Loader2, Plus, Search, Users, X } from 'lucide-react'
+import { Check, CheckCircle2, Copy, KeyRound, Loader2, Plus, RefreshCw, Search, Trash2, Users, X } from 'lucide-react'
 import type { MockTestSummary } from '@/app/api/tests/route'
 import type { GroupStats } from '@/app/api/admin/groups/route'
+import type { GroupMember } from '@/app/api/admin/groups/members/route'
 import { COURSE_GROUPS, groupsOfTask } from '@/lib/course-groups'
 
 /**
@@ -18,6 +19,28 @@ export function GroupsPanel() {
   const [query, setQuery] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [view, setView] = useState<'tasks' | 'students'>('tasks')
+  const [codes, setCodes] = useState<Record<string, { code: string; active: boolean }> | null>(null)
+
+  useEffect(() => {
+    fetch('/api/admin/groups/code')
+      .then((r) => r.json())
+      .then((d) => (d.codes ? setCodes(d.codes) : setError(d.error ?? 'Kodlarni yuklab bo‘lmadi.')))
+      .catch(() => setError("Server bilan bog'lanib bo'lmadi."))
+  }, [])
+
+  async function codeAction(action: 'regenerate' | 'on' | 'off') {
+    if (action === 'regenerate' && !window.confirm(`${group.title} uchun YANGI kod yaratilsinmi? Eski kod endi ishlamaydi (qo'shilib bo'lgan o'quvchilar guruhda qoladi).`)) return
+    setError(null)
+    const res = await fetch('/api/admin/groups/code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug, action }),
+    })
+    const d = await res.json().catch(() => ({}))
+    if (!res.ok) return setError(d.error ?? 'Saqlab bo‘lmadi.')
+    setCodes((c) => ({ ...(c ?? {}), [slug]: { code: d.code ?? c?.[slug]?.code ?? '', active: d.active } }))
+  }
 
   function loadTests() {
     fetch('/api/tests?all=1')
@@ -27,13 +50,14 @@ export function GroupsPanel() {
   }
   useEffect(loadTests, [])
 
-  useEffect(() => {
+  function loadStats() {
     setStats(null)
     fetch(`/api/admin/groups?slug=${slug}`)
       .then((r) => r.json())
       .then((d) => setStats(d.error ? { members: 0, done: {} } : d))
       .catch(() => setStats({ members: 0, done: {} }))
-  }, [slug])
+  }
+  useEffect(loadStats, [slug]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const group = COURSE_GROUPS.find((g) => g.slug === slug)!
 
@@ -102,7 +126,32 @@ export function GroupsPanel() {
 
       {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-[12.5px] font-semibold text-red-700">{error}</div>}
 
-      {tests === null ? (
+      <JoinCodeCard info={codes?.[slug] ?? null} loading={codes === null && !error} onAction={codeAction} />
+
+      <div className="mb-4 flex gap-1 border-b border-line">
+        {(
+          [
+            ['tasks', 'Vazifalar va mocklar'],
+            ['students', "O'quvchilar"],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setView(k)}
+            className={`-mb-px border-b-2 px-3.5 py-2 text-[13px] font-bold transition-colors ${
+              view === k ? 'border-ink text-ink' : 'border-transparent text-ink-soft hover:text-ink'
+            }`}
+          >
+            {label}
+            {k === 'students' && stats ? <span className="ml-1.5 opacity-60">{stats.members}</span> : null}
+          </button>
+        ))}
+      </div>
+
+      {view === 'students' ? (
+        <MembersView key={slug} slug={slug} onChanged={loadStats} />
+      ) : tests === null ? (
         <div className="flex items-center gap-2 py-4 text-[13px] text-ink-faint">
           <Loader2 size={14} className="animate-spin" /> Yuklanmoqda...
         </div>
@@ -219,6 +268,173 @@ function Badges({ t }: { t: MockTestSummary }) {
         <span className="rounded-full bg-orange-500 px-1.5 py-px text-[9.5px] font-extrabold text-white">FREE MOCK</span>
       )}
       {!t.published && <span className="rounded-full bg-amber-400 px-1.5 py-px text-[9.5px] font-extrabold text-amber-950">DRAFT</span>}
+    </>
+  )
+}
+
+function JoinCodeCard({
+  info,
+  loading,
+  onAction,
+}: {
+  info: { code: string; active: boolean } | null
+  loading: boolean
+  onAction: (a: 'regenerate' | 'on' | 'off') => void
+}) {
+  const [copied, setCopied] = useState(false)
+  function copy() {
+    if (!info) return
+    navigator.clipboard?.writeText(info.code).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    })
+  }
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-line bg-green-mist/40 px-4 py-3">
+      <KeyRound size={18} className="shrink-0 text-green-deep" />
+      <div className="min-w-0 flex-1">
+        <div className="text-[11.5px] font-semibold text-ink-soft">Guruh kodi — shu kodni Telegram guruhga yuboring</div>
+        {loading || !info ? (
+          <div className="py-1 text-[13px] text-ink-faint">{loading ? 'Yuklanmoqda...' : 'Kod yo‘q'}</div>
+        ) : (
+          <div className={`font-mono text-[20px] font-black tracking-wider ${info.active ? 'text-ink' : 'text-ink-faint line-through'}`}>{info.code}</div>
+        )}
+        <div className="text-[11.5px] text-ink-faint">
+          O&apos;quvchi kodni bir marta kiritadi (Kurslar → Kod bilan qo&apos;shilish) — keyin guruh o&apos;z akkauntida doim ochiq.
+          {info && !info.active && ' Hozir O‘CHIRILGAN: yangi o‘quvchilar qo‘shila olmaydi.'}
+        </div>
+      </div>
+      {info && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={copy} className="flex items-center gap-1 rounded-lg border border-green bg-white px-3 py-1.5 text-[12px] font-bold text-green-deep hover:bg-green-mist">
+            {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? 'Nusxalandi' : 'Nusxalash'}
+          </button>
+          <button type="button" onClick={() => onAction(info.active ? 'off' : 'on')} className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-bold text-ink-soft hover:border-green">
+            {info.active ? "O'chirib qo'yish" : 'Yoqish'}
+          </button>
+          <button type="button" onClick={() => onAction('regenerate')} className="flex items-center gap-1 rounded-lg border border-line px-3 py-1.5 text-[12px] font-bold text-ink-soft hover:border-red-300 hover:text-red-600">
+            <RefreshCw size={12} /> Yangi kod
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const VIA: Record<GroupMember['via'], { label: string; cls: string }> = {
+  code: { label: 'Guruh kodi', cls: 'bg-green-mist text-green-deep' },
+  telegram: { label: 'Telegram kodi', cls: 'bg-sky-100 text-sky-800' },
+  admin: { label: "Admin qo'shgan", cls: 'bg-violet-100 text-violet-800' },
+}
+
+function MembersView({ slug, onChanged }: { slug: string; onChanged: () => void }) {
+  const [members, setMembers] = useState<GroupMember[] | null>(null)
+  const [query, setQuery] = useState('')
+  const [busy, setBusy] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  function load() {
+    fetch(`/api/admin/groups/members?slug=${slug}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.error) setError(d.error)
+        setMembers(d.members ?? [])
+      })
+      .catch(() => {
+        setError("Server bilan bog'lanib bo'lmadi.")
+        setMembers([])
+      })
+  }
+  useEffect(load, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function remove(m: GroupMember) {
+    if (!window.confirm(`${m.name} guruhdan chiqarilsinmi? U kodni qayta kiritib qo'shilishi mumkin.`)) return
+    setBusy(m.userId)
+    setError(null)
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: m.userId, group: slug, groupOn: false }),
+    })
+    const d = await res.json().catch(() => ({}))
+    setBusy(null)
+    if (!res.ok) return setError(d.error ?? 'Olib tashlab bo‘lmadi.')
+    setMembers((cur) => (cur ?? []).filter((x) => x.userId !== m.userId))
+    onChanged()
+  }
+
+  const q = query.trim().toLowerCase()
+  const shown = (members ?? []).filter((m) => !q || `${m.name} ${m.phone} ${m.email}`.toLowerCase().includes(q))
+  const fmt = (iso: string) => (iso ? new Date(iso).toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—')
+
+  if (members === null)
+    return (
+      <div className="flex items-center gap-2 py-4 text-[13px] text-ink-faint">
+        <Loader2 size={14} className="animate-spin" /> Yuklanmoqda...
+      </div>
+    )
+
+  return (
+    <>
+      {error && <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-[12.5px] font-semibold text-red-700">{error}</div>}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <h3 className="text-[13.5px] font-extrabold text-ink">Guruh o&apos;quvchilari ({members.length})</h3>
+        <div className="relative ml-auto min-w-[180px] flex-1 sm:max-w-[260px]">
+          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Ism, telefon yoki email..."
+            className="w-full rounded-lg border border-line py-1.5 pl-8 pr-3 text-[12.5px] focus:border-green focus:outline-none"
+          />
+        </div>
+      </div>
+      {members.length === 0 ? (
+        <p className="text-[12.5px] text-ink-faint">Bu guruhga hali hech kim qo&apos;shilmagan. Yuqoridagi kodni guruhga yuboring.</p>
+      ) : shown.length === 0 ? (
+        <p className="text-[12.5px] text-ink-faint">Hech narsa topilmadi.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-line">
+          <table className="w-full min-w-[640px] text-left text-[12.5px]">
+            <thead className="bg-gray-50 text-[11px] font-extrabold uppercase tracking-wide text-ink-faint">
+              <tr>
+                <th className="px-3 py-2">#</th>
+                <th className="px-3 py-2">O&apos;quvchi</th>
+                <th className="px-3 py-2">Aloqa</th>
+                <th className="px-3 py-2">Qo&apos;shilgan</th>
+                <th className="px-3 py-2">Qanday</th>
+                <th className="px-3 py-2 text-right">Yechgan</th>
+                <th className="px-3 py-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((m, i) => (
+                <tr key={m.userId} className="border-t border-line">
+                  <td className="px-3 py-2 tabular-nums text-ink-faint">{i + 1}</td>
+                  <td className="px-3 py-2 font-bold text-ink">{m.name}</td>
+                  <td className="px-3 py-2 text-ink-soft">{m.phone || m.email || '—'}</td>
+                  <td className="px-3 py-2 tabular-nums text-ink-soft">{fmt(m.joinedAt)}</td>
+                  <td className="px-3 py-2">
+                    <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-extrabold ${VIA[m.via].cls}`}>{VIA[m.via].label}</span>
+                  </td>
+                  <td className="px-3 py-2 text-right font-black tabular-nums text-ink">{m.done}</td>
+                  <td className="px-3 py-2 text-right">
+                    <button
+                      type="button"
+                      onClick={() => remove(m)}
+                      disabled={busy === m.userId}
+                      title="Guruhdan chiqarish"
+                      className="rounded-lg border border-line p-1.5 text-ink-soft hover:border-red-300 hover:text-red-600"
+                    >
+                      {busy === m.userId ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </>
   )
 }

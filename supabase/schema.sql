@@ -368,3 +368,20 @@ alter table test_configs add column if not exists recommended_minutes integer;
 alter table test_configs add column if not exists course_groups text[] not null default '{}';
 update test_configs set course_groups = array[course_group]
   where course_group is not null and course_group <> '' and course_groups = '{}';
+
+-- v75: ONE shared join code per course group. Give it to the whole group; each student types it once
+-- (Kurslar -> Kod bilan qo'shilish) and the membership stays on their account.
+-- Admin -> Guruhlar shows the code (copy / regenerate / switch off) and lists the group's students.
+create table if not exists course_group_codes (
+  group_slug text primary key,
+  code text not null unique,
+  active boolean not null default true,
+  updated_at timestamptz not null default now()
+);
+alter table course_group_codes enable row level security;
+-- how the student got in: 'code' = shared group code (empty = Telegram personal code or added by an admin)
+alter table course_memberships add column if not exists joined_via text;
+insert into course_group_codes (group_slug, code) values
+  ('nov', 'NOYABR-TGHS9G'),
+  ('dec', 'DEKABR-NTRA2W')
+on conflict (group_slug) do nothing;

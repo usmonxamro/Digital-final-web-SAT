@@ -137,13 +137,13 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
                     <KeyRound />
                   </div>
                   <h2>Guruh kodini kiriting</h2>
-                  <p>Telegram botimizdan olgan kodingizni kiriting (masalan: NOV-1CZ3F9-3F9A1B7C2D).</p>
+                  <p>O&apos;qituvchi Telegram guruhga yuborgan kodni kiriting (masalan: NOYABR-ABC123). Kod faqat bir marta kiritiladi.</p>
                   <input
                     className="sd-code-input"
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
                     onKeyDown={(e) => e.key === 'Enter' && redeem()}
-                    placeholder="XXX-XXXXXX-XXXXXXXXXX"
+                    placeholder="NOYABR-XXXXXX"
                     autoFocus
                     spellCheck={false}
                     autoComplete="off"
