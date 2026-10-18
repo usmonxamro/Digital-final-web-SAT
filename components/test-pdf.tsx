@@ -12,7 +12,7 @@ import type { Question } from '@/lib/test-data'
 
 /**
  * "Testni yuklab olish (PDF)": the finished mock's questions, ONE QUESTION PER PAGE, with the site's name on
- * every page (header, soft watermark, clickable footer) and a cover page — so a shared PDF advertises the site.
+ * every page (header, clickable footer) and a cover page — so a shared PDF advertises the site.
  *
  * The teacher decides per mock whether students get the button (test_configs.pdf_download).
  * Pages are drawn with the same components as the exam (KaTeX, tables, figures, the saved layout) and handed to the
@@ -51,26 +51,27 @@ const PDF_CHANNELS = [
   { handle: '@sat_surxon', url: 'https://t.me/sat_surxon' },
 ]
 
-/** Soft diagonal "satbyusmon.com" watermark, drawn once as a picture (so it can't get in the way when selecting text). */
-let watermarkSrc = ''
-function makeWatermark(): string {
-  try {
-    const c = document.createElement('canvas')
-    c.width = 1800
-    c.height = 1800
-    const g = c.getContext('2d')!
-    g.translate(900, 900)
-    g.rotate((-32 * Math.PI) / 180)
-    g.fillStyle = 'rgba(14,124,117,0.07)'
-    g.font = '800 190px Arial, Helvetica, sans-serif'
-    g.textAlign = 'center'
-    g.textBaseline = 'middle'
-    g.fillText(SITE_DOMAIN, 0, 0)
-    return c.toDataURL('image/png')
-  } catch {
-    return ''
-  }
-}
+/**
+ * Static TrueType Inter (public/pdf-fonts/inter): the site's own Inter is a *variable* font, which Chrome writes into
+ * a PDF as "Type 3" glyph programs (fuzzy in many viewers). Static TrueType fonts are embedded as real, crisp,
+ * hinted text — like a LaTeX-compiled PDF.
+ */
+const PDF_FONT = "'SATPrint', Arial, Helvetica, sans-serif"
+const PDF_SERIF = "Georgia, 'Times New Roman', Times, serif"
+const FONT_CSS = [400, 600, 700, 800]
+  .map((w) =>
+    [
+      ['latin', 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD'],
+      ['latin-ext', 'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF'],
+    ]
+      .map(
+        ([sub, range]) =>
+          `@font-face{font-family:'SATPrint';font-style:normal;font-weight:${w};font-display:block;src:url(/pdf-fonts/inter/inter-${sub}-${w}-normal.woff2) format('woff2');unicode-range:${range};}`,
+      )
+      .join('\n'),
+  )
+  .join('\n')
+
 const COVER_W = 794
 const COVER_H = 1123
 
@@ -100,6 +101,22 @@ function Brand({ light }: { light?: boolean }) {
         <div style={{ fontWeight: 600, fontSize: 10.5, color: light ? 'rgba(255,255,255,.85)' : '#64748b' }}>{SITE_DOMAIN}</div>
       </div>
     </div>
+  )
+}
+
+function Chevron() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  )
+}
+
+function Tick() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0e7c75" strokeWidth="3" style={{ flexShrink: 0 }}>
+      <path d="m5 12 5 5 9-10" />
+    </svg>
   )
 }
 
@@ -146,25 +163,17 @@ function Frame({
         background: '#fff',
         overflow: 'hidden',
         color: '#111',
-        fontFamily: 'var(--font-sans), Inter, Arial, Helvetica, sans-serif',
+        fontFamily: PDF_FONT,
       }}
     >
-      {watermarkSrc && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={watermarkSrc}
-          alt=""
-          aria-hidden
-          style={{ position: 'absolute', left: (PAGE_W - 1100) / 2, top: (PAGE_H - 1100) / 2, width: 1100, height: 1100, pointerEvents: 'none', userSelect: 'none' }}
-        />
-      )}
-
       {/* ------------------------------ header (like ExamHeader) ------------------------------ */}
       <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: HEAD_H, background: '#e7f3f1', borderBottom: '1px solid #d7e7e4' }}>
         <div style={{ position: 'relative', height: 70, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 44px' }}>
           <div style={{ lineHeight: 1.25, maxWidth: 340 }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: GREEN_DEEP, letterSpacing: -0.2 }}>{label}</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#0e7c75', marginTop: 2 }}>Directions ⌄</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#0e7c75', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+              Directions <Chevron />
+            </div>
           </div>
           <div style={{ position: 'absolute', left: '50%', top: 6, transform: 'translateX(-50%)', textAlign: 'center', lineHeight: 1.1 }}>
             <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: 0.4, color: '#111' }}>SAT AKADEMIYASI</div>
@@ -213,13 +222,15 @@ function Frame({
               textAlign: 'center',
               fontSize: 13,
               fontWeight: 800,
-              letterSpacing: 1,
-              textTransform: 'uppercase',
+              letterSpacing: 0.6,
               padding: '5px 0',
               borderRadius: '0 0 12px 12px',
             }}
           >
-            This is a practice test
+            This is a practice test from{' '}
+            <a href={SITE_URL} style={{ color: '#fff', textDecoration: 'underline' }}>
+              {SITE_DOMAIN}
+            </a>
           </div>
         </div>
       </div>
@@ -262,7 +273,7 @@ function Frame({
           <div style={{ fontSize: 11.5, fontWeight: 600, color: '#64748b', marginTop: 2 }}>{pageNo ? `${pageNo} / ${pageTotal ?? ''}` : ''}</div>
         </div>
         <div style={{ background: '#111', color: '#fff', borderRadius: 999, padding: '7px 18px', fontSize: 14.5, fontWeight: 700 }}>
-          {nums.length > 1 ? `Questions ${nums[0]}–${nums[nums.length - 1]}` : `Question ${nums[0]}`} of {moduleTotal} ⌄
+          {nums.length > 1 ? `Questions ${nums[0]}–${nums[nums.length - 1]}` : `Question ${nums[0]}`} of {moduleTotal} <Chevron />
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, fontSize: 14.5, fontWeight: 700 }}>
           {PDF_CHANNELS.map((c, i) => (
@@ -339,8 +350,8 @@ function QuestionBody({ item }: { item: PdfItem }) {
 
       {reading && q.passage && (
         <div
-          className="font-serif"
           style={{
+            fontFamily: PDF_SERIF,
             whiteSpace: 'pre-line',
             fontSize: 17,
             lineHeight: 1.6,
@@ -377,7 +388,7 @@ function QuestionBody({ item }: { item: PdfItem }) {
                 borderRadius: 8,
                 background: '#fff',
                 fontSize: 17,
-                fontFamily: reading ? 'Georgia, "Times New Roman", serif' : undefined,
+                fontFamily: reading ? PDF_SERIF : undefined,
               }}
             >
               <span
@@ -417,7 +428,7 @@ function CoverPage({ testTitle, count, qr, date }: { testTitle: string; count: n
         height: COVER_H,
         overflow: 'hidden',
         background: '#fff',
-        fontFamily: 'var(--font-jakarta), "Plus Jakarta Sans", Arial, Helvetica, sans-serif',
+        fontFamily: PDF_FONT,
         color: '#0f172a',
       }}
     >
@@ -436,10 +447,18 @@ function CoverPage({ testTitle, count, qr, date }: { testTitle: string; count: n
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 22, fontWeight: 900, color: GREEN_DEEP }}>Ko‘proq mock va tahlillar bizda</div>
           <ul style={{ marginTop: 14, paddingLeft: 0, listStyle: 'none', fontSize: 15, lineHeight: 1.9, color: '#334155', fontWeight: 600 }}>
-            <li>✔ Real Bluebook uslubidagi onlayn mocklar</li>
-            <li>✔ Har bir savolga batafsil yechim va video tahlil</li>
-            <li>✔ Natija, ball va sertifikat (PDF)</li>
-            <li>✔ O‘zbek tilidagi qulay interfeys</li>
+            <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Tick /> Real Bluebook uslubidagi onlayn mocklar
+            </li>
+            <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Tick /> Har bir savolga batafsil yechim va video tahlil
+            </li>
+            <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Tick /> Natija, ball va sertifikat (PDF)
+            </li>
+            <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Tick /> O‘zbek tilidagi qulay interfeys
+            </li>
           </ul>
           <div style={{ marginTop: 22, fontSize: 15, fontWeight: 800 }}>
             Sayt:{' '}
@@ -522,6 +541,9 @@ const PRINT_ROOT_ID = 'sat-print-root'
 const PRINT_STYLE_ID = 'sat-print-style'
 
 const PRINT_CSS = `
+${FONT_CSS}
+.sat-pdf .font-serif { font-family: ${PDF_SERIF} !important; }
+.sat-pdf .font-sans { font-family: ${PDF_FONT} !important; }
 @media screen { #${PRINT_ROOT_ID} { position: fixed; left: -20000px; top: 0; width: ${PAGE_W}px; pointer-events: none; } }
 @media print {
   @page { size: A4; margin: 0; }
@@ -547,15 +569,26 @@ export async function printTestPdf({ testTitle, items, onProgress, pack = true }
 
   activeCleanup?.()
 
+  // fonts + print rules first, so the measuring pass already uses the real PDF font
+  const style = document.createElement('style')
+  style.id = PRINT_STYLE_ID
+  style.textContent = PRINT_CSS
+  document.head.appendChild(style)
+  try {
+    await Promise.all([400, 600, 700, 800].map((w) => document.fonts.load(`${w} 16px SATPrint`)))
+  } catch {
+    /* falls back to Arial */
+  }
+
   // 1) measure each question in an off-screen page (same layout as the final one)
   const mHost = document.createElement('div')
   mHost.setAttribute('aria-hidden', 'true')
+  mHost.className = 'sat-pdf'
   mHost.style.cssText = `position:fixed;left:-20000px;top:0;width:${PAGE_W}px;height:${PAGE_H}px;pointer-events:none;`
   document.body.appendChild(mHost)
   const mRoot = createRoot(mHost)
   const specs: PageSpec[] = []
   const total = items.length + 1
-  watermarkSrc = makeWatermark()
   // "Question N of M" counts per module
   const moduleTotals = new Map<string, number>()
   for (const it of items) moduleTotals.set(it.moduleLabel ?? '', (moduleTotals.get(it.moduleLabel ?? '') ?? 0) + 1)
@@ -616,18 +649,18 @@ export async function printTestPdf({ testTitle, items, onProgress, pack = true }
       }
       for (let k = 0; k < u.parts; k++) specs.push({ items: [u.item], scale: u.scale, offset: k * BODY_H })
     }
+  } catch (e) {
+    style.remove()
+    throw e
   } finally {
     mRoot.unmount()
     mHost.remove()
   }
 
   // 3) the real print tree
-  const style = document.createElement('style')
-  style.id = PRINT_STYLE_ID
-  style.textContent = PRINT_CSS
-  document.head.appendChild(style)
   const host = document.createElement('div')
   host.id = PRINT_ROOT_ID
+  host.className = 'sat-pdf'
   host.setAttribute('aria-hidden', 'true')
   document.body.appendChild(host)
   const root = createRoot(host)
