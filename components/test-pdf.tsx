@@ -7,7 +7,7 @@ import { AlertTriangle, FileDown, Loader2 } from 'lucide-react'
 import { ChoiceContent } from '@/components/choice-content'
 import { QuestionImage } from '@/components/question-image'
 import { QuestionStimulus } from '@/components/question-stimulus'
-import { SITE_DOMAIN, SITE_URL, TG_CHANNELS, TG_PERSONAL, TG_PERSONAL_URL } from '@/lib/contact'
+import { SITE_DOMAIN, SITE_URL, TG_PERSONAL } from '@/lib/contact'
 import type { Question } from '@/lib/test-data'
 
 /**
@@ -45,6 +45,32 @@ const GREEN = '#0e7c75'
 const GREEN_DEEP = '#0b4f4a'
 /** A4 width in CSS px (210 mm) — what the page canvas is scaled to when printed. */
 const A4_W = 793.7
+/** Telegram channels advertised in the PDF. */
+const PDF_CHANNELS = [
+  { handle: '@satbyusmon', url: 'https://t.me/satbyusmon' },
+  { handle: '@sat_surxon', url: 'https://t.me/sat_surxon' },
+]
+
+/** Soft diagonal "satbyusmon.com" watermark, drawn once as a picture (so it can't get in the way when selecting text). */
+let watermarkSrc = ''
+function makeWatermark(): string {
+  try {
+    const c = document.createElement('canvas')
+    c.width = 1800
+    c.height = 1800
+    const g = c.getContext('2d')!
+    g.translate(900, 900)
+    g.rotate((-32 * Math.PI) / 180)
+    g.fillStyle = 'rgba(14,124,117,0.07)'
+    g.font = '800 190px Arial, Helvetica, sans-serif'
+    g.textAlign = 'center'
+    g.textBaseline = 'middle'
+    g.fillText(SITE_DOMAIN, 0, 0)
+    return c.toDataURL('image/png')
+  } catch {
+    return ''
+  }
+}
 const COVER_W = 794
 const COVER_H = 1123
 
@@ -88,7 +114,7 @@ function Icon({ children }: { children: React.ReactNode }) {
 /** The exam's header / footer (static copy of ExamHeader + ExamFooter) so the PDF looks like the real screen. */
 function Frame({
   testTitle,
-  item,
+  items,
   moduleTotal,
   children,
   scale = 1,
@@ -97,7 +123,8 @@ function Frame({
   pageTotal,
 }: {
   testTitle: string
-  item: PdfItem
+  /** One question, or two short ones sharing a page. */
+  items: PdfItem[]
   moduleTotal: number
   children: React.ReactNode
   scale?: number
@@ -105,8 +132,10 @@ function Frame({
   pageNo?: number
   pageTotal?: number
 }) {
+  const item = items[0]
   const math = item.sectionKind === 'math' || (!item.sectionKind && !item.question.passage)
   const label = item.moduleLabel ?? testTitle
+  const nums = items.map((i) => i.index + 1)
   return (
     <div
       data-page
@@ -120,27 +149,15 @@ function Frame({
         fontFamily: 'var(--font-sans), Inter, Arial, Helvetica, sans-serif',
       }}
     >
-      {/* soft diagonal watermark */}
-      <div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          left: -80,
-          right: -80,
-          top: PAGE_H / 2 - 70,
-          textAlign: 'center',
-          transform: 'rotate(-32deg)',
-          fontWeight: 900,
-          fontSize: 120,
-          letterSpacing: 8,
-          color: 'rgba(14,124,117,0.055)',
-          whiteSpace: 'nowrap',
-          pointerEvents: 'none',
-          userSelect: 'none',
-        }}
-      >
-        SAT AKADEMIYASI
-      </div>
+      {watermarkSrc && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={watermarkSrc}
+          alt=""
+          aria-hidden
+          style={{ position: 'absolute', left: (PAGE_W - 1100) / 2, top: (PAGE_H - 1100) / 2, width: 1100, height: 1100, pointerEvents: 'none', userSelect: 'none' }}
+        />
+      )}
 
       {/* ------------------------------ header (like ExamHeader) ------------------------------ */}
       <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: HEAD_H, background: '#e7f3f1', borderBottom: '1px solid #d7e7e4' }}>
@@ -245,18 +262,22 @@ function Frame({
           <div style={{ fontSize: 11.5, fontWeight: 600, color: '#64748b', marginTop: 2 }}>{pageNo ? `${pageNo} / ${pageTotal ?? ''}` : ''}</div>
         </div>
         <div style={{ background: '#111', color: '#fff', borderRadius: 999, padding: '7px 18px', fontSize: 14.5, fontWeight: 700 }}>
-          Question {item.index + 1} of {moduleTotal} ⌄
+          {nums.length > 1 ? `Questions ${nums[0]}–${nums[nums.length - 1]}` : `Question ${nums[0]}`} of {moduleTotal} ⌄
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, fontSize: 14.5, fontWeight: 700 }}>
-          <a
-            href={TG_PERSONAL_URL}
-            style={{ border: '1.5px solid #0e7c75', color: '#0e7c75', borderRadius: 999, padding: '6px 16px', textDecoration: 'none', background: '#fff' }}
-          >
-            ‹ Telegram
-          </a>
-          <a href={SITE_URL} style={{ background: '#0e7c75', color: '#fff', borderRadius: 999, padding: '7px 18px', textDecoration: 'none' }}>
-            {SITE_DOMAIN} ›
-          </a>
+          {PDF_CHANNELS.map((c, i) => (
+            <a
+              key={c.handle}
+              href={c.url}
+              style={
+                i === 0
+                  ? { border: '1.5px solid #0e7c75', color: '#0e7c75', borderRadius: 999, padding: '6px 14px', textDecoration: 'none', background: '#fff' }
+                  : { background: '#0e7c75', color: '#fff', borderRadius: 999, padding: '7px 15px', textDecoration: 'none' }
+              }
+            >
+              {c.handle}
+            </a>
+          ))}
         </div>
       </div>
     </div>
@@ -339,7 +360,6 @@ function QuestionBody({ item }: { item: PdfItem }) {
 
       {gridin ? (
         <div style={{ marginTop: 18 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Student-produced response — javobingizni shu yerga yozing</div>
           <div style={{ width: 190, height: 58, border: '1.5px solid #777', borderRadius: 8, background: '#fff' }} />
         </div>
       ) : (
@@ -408,7 +428,7 @@ function CoverPage({ testTitle, count, qr, date }: { testTitle: string; count: n
         <div style={{ marginTop: 92, fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', opacity: 0.9 }}>Digital SAT · Mashq testi</div>
         <div style={{ marginTop: 12, fontSize: testTitle.length > 36 ? 38 : 46, fontWeight: 900, lineHeight: 1.1, maxWidth: 640 }}>{testTitle}</div>
         <div style={{ marginTop: 22, fontSize: 16, fontWeight: 600, opacity: 0.95 }}>
-          {count} ta savol · har sahifada bitta savol
+          {count} ta savol
         </div>
       </div>
 
@@ -428,7 +448,7 @@ function CoverPage({ testTitle, count, qr, date }: { testTitle: string; count: n
             </a>
           </div>
           <div style={{ marginTop: 6, fontSize: 15, fontWeight: 800 }}>
-            Telegram: <span style={{ color: GREEN_DEEP }}>{TG_CHANNELS.map((c) => c.handle).join(' · ')}</span>
+            Telegram: <span style={{ color: GREEN_DEEP }}>{PDF_CHANNELS.map((c) => c.handle).join(' · ')}</span>
           </div>
           <div style={{ marginTop: 6, fontSize: 15, fontWeight: 800 }}>
             Murojaat: <span style={{ color: GREEN_DEEP }}>{TG_PERSONAL}</span>
@@ -479,9 +499,24 @@ export type BuildOptions = {
   testTitle: string
   items: PdfItem[]
   onProgress?: (done: number, total: number) => void
+  /** Put two short questions on one page when they fit (default true). */
+  pack?: boolean
 }
 
-type PageSpec = { item: PdfItem; scale: number; offset: number }
+type PageSpec = { items: PdfItem[]; scale: number; offset: number }
+
+/** One page's worth of questions (usually one; two short ones when they fit together). */
+function PageBody({ items }: { items: PdfItem[] }) {
+  return (
+    <>
+      {items.map((it, k) => (
+        <div key={k} style={k > 0 ? { marginTop: 26, paddingTop: 26, borderTop: '2px dashed #b6c8c6' } : undefined}>
+          <QuestionBody item={it} />
+        </div>
+      ))}
+    </>
+  )
+}
 
 const PRINT_ROOT_ID = 'sat-print-root'
 const PRINT_STYLE_ID = 'sat-print-style'
@@ -505,7 +540,7 @@ let activeCleanup: (() => void) | null = null
  * Draws every page, then opens the browser's print dialog ("Save as PDF"). Resolves once the dialog was requested.
  * Pages that are too tall are shrunk to fit (down to MIN_SCALE) and, failing that, continue on the next page.
  */
-export async function printTestPdf({ testTitle, items, onProgress }: BuildOptions): Promise<void> {
+export async function printTestPdf({ testTitle, items, onProgress, pack = true }: BuildOptions): Promise<void> {
   const QRMod = await import('qrcode')
   const QRCode = QRMod.default ?? QRMod
   const qr: string = await QRCode.toDataURL(SITE_URL, { margin: 1, width: 340, color: { dark: '#0f6b35', light: '#ffffff' } })
@@ -520,42 +555,73 @@ export async function printTestPdf({ testTitle, items, onProgress }: BuildOption
   const mRoot = createRoot(mHost)
   const specs: PageSpec[] = []
   const total = items.length + 1
+  watermarkSrc = makeWatermark()
   // "Question N of M" counts per module
   const moduleTotals = new Map<string, number>()
   for (const it of items) moduleTotals.set(it.moduleLabel ?? '', (moduleTotals.get(it.moduleLabel ?? '') ?? 0) + 1)
   const totalOf = (it: PdfItem) => moduleTotals.get(it.moduleLabel ?? '') ?? items.length
+
+  const drawAt = async (group: PdfItem[], sc: number) => {
+    flushSync(() =>
+      mRoot.render(
+        <Frame testTitle={testTitle} items={group} moduleTotal={totalOf(group[0])} scale={sc}>
+          <PageBody items={group} />
+        </Frame>,
+      ),
+    )
+    const el = mHost.querySelector('[data-page]') as HTMLElement
+    await settle(el)
+    return (el.querySelector('[data-body]') as HTMLElement).getBoundingClientRect().height
+  }
+
+  type Unit = { item: PdfItem; h: number; scale: number; parts: number }
+  const units: Unit[] = []
   try {
     for (let i = 0; i < items.length; i++) {
       const item = items[i]
       let scale = 1
-      const drawAt = async (sc: number) => {
-        flushSync(() =>
-          mRoot.render(
-            <Frame testTitle={testTitle} item={item} moduleTotal={totalOf(item)} scale={sc}>
-              <QuestionBody item={item} />
-            </Frame>,
-          ),
-        )
-        const el = mHost.querySelector('[data-page]') as HTMLElement
-        await settle(el)
-        return (el.querySelector('[data-body]') as HTMLElement).getBoundingClientRect().height
-      }
-      let h = await drawAt(scale)
+      let h = await drawAt([item], scale)
+      const natural = h
       for (let tries = 0; tries < 3 && h > BODY_H + 1 && scale > MIN_SCALE; tries++) {
         scale = Math.max(MIN_SCALE, (scale * BODY_H) / h - 0.01)
-        h = await drawAt(scale)
+        h = await drawAt([item], scale)
       }
-      const parts = h > BODY_H + 1 ? Math.ceil(h / BODY_H) : 1
-      for (let k = 0; k < parts; k++) specs.push({ item, scale, offset: k * BODY_H })
+      units.push({ item, h: natural, scale, parts: h > BODY_H + 1 ? Math.ceil(h / BODY_H) : 1 })
       onProgress?.(i + 1, total)
       await sleep(0)
+    }
+
+    // 2) two short questions of the same module share a page when they really fit together
+    for (let i = 0; i < units.length; i++) {
+      const u = units[i]
+      const n = units[i + 1]
+      const joinable =
+        pack &&
+        n &&
+        u.scale === 1 &&
+        u.parts === 1 &&
+        n.scale === 1 &&
+        n.parts === 1 &&
+        u.item.moduleLabel === n.item.moduleLabel &&
+        u.item.sectionKind === n.item.sectionKind &&
+        u.h + n.h - 42 + 53 <= BODY_H
+      if (joinable) {
+        const both = [u.item, n.item]
+        const h = await drawAt(both, 1)
+        if (h <= BODY_H + 1) {
+          specs.push({ items: both, scale: 1, offset: 0 })
+          i++
+          continue
+        }
+      }
+      for (let k = 0; k < u.parts; k++) specs.push({ items: [u.item], scale: u.scale, offset: k * BODY_H })
     }
   } finally {
     mRoot.unmount()
     mHost.remove()
   }
 
-  // 2) the real print tree
+  // 3) the real print tree
   const style = document.createElement('style')
   style.id = PRINT_STYLE_ID
   style.textContent = PRINT_CSS
@@ -567,7 +633,7 @@ export async function printTestPdf({ testTitle, items, onProgress }: BuildOption
   const root = createRoot(host)
 
   const date = new Date().toLocaleDateString('uz-UZ', { timeZone: 'Asia/Tashkent', day: '2-digit', month: '2-digit', year: 'numeric' })
-  const pageTotal = specs.length + 1
+  const pageTotal = specs.length
   flushSync(() =>
     root.render(
       <>
@@ -581,14 +647,14 @@ export async function printTestPdf({ testTitle, items, onProgress }: BuildOption
             <div style={{ width: PAGE_W, height: PAGE_H, transform: `scale(${A4_W / PAGE_W})`, transformOrigin: '0 0' }}>
               <Frame
                 testTitle={testTitle}
-                item={sp.item}
-                moduleTotal={totalOf(sp.item)}
+                items={sp.items}
+                moduleTotal={totalOf(sp.items[0])}
                 scale={sp.scale}
                 offset={sp.offset}
-                pageNo={i + 2}
+                pageNo={i + 1}
                 pageTotal={pageTotal}
               >
-                <QuestionBody item={sp.item} />
+                <PageBody items={sp.items} />
               </Frame>
             </div>
           </div>
