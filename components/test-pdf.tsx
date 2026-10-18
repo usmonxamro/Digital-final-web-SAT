@@ -15,8 +15,9 @@ import type { Question } from '@/lib/test-data'
  * every page (header, soft watermark, clickable footer) and a cover page — so a shared PDF advertises the site.
  *
  * The teacher decides per mock whether students get the button (test_configs.pdf_download).
- * Pages are drawn with the same components as the exam (KaTeX, tables, figures, the saved layout), captured
- * with html2canvas and assembled with jsPDF. The footer is real vector text (selectable, links work).
+ * Pages are drawn with the same components as the exam (KaTeX, tables, figures, the saved layout) and handed to the
+ * browser's own "Print → Save as PDF": the result is a VECTOR pdf — real, selectable text, sharp formulas, working
+ * links and a small file — instead of screenshots.
  */
 
 export type PdfItem = {
@@ -68,7 +69,21 @@ function Brand({ light }: { light?: boolean }) {
   )
 }
 
-function Frame({ testTitle, children, scale = 1, offset = 0 }: { testTitle: string; children: React.ReactNode; scale?: number; offset?: number }) {
+function Frame({
+  testTitle,
+  children,
+  scale = 1,
+  offset = 0,
+  pageNo,
+  pageTotal,
+}: {
+  testTitle: string
+  children: React.ReactNode
+  scale?: number
+  offset?: number
+  pageNo?: number
+  pageTotal?: number
+}) {
   return (
     <div
       data-page
@@ -136,6 +151,34 @@ function Frame({ testTitle, children, scale = 1, offset = 0 }: { testTitle: stri
         >
           {children}
         </div>
+      </div>
+
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: FOOT_H,
+          padding: `0 ${SIDE}px`,
+          borderTop: `2px solid ${GREEN}`,
+          background: '#fff',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: 3,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13, gap: 12 }}>
+          <a href={SITE_URL} style={{ fontWeight: 800, color: GREEN_DEEP, textDecoration: 'none' }}>
+            {SITE_DOMAIN}
+          </a>
+          <span style={{ fontSize: 11.5, fontWeight: 600, color: '#475569', textAlign: 'center' }}>
+            Telegram: {TG_CHANNELS.map((c) => c.handle).join('  |  ')}
+          </span>
+          <span style={{ fontWeight: 800, color: '#0f172a' }}>{pageNo ? `${pageNo} / ${pageTotal ?? ''}` : ''}</span>
+        </div>
+        <div style={{ textAlign: 'center', fontSize: 10.5, color: '#78828f', fontWeight: 600 }}>SAT AKADEMIYASI — Usmon Xamroyev bilan</div>
       </div>
     </div>
   )
@@ -297,7 +340,10 @@ function CoverPage({ testTitle, count, qr, date }: { testTitle: string; count: n
             <li>✔ O‘zbek tilidagi qulay interfeys</li>
           </ul>
           <div style={{ marginTop: 22, fontSize: 15, fontWeight: 800 }}>
-            Sayt: <span style={{ color: GREEN_DEEP }}>{SITE_DOMAIN}</span>
+            Sayt:{' '}
+            <a href={SITE_URL} style={{ color: GREEN_DEEP, textDecoration: 'none' }}>
+              {SITE_DOMAIN}
+            </a>
           </div>
           <div style={{ marginTop: 6, fontSize: 15, fontWeight: 800 }}>
             Telegram: <span style={{ color: GREEN_DEEP }}>{TG_CHANNELS.map((c) => c.handle).join(' · ')}</span>
@@ -353,145 +399,139 @@ export type BuildOptions = {
   onProgress?: (done: number, total: number) => void
 }
 
-/** Builds the PDF. Heavy libraries are loaded here, not on page load. */
-export async function buildTestPdf({ testTitle, items, onProgress }: BuildOptions): Promise<Blob> {
-  const [{ jsPDF }, h2cMod, QRMod] = await Promise.all([import('jspdf'), import('html2canvas-pro'), import('qrcode')])
-  const html2canvas = h2cMod.default
+type PageSpec = { item: PdfItem; scale: number; offset: number }
+
+const PRINT_ROOT_ID = 'sat-print-root'
+const PRINT_STYLE_ID = 'sat-print-style'
+
+const PRINT_CSS = `
+@media screen { #${PRINT_ROOT_ID} { position: fixed; left: -20000px; top: 0; width: ${PAGE_W}px; pointer-events: none; } }
+@media print {
+  @page { size: A4; margin: 0; }
+  html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; height: auto !important; min-height: 0 !important; overflow: visible !important; }
+  body > *:not(#${PRINT_ROOT_ID}) { display: none !important; }
+  #${PRINT_ROOT_ID} { display: block !important; position: static !important; width: auto !important; }
+  #${PRINT_ROOT_ID}, #${PRINT_ROOT_ID} * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sat-print-page { width: 210mm; height: 1122px; overflow: hidden; break-after: page; page-break-after: always; break-inside: avoid; }
+  .sat-print-page:last-child { break-after: auto; page-break-after: auto; }
+}
+`
+
+let activeCleanup: (() => void) | null = null
+
+/**
+ * Draws every page, then opens the browser's print dialog ("Save as PDF"). Resolves once the dialog was requested.
+ * Pages that are too tall are shrunk to fit (down to MIN_SCALE) and, failing that, continue on the next page.
+ */
+export async function printTestPdf({ testTitle, items, onProgress }: BuildOptions): Promise<void> {
+  const QRMod = await import('qrcode')
   const QRCode = QRMod.default ?? QRMod
   const qr: string = await QRCode.toDataURL(SITE_URL, { margin: 1, width: 340, color: { dark: '#0f6b35', light: '#ffffff' } })
 
+  activeCleanup?.()
+
+  // 1) measure each question in an off-screen page (same layout as the final one)
+  const mHost = document.createElement('div')
+  mHost.setAttribute('aria-hidden', 'true')
+  mHost.style.cssText = `position:fixed;left:-20000px;top:0;width:${PAGE_W}px;height:${PAGE_H}px;pointer-events:none;`
+  document.body.appendChild(mHost)
+  const mRoot = createRoot(mHost)
+  const specs: PageSpec[] = []
+  const total = items.length + 1
+  try {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      let scale = 1
+      const drawAt = async (sc: number) => {
+        flushSync(() =>
+          mRoot.render(
+            <Frame testTitle={testTitle} scale={sc}>
+              <QuestionBody item={item} />
+            </Frame>,
+          ),
+        )
+        const el = mHost.querySelector('[data-page]') as HTMLElement
+        await settle(el)
+        return (el.querySelector('[data-body]') as HTMLElement).getBoundingClientRect().height
+      }
+      let h = await drawAt(scale)
+      for (let tries = 0; tries < 3 && h > BODY_H + 1 && scale > MIN_SCALE; tries++) {
+        scale = Math.max(MIN_SCALE, (scale * BODY_H) / h - 0.01)
+        h = await drawAt(scale)
+      }
+      const parts = h > BODY_H + 1 ? Math.ceil(h / BODY_H) : 1
+      for (let k = 0; k < parts; k++) specs.push({ item, scale, offset: k * BODY_H })
+      onProgress?.(i + 1, total)
+      await sleep(0)
+    }
+  } finally {
+    mRoot.unmount()
+    mHost.remove()
+  }
+
+  // 2) the real print tree
+  const style = document.createElement('style')
+  style.id = PRINT_STYLE_ID
+  style.textContent = PRINT_CSS
+  document.head.appendChild(style)
   const host = document.createElement('div')
+  host.id = PRINT_ROOT_ID
   host.setAttribute('aria-hidden', 'true')
-  host.style.cssText = `position:fixed;left:-20000px;top:0;width:${PAGE_W}px;height:${PAGE_H}px;pointer-events:none;`
   document.body.appendChild(host)
   const root = createRoot(host)
 
-  const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true })
-  const PW = doc.internal.pageSize.getWidth()
-  const PH = doc.internal.pageSize.getHeight()
-  const SCALE = 1.6
-  let pdfPages = 0
+  const date = new Date().toLocaleDateString('uz-UZ', { timeZone: 'Asia/Tashkent', day: '2-digit', month: '2-digit', year: 'numeric' })
+  const pageTotal = specs.length + 1
+  flushSync(() =>
+    root.render(
+      <>
+        <div className="sat-print-page">
+          <CoverPage testTitle={testTitle} count={items.length} qr={qr} date={date} />
+        </div>
+        {specs.map((sp, i) => (
+          <div className="sat-print-page" key={i}>
+            <Frame testTitle={testTitle} scale={sp.scale} offset={sp.offset} pageNo={i + 2} pageTotal={pageTotal}>
+              <QuestionBody item={sp.item} />
+            </Frame>
+          </div>
+        ))}
+      </>,
+    ),
+  )
+  await settle(host)
+  onProgress?.(total, total)
 
-  const draw = async (node: React.ReactNode): Promise<HTMLElement> => {
-    flushSync(() => root.render(node))
-    const el = host.querySelector('[data-page]') as HTMLElement
-    await settle(el)
-    return el
-  }
-  const capture = async (el: HTMLElement) => {
-    const canvas = await html2canvas(el, {
-      scale: SCALE,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      width: PAGE_W,
-      height: PAGE_H,
-      windowWidth: PAGE_W,
-      scrollX: 0,
-      scrollY: 0,
-    })
-    const jpeg = canvas.toDataURL('image/jpeg', 0.8)
-    canvas.width = canvas.height = 0
-    if (pdfPages > 0) doc.addPage()
-    pdfPages++
-    doc.addImage(jpeg, 'JPEG', 0, 0, PW, PH, undefined, 'FAST')
-  }
-
-  const total = items.length + 1
-  try {
-    // Cover
-    const date = new Date().toLocaleDateString('uz-UZ', { timeZone: 'Asia/Tashkent', day: '2-digit', month: '2-digit', year: 'numeric' })
-    await capture(await draw(<CoverPage testTitle={testTitle} count={items.length} qr={qr} date={date} />))
-    onProgress?.(1, total)
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i]
-      // 1) natural height
-      let scale = 1
-      let el = await draw(
-        <Frame testTitle={testTitle} scale={scale}>
-          <QuestionBody item={item} />
-        </Frame>,
-      )
-      const measure = () => (el.querySelector('[data-body]') as HTMLElement).getBoundingClientRect().height
-      let h = measure()
-      // 2) too tall → shrink the whole page content to fit (down to MIN_SCALE); wider text reflows shorter
-      for (let tries = 0; tries < 3 && h > BODY_H + 1 && scale > MIN_SCALE; tries++) {
-        scale = Math.max(MIN_SCALE, (scale * BODY_H) / h - 0.01)
-        el = await draw(
-          <Frame testTitle={testTitle} scale={scale}>
-            <QuestionBody item={item} />
-          </Frame>,
-        )
-        h = measure()
-      }
-      // 3) still too tall → continue on following pages
-      const parts = h > BODY_H + 1 ? Math.ceil(h / BODY_H) : 1
-      for (let k = 0; k < parts; k++) {
-        if (k > 0) {
-          el = await draw(
-            <Frame testTitle={testTitle} scale={scale} offset={k * BODY_H}>
-              <QuestionBody item={item} />
-            </Frame>,
-          )
-        }
-        await capture(el)
-      }
-      onProgress?.(i + 2, total)
-      // let the browser breathe (phones)
-      await sleep(0)
+  const prevTitle = document.title
+  let cleaned = false
+  const cleanup = () => {
+    if (cleaned) return
+    cleaned = true
+    window.removeEventListener('afterprint', cleanup)
+    clearTimeout(timer)
+    document.title = prevTitle
+    try {
+      root.unmount()
+    } catch {
+      /* ignore */
     }
-
-    // Vector footer on every page: a rule, the site (clickable), channels and "n / N".
-    const n = doc.getNumberOfPages()
-    const k = PW / PAGE_W
-    const fy = PH - FOOT_H * k
-    for (let p = 1; p <= n; p++) {
-      doc.setPage(p)
-      doc.setFillColor(255, 255, 255)
-      doc.rect(0, fy, PW, FOOT_H * k, 'F')
-      doc.setDrawColor(22, 163, 74)
-      doc.setLineWidth(1.6)
-      doc.line(SIDE * k, fy + 4, PW - SIDE * k, fy + 4)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(10.5)
-      doc.setTextColor(15, 107, 53)
-      doc.textWithLink(SITE_DOMAIN, SIDE * k, fy + 26, { url: SITE_URL })
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(9)
-      doc.setTextColor(71, 85, 105)
-      doc.text(`Telegram: ${TG_CHANNELS.map((c) => c.handle).join('  |  ')}`, PW / 2, fy + 26, { align: 'center' })
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(15, 23, 42)
-      doc.text(`${p} / ${n}`, PW - SIDE * k, fy + 26, { align: 'right' })
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(8)
-      doc.setTextColor(120, 130, 145)
-      doc.text('SAT AKADEMIYASI — Usmon Xamroyev bilan', PW / 2, fy + 40, { align: 'center' })
-    }
-    doc.setProperties({ title: `${testTitle} — SAT AKADEMIYASI`, subject: 'Digital SAT', author: 'SAT AKADEMIYASI', creator: SITE_DOMAIN })
-    return doc.output('blob')
-  } finally {
-    root.unmount()
     host.remove()
+    style.remove()
+    if (activeCleanup === cleanup) activeCleanup = null
   }
+  activeCleanup = cleanup
+  window.addEventListener('afterprint', cleanup)
+  // phones may never fire afterprint — drop the hidden pages eventually
+  const timer = setTimeout(cleanup, 15 * 60_000)
+
+  // the print dialog proposes the document title as the file name
+  document.title = fileNameOf(testTitle).replace(/\.pdf$/i, '')
+  await sleep(60)
+  window.print()
 }
 
 function fileNameOf(title: string) {
   const base = title.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'SAT test'
   return `${base} - SAT AKADEMIYASI.pdf`
-}
-
-/** Saves a blob as a file (works on phones too). */
-function saveBlob(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = name
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 120_000)
 }
 
 /**
@@ -533,8 +573,7 @@ export function DownloadTestPdfButton({
       }
       setProgress({ done: 0, total: list.length + 1 })
       setState('busy')
-      const blob = await buildTestPdf({ testTitle, items: list, onProgress: (done, total) => setProgress({ done, total }) })
-      saveBlob(blob, fileNameOf(testTitle))
+      await printTestPdf({ testTitle, items: list, onProgress: (done, total) => setProgress({ done, total }) })
       setState('done')
     } catch (e) {
       console.error('Test PDF failed', e)
@@ -554,7 +593,7 @@ export function DownloadTestPdfButton({
         type="button"
         onClick={run}
         disabled={working}
-        title={state === 'error' ? errText : 'Mockning savollarini PDF qilib yuklab olish (har sahifada bitta savol)'}
+        title={state === 'error' ? errText : 'Mockning savollarini PDF qilib yuklab olish (chop etish oynasida «PDF sifatida saqlash» ni tanlang)'}
         className={`flex items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-extrabold transition-colors disabled:cursor-wait ${
           state === 'error' ? 'border-red-300 bg-red-50 text-red-700' : 'border-violet-300 bg-white text-violet-700 hover:bg-violet-50'
         } ${className ?? ''}`}
@@ -580,7 +619,11 @@ export function DownloadTestPdfButton({
         </span>
       </button>
       {state === 'busy' && <p className="mt-2 text-xs font-semibold text-[#64748b]">Iltimos, sahifani yopmang — savollar sahifa-sahifa tayyorlanmoqda.</p>}
-      {state === 'done' && <p className="mt-2 text-xs font-semibold text-green-700">Tayyor! Fayl yuklab olindi.</p>}
+      {state === 'done' && (
+        <p className="mt-2 text-xs font-semibold leading-relaxed text-green-700">
+          Chop etish oynasi ochildi — u yerda <b>«PDF sifatida saqlash»</b> (Save as PDF) ni tanlab, <b>Saqlash</b> ni bosing.
+        </p>
+      )}
       {state === 'error' && (
         <p className="mt-2 flex items-center justify-center gap-1 text-xs font-semibold text-red-600">
           <AlertTriangle className="size-3.5" /> {errText}
