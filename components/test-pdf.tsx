@@ -790,7 +790,7 @@ export function DownloadTestPdfButton({
         type="button"
         onClick={run}
         disabled={working}
-        title={state === 'error' ? errText : 'Mockning savollarini PDF qilib yuklab olish (chop etish oynasida «PDF sifatida saqlash» ni tanlang)'}
+        title={state === 'error' ? errText : 'Mockning savollarini PDF qilib yuklab olish (chop etish oynasida «Save as PDF» ni tanlang, «Microsoft Print to PDF» ni emas)'}
         className={`flex items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-extrabold transition-colors disabled:cursor-wait ${
           state === 'error' ? 'border-red-300 bg-red-50 text-red-700' : 'border-violet-300 bg-white text-violet-700 hover:bg-violet-50'
         } ${className ?? ''}`}
@@ -816,9 +816,11 @@ export function DownloadTestPdfButton({
         </span>
       </button>
       {state === 'busy' && <p className="mt-2 text-xs font-semibold text-[#64748b]">Iltimos, sahifani yopmang — savollar sahifa-sahifa tayyorlanmoqda.</p>}
-      {state === 'done' && (
-        <p className="mt-2 text-xs font-semibold leading-relaxed text-green-700">
-          Chop etish oynasi ochildi — u yerda <b>«PDF sifatida saqlash»</b> (Save as PDF) ni tanlab, <b>Saqlash</b> ni bosing.
+      {state === 'done' && <p className="mt-2 text-xs font-semibold text-green-700">Chop etish oynasi ochildi.</p>}
+      {(state === 'idle' || state === 'done' || state === 'busy') && (
+        <p className="mx-auto mt-2 max-w-[340px] text-[11.5px] font-medium leading-relaxed text-[#64748b]">
+          Chop etish oynasida <b className="text-[#0f172a]">Printer / Destination</b> qismidan <b className="text-green-700">«Save as PDF»</b> (PDF sifatida saqlash) ni tanlang.{' '}
+          <b className="text-red-600">«Microsoft Print to PDF» ni tanlamang</b> — u sahifalarni xira rasmga aylantirib qo‘yadi.
         </p>
       )}
       {state === 'error' && (
