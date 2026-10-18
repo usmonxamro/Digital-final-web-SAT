@@ -58,6 +58,7 @@ export function AnswerSheet({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [rescored, setRescored] = useState(0)
+  const [notified, setNotified] = useState(0)
   const [toastVisible, setToastVisible] = useState(false)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -117,6 +118,7 @@ export function AnswerSheet({
       })
       setSavedSnapshot(JSON.parse(JSON.stringify(answers)))
       setRescored(data.rescored ?? 0)
+      setNotified(data.notified ?? 0)
       setDone(true)
       setToastVisible(true)
       if (toastTimer.current) clearTimeout(toastTimer.current)
@@ -235,6 +237,7 @@ export function AnswerSheet({
               <div className="text-[11.5px] text-ink-soft">
                 {allQuestions.length} ta savol
                 {rescored > 0 ? ` · ${rescored} ta oldin topshirilgan natija qayta hisoblandi` : ''}
+                {notified > 0 ? ` · ${notified} ta o‘quvchiga qo‘ng‘iroqcha xabari yuborildi` : ''}
               </div>
             </div>
             <button

@@ -1,8 +1,136 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AlertTriangle, CheckCircle2, Check, Copy, Loader2, Send, Trash2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Check, ChevronDown, Copy, Eye, Loader2, Send, Trash2 } from 'lucide-react'
+import { ChoiceContent } from '@/components/choice-content'
+import { QuestionImage } from '@/components/question-image'
+import { QuestionStimulus } from '@/components/question-stimulus'
+import { RichText } from '@/components/rich-text'
+import type { Question } from '@/lib/test-data'
 import type { ReportRow } from '@/app/api/admin/reports/route'
+
+
+/**
+ * The reported question drawn the way a student saw it: rendered math, figure, passage and the A/B/C/D option cards
+ * (the key is marked green) — so the admin can judge "is something placed wrongly?" without reading raw LaTeX.
+ */
+function QuestionPreview({ questionId, fallbackPrompt, defaultOpen }: { questionId: string | null; fallbackPrompt: string; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
+  const [q, setQ] = useState<(Question & { kind?: 'reading' | 'math' }) | null>(null)
+  const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
+
+  useEffect(() => {
+    if (!open || q || !questionId) return
+    let alive = true
+    setState('loading')
+    fetch(`/api/admin/questions/${encodeURIComponent(questionId)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive) return
+        if (d?.question) {
+          setQ(d.question)
+          setState('idle')
+        } else setState('error')
+      })
+      .catch(() => alive && setState('error'))
+    return () => {
+      alive = false
+    }
+  }, [open, q, questionId])
+
+  const reading = q ? q.kind === 'reading' || (!q.kind && !!q.passage) : false
+  const textCls = reading ? 'text-[15.5px] font-semibold leading-[1.5] text-[#111]' : 'text-[15.5px] leading-[1.6] text-[#111]'
+
+  return (
+    <div className="mt-2.5">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 text-[12px] font-extrabold text-green-deep hover:underline"
+      >
+        <Eye size={14} /> {open ? 'Savolni yashirish' : 'Savolni sayt ko‘rinishida ko‘rish'}
+        <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="mt-2 rounded-xl border border-line bg-white p-4">
+          {state === 'loading' && (
+            <div className="flex items-center gap-2 text-[12.5px] text-ink-faint">
+              <Loader2 size={14} className="animate-spin" /> Savol yuklanmoqda…
+            </div>
+          )}
+
+          {!q && state !== 'loading' && (
+            <div>
+              {state === 'error' && <p className="mb-2 text-[11.5px] font-semibold text-amber-700">Savolni bazadan olib bo‘lmadi (o‘chirilgan yoki ID yo‘q) — xabardagi matn:</p>}
+              <div className="text-[15px] leading-relaxed text-[#111]">
+                <RichText text={fallbackPrompt} />
+              </div>
+            </div>
+          )}
+
+          {q && (
+            <div className="mx-auto max-w-[760px]">
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-bold text-ink-faint">
+                {q.domain && <span>{q.domain}</span>}
+                {q.difficulty && <span className="uppercase">{q.difficulty}</span>}
+                <span className="rounded-full bg-green-mist px-2 py-px text-green-deep">
+                  To‘g‘ri javob: {q.type === 'gridin' ? (q.correctValue ?? '—') : (q.correct ?? 'belgilanmagan')}
+                </span>
+              </div>
+
+              {reading && q.passage && (
+                <div className="mb-3 whitespace-pre-line border-l-4 border-[#0e7c75] pl-4 font-serif text-[15.5px] leading-[1.6] text-[#111]">{q.passage}</div>
+              )}
+              {reading && q.image && <QuestionImage src={q.image} scale={q.layout?.img?.scale} plain />}
+
+              <div className="mb-3">
+                <QuestionStimulus question={q} withFigure={!reading} textClassName={textCls} plain />
+              </div>
+
+              {q.type === 'gridin' ? (
+                <div className="mt-2 h-12 w-44 rounded-lg border-[1.5px] border-[#777] bg-white" />
+              ) : (
+                <div className="flex flex-col gap-2.5">
+                  {(q.choices ?? []).map((c) => {
+                    const right = q.correct === c.id
+                    return (
+                      <div
+                        key={c.id}
+                        className={`flex min-h-[44px] items-center gap-3.5 rounded-lg border-[1.5px] px-3.5 py-2 ${reading ? 'font-serif' : 'font-sans'} ${
+                          right ? 'border-[#16a34a] bg-green-50' : 'border-[#777] bg-white'
+                        }`}
+                      >
+                        <span
+                          className={`flex size-6 shrink-0 items-center justify-center rounded-full border-[1.5px] font-sans text-sm font-bold ${
+                            right ? 'border-[#16a34a] bg-[#16a34a] text-white' : 'border-[#777] text-[#111]'
+                          }`}
+                        >
+                          {c.id}
+                        </span>
+                        <span className="text-[15px] text-[#111]">
+                          <ChoiceContent choice={c} scale={q.layout?.choiceImg?.[c.id]?.scale} plain />
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+              {q.explanation && (
+                <details className="mt-3 text-[12.5px] text-ink-soft">
+                  <summary className="cursor-pointer font-bold text-ink">Yechim (explanation)</summary>
+                  <div className="mt-1.5 text-[13px] leading-relaxed text-[#111]">
+                    <RichText text={q.explanation} />
+                  </div>
+                </details>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 /** Admin "Xato xabarlari": questions students flagged after a mock; the reply lands in their bell. */
 export function ReportsPanel({ onChanged }: { onChanged?: () => void }) {
@@ -83,7 +211,7 @@ export function ReportsPanel({ onChanged }: { onChanged?: () => void }) {
                 </button>
               </div>
             </div>
-            {r.prompt && <p className="mt-2 rounded-lg bg-bg px-3 py-2 text-[12px] text-ink-soft">{r.prompt}</p>}
+            <QuestionPreview questionId={r.question_id} fallbackPrompt={r.prompt} defaultOpen={r.status === 'open'} />
             {r.question_id && (
               <button
                 type="button"

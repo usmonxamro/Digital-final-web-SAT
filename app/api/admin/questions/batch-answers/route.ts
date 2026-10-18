@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
-import { rescoreAttemptsForQuestion } from '@/lib/rescoring'
+import { rescoreAttemptsForQuestion, notifyRescoredStudents, type RescoreChange } from '@/lib/rescoring'
 import type { ChoiceId, Question } from '@/lib/test-data'
 import { invalidateCounts } from '@/lib/mock-catalog'
 
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
   const ids = patches.map((p) => p.id)
   const { data: beforeRows, error: beforeErr } = await supabase
     .from('questions')
-    .select('id, correct, correct_value, test_label')
+    .select('id, type, correct, correct_value, test_label')
     .in('id', ids)
 
   if (beforeErr) {
@@ -98,6 +98,7 @@ export async function POST(req: NextRequest) {
   // changed. Kept SEQUENTIAL on purpose: different questions can belong to the
   // same attempt row, and concurrent read-modify-write re-scoring would race.
   let rescoredTotal = 0
+  const allChanges: RescoreChange[] = []
   const okIds = new Set(results.filter((r) => r.ok).map((r) => r.id))
   for (const patch of patches) {
     if (!okIds.has(patch.id)) continue
@@ -105,19 +106,23 @@ export async function POST(req: NextRequest) {
     const answerChanged =
       before && (before.correct !== (patch.correct ?? null) || before.correct_value !== (patch.correctValue ?? null))
     if (answerChanged) {
-      const updatedForRescore = { correct: patch.correct, correctValue: patch.correctValue } as Question
+      const updatedForRescore = { type: before!.type ?? 'mcq', correct: patch.correct, correctValue: patch.correctValue } as Question
       const result = await rescoreAttemptsForQuestion(supabase, patch.id, before!.test_label ?? null, updatedForRescore)
       rescoredTotal += result.rescored
+      allChanges.push(...result.changes)
     }
   }
+
+  // One bell message per affected student (several fixed questions in one attempt are grouped).
+  const notified = await notifyRescoredStudents(supabase, allChanges)
 
   const failed = results.filter((r) => !r.ok)
   if (failed.length > 0) {
     return NextResponse.json(
-      { error: `${failed.length} ta savolni saqlashda xatolik yuz berdi.`, results, rescored: rescoredTotal },
+      { error: `${failed.length} ta savolni saqlashda xatolik yuz berdi.`, results, rescored: rescoredTotal, notified },
       { status: 207 },
     )
   }
 
-  return NextResponse.json({ ok: true, results, rescored: rescoredTotal })
+  return NextResponse.json({ ok: true, results, rescored: rescoredTotal, notified })
 }

@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { validateQuestions } from '@/lib/admin-schema'
-import { rescoreAttemptsForQuestion } from '@/lib/rescoring'
+import { rescoreAttemptsForQuestion, notifyRescoredStudents } from '@/lib/rescoring'
 import type { Question } from '@/lib/test-data'
 import { invalidateCounts } from '@/lib/mock-catalog'
 
@@ -122,14 +122,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   // now-corrected key) gets their score updated instead of staying wrong
   // forever. Best-effort and silent: never blocks the save response.
   let rescored = 0
+  let notified = 0
   const answerChanged =
     before && (before.correct !== (q.correct ?? null) || before.correct_value !== (q.correctValue ?? null))
   if (answerChanged) {
     const result = await rescoreAttemptsForQuestion(supabase, id, before!.test_label ?? null, q)
     rescored = result.rescored
+    notified = await notifyRescoredStudents(supabase, result.changes)
   }
 
-  return NextResponse.json({ ok: true, rescored })
+  return NextResponse.json({ ok: true, rescored, notified })
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

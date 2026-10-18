@@ -941,7 +941,7 @@ function QuestionIdLookup() {
       const data = await res.json()
       const rescoreSuffix =
         res.ok && typeof data.rescored === 'number' && data.rescored > 0
-          ? ` ${data.rescored} ta oldingi natija qayta hisoblandi.`
+          ? ` ${data.rescored} ta oldingi natija qayta hisoblandi${typeof data.notified === 'number' && data.notified > 0 ? `, ${data.notified} ta o‘quvchiga xabar yuborildi` : ''}.`
           : ''
       setResult(
         res.ok

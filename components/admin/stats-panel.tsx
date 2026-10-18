@@ -9,6 +9,7 @@ export function StatsPanel() {
   const [stats, setStats] = useState<SiteStats | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [hover, setHover] = useState<number | null>(null)
+  const [fp, setFp] = useState<'today' | 'd7' | 'd30'>('d7')
 
   useEffect(() => {
     fetch('/api/admin/stats')
@@ -47,7 +48,9 @@ export function StatsPanel() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <Funnel data={stats.funnel} period={fp} onPeriod={setFp} />
+
+      <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Tile label="Bugun tashrif" value={visits.today} sub={`${visits.uniqueToday} ta odam`} />
         <Tile label="7 kun" value={visits.last7} sub={`${visits.unique7} ta odam`} />
         <Tile label="30 kun" value={visits.last30} sub={`${visits.unique30} ta odam`} />
@@ -166,6 +169,69 @@ function Tile({ label, value, sub }: { label: string; value: number; sub: string
       <div className="text-[11.5px] font-bold uppercase tracking-wide text-ink-faint">{label}</div>
       <div className="mt-1 text-[28px] font-black leading-none tabular-nums text-ink">{value.toLocaleString('ru-RU')}</div>
       <div className="mt-1.5 text-[11.5px] text-ink-soft">{sub}</div>
+    </div>
+  )
+}
+
+const PERIODS: { id: 'today' | 'd7' | 'd30'; label: string }[] = [
+  { id: 'today', label: 'Bugun' },
+  { id: 'd7', label: '7 kun' },
+  { id: 'd30', label: '30 kun' },
+]
+
+/** The four numbers that matter first: visitors → registrations → started a test → finished a test. */
+function Funnel({ data, period, onPeriod }: { data: SiteStats['funnel']; period: 'today' | 'd7' | 'd30'; onPeriod: (p: 'today' | 'd7' | 'd30') => void }) {
+  const f = data[period]
+  const steps = [
+    { label: 'Unique visitors', hint: 'Nechta alohida odam kirgan', value: f.visitors, sub: '' },
+    { label: 'Registrations', hint: 'Nechtasi ro‘yxatdan o‘tgan', value: f.registrations, sub: '' },
+    { label: 'Tests started', hint: 'Nechtasi test boshlagan', value: f.startedUsers, sub: `${f.startedTotal} ta boshlanish` },
+    { label: 'Tests completed', hint: 'Nechtasi testni tugatgan', value: f.completedUsers, sub: `${f.completedTotal} ta tugatilgan mock` },
+  ]
+  const base = Math.max(1, f.visitors)
+  const pct = (n: number) => Math.min(100, Math.round((n / base) * 100))
+  return (
+    <div className="mb-5 rounded-xl border border-line bg-white p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="text-[13.5px] font-extrabold text-ink">Asosiy 4 ko‘rsatkich</h3>
+          <p className="text-[12px] text-ink-faint">Tashrifchidan o‘quvchigacha: qaerda yo‘qolayotganini shu yerdan ko‘ring.</p>
+        </div>
+        <div className="flex gap-1 rounded-full bg-bg-deep p-0.5">
+          {PERIODS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onPeriod(p.id)}
+              className={`rounded-full px-3 py-1 text-[12px] font-bold transition-colors ${period === p.id ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink'}`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {steps.map((s, i) => (
+          <div key={s.label} className="rounded-xl border border-line bg-bg p-3.5">
+            <div className="text-[11.5px] font-extrabold uppercase tracking-wide text-ink-faint">{s.label}</div>
+            <div className="mt-1 text-[30px] font-black leading-none tabular-nums text-ink">{s.value}</div>
+            <div className="mt-1.5 text-[11.5px] text-ink-soft">{s.hint}</div>
+            {s.sub && <div className="text-[11px] text-ink-faint">{s.sub}</div>}
+            {i > 0 && (
+              <div className="mt-2">
+                <div className="h-1.5 overflow-hidden rounded-full bg-bg-deep">
+                  <div className="h-full rounded-full bg-green" style={{ width: `${pct(s.value)}%` }} />
+                </div>
+                <div className="mt-1 text-[10.5px] font-semibold text-ink-faint">tashrifchilarning {pct(s.value)}% i</div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="mt-2.5 text-[11.5px] text-ink-faint">
+        «Tests started/completed» — nechta alohida o‘quvchi (bitta o‘quvchi bir necha marta ishlashi mumkin, ularning soni pastda yozilgan). Tashrif soni
+        brauzer bo‘yicha sanaladi.
+      </p>
     </div>
   )
 }

@@ -29,7 +29,21 @@ export type SiteStats = {
     buckets: { label: string; count: number }[]
     topMocks: { label: string; count: number }[]
   }
+  /** The 4 numbers that show how well the site turns visitors into students (Tashkent days). */
+  funnel: { today: FunnelPeriod; d7: FunnelPeriod; d30: FunnelPeriod }
   migrationNeeded: boolean
+}
+export type FunnelPeriod = {
+  /** Unique visitors (anonymous browser ids). */
+  visitors: number
+  /** New accounts created in the period. */
+  registrations: number
+  /** Students who opened (started) at least one mock, and the number of starts. */
+  startedUsers: number
+  startedTotal: number
+  /** Students who finished at least one mock, and the number of finished mocks. */
+  completedUsers: number
+  completedTotal: number
 }
 
 const DAY = 86400_000
@@ -46,11 +60,11 @@ export async function GET() {
   const from30 = today - 29 * DAY
   const iso = (t: number) => new Date(t).toISOString()
 
-  const [attRes, planRes, viewsRes, usersTotal, users7, users30, attTotal, att7] = await Promise.all([
-    fetchAll<{ test_label: string; composite: number; subject: string; correct_count: number; incorrect_count: number; omitted_count: number }>((from, to) =>
+  const [attRes, planRes, viewsRes, usersTotal, users7, users30, attTotal, att7, usersToday, startsRes] = await Promise.all([
+    fetchAll<{ test_label: string; user_id: string; created_at: string; composite: number; subject: string; correct_count: number; incorrect_count: number; omitted_count: number }>((from, to) =>
       supabase
         .from('test_attempts')
-        .select('test_label, composite, subject, correct_count, incorrect_count, omitted_count')
+        .select('test_label, user_id, created_at, composite, subject, correct_count, incorrect_count, omitted_count')
         .gte('created_at', iso(from30))
         .order('created_at', { ascending: false })
         .range(from, to),
@@ -71,6 +85,10 @@ export async function GET() {
     supabase.from('users').select('id', { count: 'exact', head: true }).gte('created_at', iso(from30)),
     supabase.from('test_attempts').select('id', { count: 'exact', head: true }),
     supabase.from('test_attempts').select('id', { count: 'exact', head: true }).gte('created_at', iso(today - 6 * DAY)),
+    supabase.from('users').select('id', { count: 'exact', head: true }).gte('created_at', iso(today)),
+    fetchAll<{ user_id: string; started_at: string }>((from, to) =>
+      supabase.from('mock_starts').select('user_id, started_at').gte('started_at', iso(from30)).order('started_at', { ascending: false }).range(from, to),
+    ),
   ])
 
   const rows = viewsRes.error ? [] : viewsRes.data
@@ -125,6 +143,28 @@ export async function GET() {
     mockCount.set(a.test_label, (mockCount.get(a.test_label) ?? 0) + 1)
   }
 
+  // ---- funnel: visitors → registrations → started a mock → finished a mock ----
+  const starts = startsRes.error ? [] : startsRes.data
+  const uToday = new Set<string>()
+  for (const r of rows) if (new Date(r.created_at as string).getTime() >= today) uToday.add(r.visitor_id as string)
+  const period = (since: number, visitors: number, registrations: number): FunnelPeriod => {
+    const st = starts.filter((r) => new Date(r.started_at).getTime() >= since)
+    const co = atts.filter((r) => new Date(r.created_at).getTime() >= since)
+    return {
+      visitors,
+      registrations,
+      startedUsers: new Set(st.map((r) => r.user_id)).size,
+      startedTotal: st.length,
+      completedUsers: new Set(co.map((r) => r.user_id)).size,
+      completedTotal: co.length,
+    }
+  }
+  const funnel = {
+    today: period(today, uToday.size, usersToday.count ?? 0),
+    d7: period(today - 6 * DAY, u7.size, users7.count ?? 0),
+    d30: period(from30, u30.size, users30.count ?? 0),
+  }
+
   const stats: SiteStats = {
     visits: {
       today: days[29].views,
@@ -149,6 +189,7 @@ export async function GET() {
       buckets,
       topMocks: [...mockCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([label, count]) => ({ label, count })),
     },
+    funnel,
     migrationNeeded: !!viewsRes.error,
   }
   return NextResponse.json(stats)
