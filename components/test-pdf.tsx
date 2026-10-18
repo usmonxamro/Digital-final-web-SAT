@@ -7,7 +7,7 @@ import { AlertTriangle, FileDown, Loader2 } from 'lucide-react'
 import { ChoiceContent } from '@/components/choice-content'
 import { QuestionImage } from '@/components/question-image'
 import { QuestionStimulus } from '@/components/question-stimulus'
-import { SITE_DOMAIN, SITE_URL, TG_CHANNELS, TG_PERSONAL } from '@/lib/contact'
+import { SITE_DOMAIN, SITE_URL, TG_CHANNELS, TG_PERSONAL, TG_PERSONAL_URL } from '@/lib/contact'
 import type { Question } from '@/lib/test-data'
 
 /**
@@ -29,16 +29,24 @@ export type PdfItem = {
   question: Question
 }
 
-/** CSS px of an A4 page at 96 dpi. */
-const PAGE_W = 794
-const PAGE_H = 1123
-const HEAD_H = 62
-const FOOT_H = 64
+/**
+ * Design size of one page. It is an A4 *proportion* but drawn on a bigger canvas (1000 × 1414 px) than a plain A4 at
+ * 96 dpi (794 × 1123): text keeps its on-screen size, so MORE fits on a page (long questions no longer get squeezed)
+ * and the page is scaled down to A4 when printed.
+ */
+const PAGE_W = 1000
+const PAGE_H = 1414
+const HEAD_H = 112
+const FOOT_H = 68
 const BODY_H = PAGE_H - HEAD_H - FOOT_H
-const SIDE = 46
+const COL = 800
 const MIN_SCALE = 0.62
-const GREEN = '#16a34a'
-const GREEN_DEEP = '#0f6b35'
+const GREEN = '#0e7c75'
+const GREEN_DEEP = '#0b4f4a'
+/** A4 width in CSS px (210 mm) — what the page canvas is scaled to when printed. */
+const A4_W = 793.7
+const COVER_W = 794
+const COVER_H = 1123
 
 /* ----------------------------- page building blocks ----------------------------- */
 
@@ -69,8 +77,19 @@ function Brand({ light }: { light?: boolean }) {
   )
 }
 
+function Icon({ children }: { children: React.ReactNode }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      {children}
+    </svg>
+  )
+}
+
+/** The exam's header / footer (static copy of ExamHeader + ExamFooter) so the PDF looks like the real screen. */
 function Frame({
   testTitle,
+  item,
+  moduleTotal,
   children,
   scale = 1,
   offset = 0,
@@ -78,12 +97,16 @@ function Frame({
   pageTotal,
 }: {
   testTitle: string
+  item: PdfItem
+  moduleTotal: number
   children: React.ReactNode
   scale?: number
   offset?: number
   pageNo?: number
   pageTotal?: number
 }) {
+  const math = item.sectionKind === 'math' || (!item.sectionKind && !item.question.passage)
+  const label = item.moduleLabel ?? testTitle
   return (
     <div
       data-page
@@ -94,7 +117,7 @@ function Frame({
         background: '#fff',
         overflow: 'hidden',
         color: '#111',
-        fontFamily: 'var(--font-jakarta), "Plus Jakarta Sans", Arial, Helvetica, sans-serif',
+        fontFamily: 'var(--font-sans), Inter, Arial, Helvetica, sans-serif',
       }}
     >
       {/* soft diagonal watermark */}
@@ -102,49 +125,97 @@ function Frame({
         aria-hidden
         style={{
           position: 'absolute',
-          left: -60,
-          right: -60,
-          top: PAGE_H / 2 - 60,
+          left: -80,
+          right: -80,
+          top: PAGE_H / 2 - 70,
           textAlign: 'center',
           transform: 'rotate(-32deg)',
           fontWeight: 900,
-          fontSize: 92,
-          letterSpacing: 6,
-          color: 'rgba(22,163,74,0.06)',
+          fontSize: 120,
+          letterSpacing: 8,
+          color: 'rgba(14,124,117,0.055)',
           whiteSpace: 'nowrap',
           pointerEvents: 'none',
+          userSelect: 'none',
         }}
       >
         SAT AKADEMIYASI
       </div>
 
-      <div
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: 0,
-          height: HEAD_H,
-          padding: `0 ${SIDE}px`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: `3px solid ${GREEN}`,
-          background: 'linear-gradient(90deg, rgba(240,253,244,.95), rgba(255,255,255,.9))',
-        }}
-      >
-        <Brand />
-        <div style={{ maxWidth: 400, textAlign: 'right', fontSize: 12.5, fontWeight: 700, color: '#334155', lineHeight: 1.25 }}>{testTitle}</div>
+      {/* ------------------------------ header (like ExamHeader) ------------------------------ */}
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: HEAD_H, background: '#e7f3f1', borderBottom: '1px solid #d7e7e4' }}>
+        <div style={{ position: 'relative', height: 70, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 44px' }}>
+          <div style={{ lineHeight: 1.25, maxWidth: 340 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: GREEN_DEEP, letterSpacing: -0.2 }}>{label}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#0e7c75', marginTop: 2 }}>Directions ⌄</div>
+          </div>
+          <div style={{ position: 'absolute', left: '50%', top: 6, transform: 'translateX(-50%)', textAlign: 'center', lineHeight: 1.1 }}>
+            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: 0.4, color: '#111' }}>SAT AKADEMIYASI</div>
+            <a
+              href={SITE_URL}
+              style={{ display: 'inline-block', marginTop: 5, border: '1px solid rgba(14,124,117,.45)', borderRadius: 999, padding: '1px 14px', fontSize: 12.5, fontWeight: 700, color: '#0e7c75', textDecoration: 'none' }}
+            >
+              {SITE_DOMAIN}
+            </a>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 26, color: '#375957', fontSize: 12.5, fontWeight: 600 }}>
+            {math && (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <Icon>
+                    <rect x="4" y="2" width="16" height="20" rx="2" />
+                    <path d="M8 6h8M7 11h2M11 11h2M15 11h2M7 15h2M11 15h2M15 15h2M7 19h2M11 19h2" strokeLinecap="round" />
+                  </Icon>
+                  Calculator
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <Icon>
+                    <path d="M4 19V6a2 2 0 0 1 2-2h8l6 6v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" />
+                    <path d="M14 4v6h6" />
+                  </Icon>
+                  Reference
+                </div>
+              </>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <Icon>
+                <circle cx="12" cy="5" r="1.4" fill="currentColor" />
+                <circle cx="12" cy="12" r="1.4" fill="currentColor" />
+                <circle cx="12" cy="19" r="1.4" fill="currentColor" />
+              </Icon>
+              More
+            </div>
+          </div>
+        </div>
+        <div style={{ height: 3, backgroundImage: 'repeating-linear-gradient(90deg,#111 0 20px,transparent 20px 26px)' }} />
+        <div style={{ padding: '4px 50px 0' }}>
+          <div
+            style={{
+              background: GREEN_DEEP,
+              color: '#fff',
+              textAlign: 'center',
+              fontSize: 13,
+              fontWeight: 800,
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+              padding: '5px 0',
+              borderRadius: '0 0 12px 12px',
+            }}
+          >
+            This is a practice test
+          </div>
+        </div>
       </div>
 
+      {/* --------------------------------- question --------------------------------- */}
       <div style={{ position: 'absolute', left: 0, right: 0, top: HEAD_H, height: BODY_H, overflow: 'hidden' }}>
         <div
           data-body
           style={{
-            width: (PAGE_W - SIDE * 2) / scale,
-            marginLeft: SIDE,
-            paddingTop: 22 / scale,
-            paddingBottom: 12 / scale,
+            width: COL / scale,
+            marginLeft: (PAGE_W - COL) / 2,
+            paddingTop: 28 / scale,
+            paddingBottom: 14 / scale,
             transform: `translateY(${-offset}px) scale(${scale})`,
             transformOrigin: '0 0',
           }}
@@ -153,6 +224,7 @@ function Frame({
         </div>
       </div>
 
+      {/* ------------------------------ footer (like ExamFooter) ------------------------------ */}
       <div
         style={{
           position: 'absolute',
@@ -160,25 +232,32 @@ function Frame({
           right: 0,
           bottom: 0,
           height: FOOT_H,
-          padding: `0 ${SIDE}px`,
-          borderTop: `2px solid ${GREEN}`,
+          padding: '0 50px',
+          borderTop: '1px solid #d7e7e4',
           background: '#fff',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          gap: 3,
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
+          alignItems: 'center',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13, gap: 12 }}>
-          <a href={SITE_URL} style={{ fontWeight: 800, color: GREEN_DEEP, textDecoration: 'none' }}>
-            {SITE_DOMAIN}
-          </a>
-          <span style={{ fontSize: 11.5, fontWeight: 600, color: '#475569', textAlign: 'center' }}>
-            Telegram: {TG_CHANNELS.map((c) => c.handle).join('  |  ')}
-          </span>
-          <span style={{ fontWeight: 800, color: '#0f172a' }}>{pageNo ? `${pageNo} / ${pageTotal ?? ''}` : ''}</span>
+        <div style={{ fontSize: 16, fontWeight: 700, color: '#111' }}>
+          Usmon Xamroyev
+          <div style={{ fontSize: 11.5, fontWeight: 600, color: '#64748b', marginTop: 2 }}>{pageNo ? `${pageNo} / ${pageTotal ?? ''}` : ''}</div>
         </div>
-        <div style={{ textAlign: 'center', fontSize: 10.5, color: '#78828f', fontWeight: 600 }}>SAT AKADEMIYASI — Usmon Xamroyev bilan</div>
+        <div style={{ background: '#111', color: '#fff', borderRadius: 999, padding: '7px 18px', fontSize: 14.5, fontWeight: 700 }}>
+          Question {item.index + 1} of {moduleTotal} ⌄
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, fontSize: 14.5, fontWeight: 700 }}>
+          <a
+            href={TG_PERSONAL_URL}
+            style={{ border: '1.5px solid #0e7c75', color: '#0e7c75', borderRadius: 999, padding: '6px 16px', textDecoration: 'none', background: '#fff' }}
+          >
+            ‹ Telegram
+          </a>
+          <a href={SITE_URL} style={{ background: '#0e7c75', color: '#fff', borderRadius: 999, padding: '7px 18px', textDecoration: 'none' }}>
+            {SITE_DOMAIN} ›
+          </a>
+        </div>
       </div>
     </div>
   )
@@ -201,34 +280,40 @@ function QuestionBody({ item }: { item: PdfItem }) {
   const reading = item.sectionKind === 'reading' || (!item.sectionKind && !!q.passage)
   const gridin = q.type === 'gridin'
   const text = reading
-    ? 'text-[16px] font-semibold leading-[1.5] text-[#111]'
-    : 'text-[16px] leading-[1.65] text-[#111]'
+    ? 'text-[17px] font-semibold leading-[1.55] text-[#111]'
+    : 'text-[17.5px] leading-[1.7] text-[#111]'
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <span
-          style={{
-            width: 38,
-            height: 38,
-            background: '#111',
-            color: '#fff',
-            borderRadius: 6,
-            fontWeight: 800,
-            fontSize: 18,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
+      {/* q-head: number, Mark for Review, ABC */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          marginBottom: 18,
+          padding: '7px 12px',
+          background: '#ececec',
+          borderBottom: '2px dashed #111',
+        }}
+      >
+        <span style={{ width: 30, height: 34, background: '#111', color: '#fff', fontWeight: 800, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {item.index + 1}
         </span>
-        <div style={{ lineHeight: 1.25 }}>
-          {item.moduleLabel && <div style={{ fontSize: 12, fontWeight: 800, color: GREEN_DEEP, textTransform: 'uppercase', letterSpacing: 0.5 }}>{item.moduleLabel}</div>}
-          <div style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>
-            {q.domain ?? (reading ? 'Reading and Writing' : 'Math')}
-          </div>
-        </div>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 15, fontWeight: 600, color: '#333' }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          </svg>
+          Mark for Review
+        </span>
+        <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+          {q.difficulty && (
+            <span style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: 0.6, color: '#64748b', textTransform: 'uppercase' }}>{q.difficulty}</span>
+          )}
+          {!gridin && (
+            <span style={{ border: '1.5px solid #0e7c75', borderRadius: 4, color: '#0e7c75', fontSize: 12, fontWeight: 800, padding: '2px 7px', textDecoration: 'line-through' }}>ABC</span>
+          )}
+        </span>
       </div>
 
       {reading && q.passage && (
@@ -236,14 +321,11 @@ function QuestionBody({ item }: { item: PdfItem }) {
           className="font-serif"
           style={{
             whiteSpace: 'pre-line',
-            fontSize: 15.5,
-            lineHeight: 1.5,
-            padding: '14px 18px',
-            marginBottom: 16,
-            border: '1px solid #d9e2dc',
+            fontSize: 17,
+            lineHeight: 1.6,
+            padding: '4px 4px 4px 18px',
+            marginBottom: 18,
             borderLeft: `4px solid ${GREEN}`,
-            borderRadius: 8,
-            background: 'rgba(240,253,244,.55)',
           }}
         >
           <Underlined text={q.passage} underline={q.underline} />
@@ -251,14 +333,14 @@ function QuestionBody({ item }: { item: PdfItem }) {
       )}
       {reading && q.image && <QuestionImage src={q.image} scale={q.layout?.img?.scale} plain />}
 
-      <div style={{ marginBottom: 14 }}>
+      <div style={{ marginBottom: 16 }}>
         <QuestionStimulus question={q} withFigure={!reading} textClassName={text} plain />
       </div>
 
       {gridin ? (
         <div style={{ marginTop: 18 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Student-produced response — javobingizni shu yerga yozing</div>
-          <div style={{ width: 150, height: 56, border: '1.5px solid #3a3a3a', borderRadius: 8, background: '#fff' }} />
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Student-produced response — javobingizni shu yerga yozing</div>
+          <div style={{ width: 190, height: 58, border: '1.5px solid #777', borderRadius: 8, background: '#fff' }} />
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -269,23 +351,23 @@ function QuestionBody({ item }: { item: PdfItem }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 14,
-                padding: '10px 14px',
-                border: '1.5px solid #bbe5c8',
-                borderRadius: 10,
-                background: 'rgba(240,253,244,.8)',
-                fontSize: 16,
+                minHeight: 50,
+                padding: '10px 15px',
+                border: '1.5px solid #777',
+                borderRadius: 8,
+                background: '#fff',
+                fontSize: 17,
                 fontFamily: reading ? 'Georgia, "Times New Roman", serif' : undefined,
               }}
             >
               <span
                 style={{
                   flexShrink: 0,
-                  width: 28,
-                  height: 28,
-                  borderRadius: 14,
-                  border: `1.5px solid ${GREEN_DEEP}`,
-                  color: GREEN_DEEP,
-                  background: '#fff',
+                  width: 26,
+                  height: 26,
+                  borderRadius: 13,
+                  border: '1.5px solid #777',
+                  color: '#111',
                   fontWeight: 800,
                   fontSize: 14,
                   display: 'flex',
@@ -311,8 +393,8 @@ function CoverPage({ testTitle, count, qr, date }: { testTitle: string; count: n
       data-page
       style={{
         position: 'relative',
-        width: PAGE_W,
-        height: PAGE_H,
+        width: COVER_W,
+        height: COVER_H,
         overflow: 'hidden',
         background: '#fff',
         fontFamily: 'var(--font-jakarta), "Plus Jakarta Sans", Arial, Helvetica, sans-serif',
@@ -438,6 +520,10 @@ export async function printTestPdf({ testTitle, items, onProgress }: BuildOption
   const mRoot = createRoot(mHost)
   const specs: PageSpec[] = []
   const total = items.length + 1
+  // "Question N of M" counts per module
+  const moduleTotals = new Map<string, number>()
+  for (const it of items) moduleTotals.set(it.moduleLabel ?? '', (moduleTotals.get(it.moduleLabel ?? '') ?? 0) + 1)
+  const totalOf = (it: PdfItem) => moduleTotals.get(it.moduleLabel ?? '') ?? items.length
   try {
     for (let i = 0; i < items.length; i++) {
       const item = items[i]
@@ -445,7 +531,7 @@ export async function printTestPdf({ testTitle, items, onProgress }: BuildOption
       const drawAt = async (sc: number) => {
         flushSync(() =>
           mRoot.render(
-            <Frame testTitle={testTitle} scale={sc}>
+            <Frame testTitle={testTitle} item={item} moduleTotal={totalOf(item)} scale={sc}>
               <QuestionBody item={item} />
             </Frame>,
           ),
@@ -486,13 +572,25 @@ export async function printTestPdf({ testTitle, items, onProgress }: BuildOption
     root.render(
       <>
         <div className="sat-print-page">
-          <CoverPage testTitle={testTitle} count={items.length} qr={qr} date={date} />
+          <div style={{ width: COVER_W, height: COVER_H, transform: `scale(${A4_W / COVER_W})`, transformOrigin: '0 0' }}>
+            <CoverPage testTitle={testTitle} count={items.length} qr={qr} date={date} />
+          </div>
         </div>
         {specs.map((sp, i) => (
           <div className="sat-print-page" key={i}>
-            <Frame testTitle={testTitle} scale={sp.scale} offset={sp.offset} pageNo={i + 2} pageTotal={pageTotal}>
-              <QuestionBody item={sp.item} />
-            </Frame>
+            <div style={{ width: PAGE_W, height: PAGE_H, transform: `scale(${A4_W / PAGE_W})`, transformOrigin: '0 0' }}>
+              <Frame
+                testTitle={testTitle}
+                item={sp.item}
+                moduleTotal={totalOf(sp.item)}
+                scale={sp.scale}
+                offset={sp.offset}
+                pageNo={i + 2}
+                pageTotal={pageTotal}
+              >
+                <QuestionBody item={sp.item} />
+              </Frame>
+            </div>
           </div>
         ))}
       </>,
