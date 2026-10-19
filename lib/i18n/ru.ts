@@ -385,4 +385,5 @@ export const ru: Record<string, string> = {
  "Telegramda yozish": "Написать в Telegram",
  "Hozircha yangi bildirishnomalar yo'q. Test natijalari va yangi vazifalar haqidagi xabarlar shu yerda chiqadi.": "Новых уведомлений пока нет. Здесь появятся сообщения о результатах тестов и новых заданиях.",
  "Bosh sahifa": "Главная",
+ "Yechish": "Решать",
 }

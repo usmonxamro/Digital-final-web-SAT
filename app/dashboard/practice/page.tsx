@@ -203,19 +203,21 @@ export default function PracticePage() {
           )}
 
           {tests === null && <SatSkeleton kind="cards" count={3} />}
-          {sections.map(([y, list]) => (
-            <section key={y || 'other'} className="sd-year-block">
-              <div className="sd-year-head">
-                <h2>{y || t('Boshqa imtihonlar')}</h2>
-                <span>{t('{n} ta imtihon', { n: list.length })}</span>
-              </div>
-              <div className="sd-mo-grid">
-                {list.map((g) => (
-                  <ExamCard key={g.name} group={g} lang={lang} onOpen={() => show(g.name)} />
-                ))}
-              </div>
-            </section>
-          ))}
+          <div className="sd-tl">
+            {sections.map(([y, list], si) => (
+              <section key={y || 'other'} className="sd-year-block" style={{ ['--yh' as string]: (si * 47 + 205) % 360 }}>
+                <div className="sd-year-head">
+                  <h2>{y || t('Boshqa imtihonlar')}</h2>
+                  <span>{t('{n} ta imtihon', { n: list.length })}</span>
+                </div>
+                <div className="sd-ex-grid">
+                  {list.map((g) => (
+                    <ExamCard key={g.name} group={g} lang={lang} onOpen={() => show(g.name)} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
           {tests !== null && visible.length === 0 && (
             <p className="sd-note">{mocks.length === 0 ? t("Hozircha mocklar yo'q — tez orada qo'shiladi.") : t('Hech narsa topilmadi.')}</p>
           )}
@@ -230,43 +232,127 @@ export default function PracticePage() {
   )
 }
 
-/** One exam (a month): a coloured banner with the month, the year, how many versions and how many are done. */
+const seasonOf = (m: number) => (m < 0 ? 'none' : m === 11 || m <= 1 ? 'winter' : m <= 4 ? 'spring' : m <= 7 ? 'summer' : 'autumn')
+const SEASON = {
+  autumn: { sky: ['#ffd9a8', '#ffb36b'], hill: ['#d9822b', '#b9611d'], leaf: ['#e8590c', '#f59e0b'] },
+  winter: { sky: ['#c9e3ff', '#eef6ff'], hill: ['#ffffff', '#d6e6fb'], leaf: ['#9fb7d6', '#9fb7d6'] },
+  spring: { sky: ['#d6efff', '#fde4f2'], hill: ['#86d37a', '#58b95f'], leaf: ['#f9a8d4', '#fbcfe8'] },
+  summer: { sky: ['#8fd3ff', '#e0f6ff'], hill: ['#4ade80', '#1fb85a'], leaf: ['#16a34a', '#22c55e'] },
+  none: { sky: ['#cbd5e1', '#e2e8f0'], hill: ['#94a3b8', '#64748b'], leaf: ['#64748b', '#94a3b8'] },
+} as const
+
+/** Small hand-drawn scene for the exam's season (no photos: nothing to download, nothing to license). */
+function MonthArt({ month, id }: { month: number; id: string }) {
+  const sn = seasonOf(month)
+  const c = SEASON[sn]
+  return (
+    <svg viewBox="0 0 120 150" className="sd-ex-art" preserveAspectRatio="xMidYMid slice" aria-hidden>
+      <defs>
+        <linearGradient id={`sky-${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={c.sky[0]} />
+          <stop offset="1" stopColor={c.sky[1]} />
+        </linearGradient>
+      </defs>
+      <rect width="120" height="150" fill={`url(#sky-${id})`} />
+      {sn === 'summer' && <circle cx="92" cy="34" r="14" fill="#fde047" />}
+      {sn === 'autumn' && <circle cx="90" cy="38" r="12" fill="#fff3d6" opacity=".9" />}
+      {sn === 'spring' && <circle cx="30" cy="34" r="11" fill="#fff7c2" />}
+      {sn === 'winter' && (
+        <g fill="#fff">
+          {[[18, 30], [44, 18], [72, 40], [100, 22], [30, 62], [88, 66], [58, 54], [108, 52]].map(([x, y], i) => (
+            <circle key={i} cx={x} cy={y} r={i % 3 === 0 ? 2.4 : 1.6} />
+          ))}
+        </g>
+      )}
+      {/* a campus hall */}
+      <g transform="translate(36 70)">
+        <rect x="0" y="22" width="48" height="36" fill={sn === 'winter' ? '#e9d5c0' : '#f3e2cf'} />
+        <path d="M-4 22 24 2 52 22Z" fill={sn === 'winter' ? '#f8fbff' : '#b45309'} />
+        <rect x="19" y="-6" width="10" height="14" fill="#f3e2cf" />
+        <path d="M17 -6 24 -16 31 -6Z" fill={sn === 'winter' ? '#f8fbff' : '#b45309'} />
+        {[6, 20, 34].map((x) => (
+          <rect key={x} x={x} y="32" width="8" height="12" rx="4" fill="#7c5a3a" opacity=".55" />
+        ))}
+      </g>
+      {/* hills */}
+      <ellipse cx="24" cy="146" rx="78" ry="30" fill={c.hill[0]} />
+      <ellipse cx="104" cy="152" rx="70" ry="30" fill={c.hill[1]} />
+      {/* tree */}
+      <rect x="14" y="94" width="5" height="34" rx="2" fill="#6b4423" />
+      {sn === 'winter' ? (
+        <g stroke="#6b4423" strokeWidth="2" strokeLinecap="round">
+          <path d="M16 100 6 88M16 106 28 94M16 96 18 82" />
+        </g>
+      ) : (
+        <g>
+          <circle cx="16" cy="88" r="15" fill={c.leaf[0]} />
+          <circle cx="6" cy="98" r="10" fill={c.leaf[1]} />
+          <circle cx="27" cy="96" r="10" fill={c.leaf[1]} />
+        </g>
+      )}
+      {sn === 'autumn' && (
+        <g fill={c.leaf[0]}>
+          {[[40, 132], [58, 140], [78, 134], [96, 142]].map(([x, y], i) => (
+            <ellipse key={i} cx={x} cy={y} rx="3" ry="1.8" transform={`rotate(${i * 30} ${x} ${y})`} />
+          ))}
+        </g>
+      )}
+    </svg>
+  )
+}
+
+/** One exam (a month): season picture with the month badge, name, chips and the buttons — on the year timeline. */
 function ExamCard({ group, lang, onOpen }: { group: ExamGroup<TestSummary>; lang: Lang; onOpen: () => void }) {
   const { t } = useI18n()
   const done = group.versions.filter((v) => v.test.done).length
   const hasFull = group.versions.some((v) => v.test.subject === 'full')
+  const video = group.versions.find((v) => v.test.hasVideo && v.test.done)
   const p = parseExam(group.name)
-  const title = p.month >= 0 ? MONTH_NAMES[lang][p.month] : group.name
   const total = group.versions.length
+  const monthName = p.month >= 0 ? MONTH_NAMES[lang][p.month] : ''
+  const title = p.month >= 0 ? `${p.rest ? `${p.rest} ` : ''}${monthName}${p.year ? ` ${p.year}` : ''}` : group.name
+  const badge = p.month >= 0 ? monthName.slice(0, 3).toUpperCase() : ''
   return (
-    <button className="sd-mo-card" style={bannerStyle(p.month, group.name)} onClick={onOpen}>
-      <span className="sd-mo-banner">
-        <span className="sd-mo-year">{p.year ?? ''}</span>
-        <span className="sd-mo-title">{title}</span>
-        {p.rest && p.month >= 0 && <span className="sd-mo-rest">{p.rest}</span>}
-        {hasFull && (
-          <span className="sd-mo-full">
-            <Crown /> {t("TO'LIQ")}
+    <div className="sd-ex-card" style={bannerStyle(p.month, group.name)} onClick={onOpen} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && onOpen()}>
+      <div className="sd-ex-media">
+        <MonthArt month={p.month} id={group.name.replace(/\W/g, '')} />
+        {(badge || p.year) && (
+          <span className="sd-ex-badge">
+            <b>{badge}</b>
+            <small>{p.year}</small>
           </span>
         )}
-      </span>
-      <span className="sd-mo-body">
-        <span className="sd-mo-line">
-          <Layers /> {t('{n} ta versiya', { n: total })}
-        </span>
-        <span className="sd-mo-dots" aria-label={`${done}/${total}`}>
-          {group.versions.map((v) => (
-            <i key={v.test.label} className={v.test.done ? 'sd-on' : ''} title={`${t('Versiya')} ${v.version}`} />
-          ))}
-        </span>
-        <span className="sd-mo-foot">
-          <span>{done > 0 ? t('{a}/{b} bajarilgan', { a: done, b: total }) : t('Hali boshlanmagan')}</span>
-          <b>
-            {t("Ko'rish")} <ArrowRight />
-          </b>
-        </span>
-      </span>
-    </button>
+      </div>
+      <div className="sd-ex-body">
+        <h3>{title}</h3>
+        <div className="sd-ex-chips">
+          {done > 0 && (
+            <span className="sd-tag sd-done">
+              <CheckCircle2 /> {t('{a}/{b} bajarilgan', { a: done, b: total })}
+            </span>
+          )}
+          <span className="sd-tag">
+            <Layers /> {t('{n} ta versiya', { n: total })}
+          </span>
+          {hasFull && (
+            <span className="sd-tag sd-full">
+              <Crown /> {t("TO'LIQ")}
+            </span>
+          )}
+        </div>
+        <p>{t("SAT Math va Reading & Writing bo'yicha imtihon variantlari.")}</p>
+        <div className="sd-ex-actions">
+          <button className="sd-primary" onClick={(e) => { e.stopPropagation(); onOpen() }}>
+            {t('Yechish')} <ArrowRight />
+          </button>
+          {video && (
+            <Link href={`/dashboard/analysis?test=${encodeURIComponent(video.test.label)}`} className="sd-soft" onClick={(e) => e.stopPropagation()}>
+              <MonitorPlay /> {t('Video tahlil')}
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 

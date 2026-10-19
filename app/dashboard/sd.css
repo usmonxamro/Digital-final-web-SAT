@@ -628,3 +628,30 @@ html[data-sp-theme="dark"] .sd-tour-tip{background:#0d1017}
 .sd-qb-dots button{width:38px;height:38px;border-radius:11px;border:0;font-weight:800;color:#fff}
 .sd-qb-dots .sd-ok{background:#16a34a}.sd-qb-dots .sd-bad{background:#ef4444}
 @media(max-width:900px){.sd-qb-sections,.sd-qb-topics{grid-template-columns:1fr}.sd-qb-card{padding:16px}}
+
+/* ---------- All Past Exams: year timeline + picture cards ---------- */
+.sd-tl{position:relative;padding-left:46px}
+.sd-tl .sd-year-block{position:relative;margin:0 0 34px}
+.sd-tl .sd-year-block::before{content:"";position:absolute;left:-46px;top:6px;width:16px;height:16px;border-radius:50%;background:hsl(var(--yh) 85% 55%);box-shadow:0 0 0 5px color-mix(in srgb,hsl(var(--yh) 85% 55%) 22%,transparent)}
+.sd-tl .sd-year-block::after{content:"";position:absolute;left:-39px;top:28px;bottom:-34px;width:2px;border-radius:2px;background:linear-gradient(var(--sp-border),var(--sp-border))}
+.sd-tl .sd-year-block:last-child::after{display:none}
+.sd-tl .sd-year-head span{padding:3px 11px;border-radius:99px;background:color-mix(in srgb,hsl(var(--yh) 85% 55%) 16%,transparent);color:hsl(var(--yh) 70% 50%);font-weight:800}
+.sd-ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px}
+.sd-ex-card{--g1:hsl(var(--h) 82% 52%);display:flex;gap:16px;border:1px solid var(--sp-border);border-radius:20px;background:var(--sp-card);padding:12px;color:var(--sp-text);box-shadow:var(--sd-shadow);cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s}
+.sd-ex-card:hover{transform:translateY(-3px);border-color:var(--sd-accent-line);box-shadow:0 16px 32px rgba(255,102,0,.12)}
+.sd-ex-media{position:relative;width:128px;flex-shrink:0;border-radius:14px;overflow:hidden;min-height:168px}
+.sd-ex-art{position:absolute;inset:0;width:100%;height:100%}
+.sd-ex-badge{position:absolute;top:8px;left:8px;display:flex;flex-direction:column;align-items:center;line-height:1.05;padding:5px 9px;border-radius:10px;background:rgba(255,255,255,.94);color:var(--g1);box-shadow:0 4px 12px rgba(0,0,0,.14)}
+.sd-ex-badge b{font-size:13px;font-weight:800;letter-spacing:.5px}
+.sd-ex-badge small{font-size:12px;font-weight:800;color:#0f172a}
+.sd-ex-body{min-width:0;flex:1;display:flex;flex-direction:column;padding:4px 4px 2px 0}
+.sd-ex-body h3{margin:2px 0 9px;font-size:18px;font-weight:800;letter-spacing:-.4px}
+.sd-ex-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.sd-ex-body p{margin:0 0 14px;font-size:12px;line-height:1.6;color:var(--sp-text-muted)}
+.sd-ex-actions{display:flex;gap:8px;margin-top:auto}
+.sd-ex-actions .sd-primary,.sd-ex-actions .sd-soft{height:40px;font-size:12.5px;padding:0 16px;justify-content:center;flex:1}
+@media(max-width:620px){.sd-tl{padding-left:34px}.sd-tl .sd-year-block::before{left:-34px}.sd-tl .sd-year-block::after{left:-27px}.sd-ex-grid{grid-template-columns:1fr}.sd-ex-media{width:104px}}
+.sd-ex-actions{flex-wrap:wrap}
+.sd-ex-actions .sd-primary,.sd-ex-actions .sd-soft{min-width:0;white-space:nowrap}
+.sd-ex-actions .sd-soft{flex:1 1 100%}
+.sd-ex-actions .sd-primary{flex:1 1 100%}
