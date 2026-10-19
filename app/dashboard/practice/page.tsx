@@ -3,11 +3,13 @@
 import { SatSkeleton } from '@/components/sat-loader'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Sparkles, BookOpen, Calculator, CheckCircle2, Crown, Lock, MonitorPlay, Play, Timer, ChevronLeft, PenLine } from 'lucide-react'
+import { ArrowRight, Sparkles, Calculator, CheckCircle2, Crown, Lock, MonitorPlay, Play, Timer, ChevronLeft, PenLine, Layers } from 'lucide-react'
 import { useDashboardData, type TestSummary } from '@/components/marketing/dashboard/dashboard-data'
 import { groupExams, type ExamGroup } from '@/lib/exam-groups'
 import { GhostCards } from '@/components/marketing/dashboard/ghost-cards'
 import { inSection } from '@/lib/mock-sections'
+import { useI18n } from '@/components/i18n-provider'
+import type { Lang } from '@/lib/i18n'
 
 type Quota = {
   usedToday: number
@@ -18,16 +20,19 @@ type Quota = {
   reason: 'day' | 'hour' | null
 }
 
+const LOCALE: Record<Lang, string> = { uz: 'uz-UZ', ru: 'ru-RU', en: 'en-GB' }
+
 function QuotaBar({ quota }: { quota: Quota | null }) {
+  const { t, lang } = useI18n()
   if (!quota) return null
   const left = Math.max(0, quota.perDay - quota.usedToday)
   const at = quota.nextAllowedAt
-    ? new Date(quota.nextAllowedAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })
+    ? new Date(quota.nextAllowedAt).toLocaleTimeString(LOCALE[lang], { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })
     : ''
   return (
     <div className="sd-quota">
       <b>
-        <Timer /> Bugun: {quota.usedToday}/{quota.perDay} mock
+        <Timer /> {t('Bugun: {x} mock', { x: `${quota.usedToday}/${quota.perDay}` })}
       </b>
       <span className="sd-quota-dots">
         {Array.from({ length: quota.perDay }, (_, i) => (
@@ -36,10 +41,10 @@ function QuotaBar({ quota }: { quota: Quota | null }) {
       </span>
       <span>
         {quota.allowed
-          ? `Yana ${left} ta yechishingiz mumkin · bir soatda ko'pi bilan ${quota.perHour} ta`
+          ? t("Yana {n} ta yechishingiz mumkin · bir soatda ko'pi bilan {m} ta", { n: left, m: quota.perHour })
           : quota.reason === 'day'
-            ? 'Kunlik limit tugadi — ertaga yana davom etasiz'
-            : `Keyingi mock soat ${at} dan keyin ochiladi`}
+            ? t('Kunlik limit tugadi — ertaga yana davom etasiz')
+            : t('Keyingi mock soat {at} dan keyin ochiladi', { at })}
       </span>
     </div>
   )
@@ -57,7 +62,38 @@ function subjectLabel(t: TestSummary): string {
   return 'Full SAT Mock'
 }
 
+/* ------------------------- month / year helpers ------------------------- */
+
+const EN_MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+const MONTH_NAMES: Record<Lang, string[]> = {
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  ru: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+  uz: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'],
+}
+
+/** "October 2026 SAT" → month index 9, year 2026 and the rest of the name ("SAT"). */
+function parseExam(name: string) {
+  const lower = name.toLowerCase()
+  const mi = EN_MONTHS.findIndex((m) => new RegExp(`\\b${m}\\b`).test(lower))
+  const year = name.match(/\b(20\d{2})\b/)?.[1] ?? null
+  let rest = name
+  if (mi >= 0) rest = rest.replace(new RegExp(EN_MONTHS[mi], 'i'), '')
+  if (year) rest = rest.replace(year, '')
+  rest = rest.replace(/[—–\-,()]/g, ' ').replace(/\s+/g, ' ').trim()
+  return { month: mi, year, rest }
+}
+
+/** Banner colour: one hue per month, so a year reads like a colourful calendar. */
+const hueOf = (month: number, name: string) => (month >= 0 ? (month * 30 + 18) % 360 : (name.length * 47) % 360)
+
+function bannerStyle(month: number, name: string): React.CSSProperties {
+  return { ['--h' as string]: hueOf(month, name) }
+}
+
+/* --------------------------------- page --------------------------------- */
+
 export default function PracticePage() {
+  const { t, lang } = useI18n()
   const { tests } = useDashboardData()
   const [quota, setQuota] = useState<Quota | null>(null)
   const [unlimited, setUnlimited] = useState(false)
@@ -78,7 +114,7 @@ export default function PracticePage() {
       .catch(() => {})
   }, [])
 
-  const mocks = useMemo(() => (tests ?? []).filter((t) => t.placement === 'mock' && inSection(t, 'exams')), [tests])
+  const mocks = useMemo(() => (tests ?? []).filter((x) => x.placement === 'mock' && inSection(x, 'exams')), [tests])
   const groups = useMemo(() => groupExams(mocks), [mocks])
   const years = useMemo(() => [...new Set(groups.map((g) => g.year).filter(Boolean) as string[])].sort().reverse(), [groups])
   const visible = groups.filter(
@@ -86,6 +122,15 @@ export default function PracticePage() {
       (year === 'all' || g.year === year) &&
       (!q || g.name.toLowerCase().includes(q) || g.versions.some((v) => v.test.label.toLowerCase().includes(q))),
   )
+  // Sections: one per year (newest first), then everything without a year.
+  const sections = useMemo(() => {
+    const by = new Map<string, ExamGroup<TestSummary>[]>()
+    for (const g of visible) {
+      const k = g.year ?? ''
+      by.set(k, [...(by.get(k) ?? []), g])
+    }
+    return [...by.entries()].sort((a, b) => (a[0] === '' ? 1 : b[0] === '' ? -1 : b[0].localeCompare(a[0])))
+  }, [visible])
   const current = open ? groups.find((g) => g.name.toLowerCase() === open.toLowerCase()) ?? null : null
 
   function show(name: string | null) {
@@ -103,30 +148,30 @@ export default function PracticePage() {
         <>
           <div className="sd-page-header">
             <div>
-              <div className="sd-eyebrow">SAT Akademiyasi / Testlar</div>
-              <h1>All Past Exams</h1>
+              <div className="sd-eyebrow">{t('SAT Akademiyasi / Testlar')}</div>
+              <h1>{t('Barcha o‘tgan imtihonlar')}</h1>
             </div>
-            <span className="sd-pill">Imtihonlar arxivi</span>
+            <span className="sd-pill">{t('Imtihonlar arxivi')}</span>
           </div>
-          <p className="sd-note">Imtihon nomini tanlang va ichidagi versiyalardan birini ishlang. Barqarorlik — muvaffaqiyat kaliti.</p>
+          <p className="sd-note">{t('Imtihon nomini tanlang va ichidagi versiyalardan birini ishlang. Barqarorlik — muvaffaqiyat kaliti.')}</p>
 
           <Link href="/dashboard/free-mocks" className="sd-promo">
             <span className="sd-promo-icon">
               <Sparkles />
             </span>
             <span className="sd-promo-text">
-              <strong>Tekin va qiyinroq mocklar ham bor!</strong>
-              <small>Istasangiz Free Mocks bo&apos;limida o&apos;qituvchi tuzgan mashq testlarni bemalol yechishingiz mumkin.</small>
+              <strong>{t('Tekin va qiyinroq mocklar ham bor!')}</strong>
+              <small>{t("Istasangiz Bepul mocklar bo'limida o'qituvchi tuzgan mashq testlarni bemalol yechishingiz mumkin.")}</small>
             </span>
             <span className="sd-promo-btn">
-              Free Mocks&apos;ga o&apos;tish <ArrowRight />
+              {t("Bepul mocklarga o'tish")} <ArrowRight />
             </span>
           </Link>
 
           {unlimited ? (
             <div className="sd-quota">
               <b>
-                <Timer /> Admin: mocklar cheklovsiz
+                <Timer /> {t('Admin: mocklar cheklovsiz')}
               </b>
             </div>
           ) : (
@@ -137,139 +182,171 @@ export default function PracticePage() {
             <div className="sd-filters">
               {['all', ...years].map((y) => (
                 <button key={y} className={`sd-filter ${year === y ? 'sd-selected' : ''}`} onClick={() => setYear(y)}>
-                  {y === 'all' ? 'Barcha imtihonlar' : `${y} yil`}
+                  {y === 'all' ? t('Barcha imtihonlar') : t('{y} yil', { y })}
                 </button>
               ))}
               {q && (
                 <span className="sd-chip">
-                  Qidiruv: “{q}” <button className="sd-text-btn" onClick={() => { setQ(''); window.history.replaceState(null, '', '/dashboard/practice') }}>✕</button>
+                  {t('Qidiruv')}: “{q}”{' '}
+                  <button
+                    className="sd-text-btn"
+                    onClick={() => {
+                      setQ('')
+                      window.history.replaceState(null, '', '/dashboard/practice')
+                    }}
+                  >
+                    ✕
+                  </button>
                 </span>
               )}
             </div>
           )}
 
-          <div className="sd-exam-grid">
-            {tests === null && <div style={{ gridColumn: '1 / -1' }}><SatSkeleton kind="cards" count={3} /></div>}
-            {visible.map((g) => (
-              <ExamCard key={g.name} group={g} onOpen={() => show(g.name)} />
-            ))}
-            {tests !== null && visible.length === 0 && (
-              <p className="sd-note" style={{ gridColumn: '1 / -1' }}>
-                {mocks.length === 0 ? "Hozircha mocklar yo'q — tez orada qo'shiladi." : 'Hech narsa topilmadi.'}
-              </p>
-            )}
-            {tests !== null && !q && year === 'all' && <GhostCards count={3} label="Yangi mock tayyorlanmoqda" />}
-          </div>
+          {tests === null && <SatSkeleton kind="cards" count={3} />}
+          {sections.map(([y, list]) => (
+            <section key={y || 'other'} className="sd-year-block">
+              <div className="sd-year-head">
+                <h2>{y || t('Boshqa imtihonlar')}</h2>
+                <span>{t('{n} ta imtihon', { n: list.length })}</span>
+              </div>
+              <div className="sd-mo-grid">
+                {list.map((g) => (
+                  <ExamCard key={g.name} group={g} lang={lang} onOpen={() => show(g.name)} />
+                ))}
+              </div>
+            </section>
+          ))}
+          {tests !== null && visible.length === 0 && (
+            <p className="sd-note">{mocks.length === 0 ? t("Hozircha mocklar yo'q — tez orada qo'shiladi.") : t('Hech narsa topilmadi.')}</p>
+          )}
+          {tests !== null && !q && year === 'all' && (
+            <div className="sd-exam-grid" style={{ marginTop: 18 }}>
+              <GhostCards count={3} label={t('Yangi mock tayyorlanmoqda')} />
+            </div>
+          )}
         </>
       )}
     </div>
   )
 }
 
-function ExamCard({ group, onOpen }: { group: ExamGroup<TestSummary>; onOpen: () => void }) {
+/** One exam (a month): a coloured banner with the month, the year, how many versions and how many are done. */
+function ExamCard({ group, lang, onOpen }: { group: ExamGroup<TestSummary>; lang: Lang; onOpen: () => void }) {
+  const { t } = useI18n()
   const done = group.versions.filter((v) => v.test.done).length
   const hasFull = group.versions.some((v) => v.test.subject === 'full')
-  const body = (
-    <>
-      <div className="sd-exam-icon">
-        <BookOpen />
-      </div>
-      <h3>{group.name}</h3>
-      <div className="sd-exam-tags">
-        {hasFull && (
-          <span className="sd-tag sd-full">
-            <Crown /> TO&apos;LIQ
-          </span>
-        )}
-        {done > 0 && (
-          <span className="sd-tag sd-done">
-            <CheckCircle2 /> {done}/{group.versions.length} bajarilgan
-          </span>
-        )}
-      </div>
-      <p>SAT Math va Reading &amp; Writing bo&apos;yicha imtihon variantlari.</p>
-      <div className="sd-exam-foot">
-        <span>{group.versions.length} ta versiya</span>
-        <span>Ko&apos;rish →</span>
-      </div>
-    </>
-  )
+  const p = parseExam(group.name)
+  const title = p.month >= 0 ? MONTH_NAMES[lang][p.month] : group.name
+  const total = group.versions.length
   return (
-    <button className="sd-exam-card" onClick={onOpen}>
-      {body}
+    <button className="sd-mo-card" style={bannerStyle(p.month, group.name)} onClick={onOpen}>
+      <span className="sd-mo-banner">
+        <span className="sd-mo-year">{p.year ?? ''}</span>
+        <span className="sd-mo-title">{title}</span>
+        {p.rest && p.month >= 0 && <span className="sd-mo-rest">{p.rest}</span>}
+        {hasFull && (
+          <span className="sd-mo-full">
+            <Crown /> {t("TO'LIQ")}
+          </span>
+        )}
+      </span>
+      <span className="sd-mo-body">
+        <span className="sd-mo-line">
+          <Layers /> {t('{n} ta versiya', { n: total })}
+        </span>
+        <span className="sd-mo-dots" aria-label={`${done}/${total}`}>
+          {group.versions.map((v) => (
+            <i key={v.test.label} className={v.test.done ? 'sd-on' : ''} title={`${t('Versiya')} ${v.version}`} />
+          ))}
+        </span>
+        <span className="sd-mo-foot">
+          <span>{done > 0 ? t('{a}/{b} bajarilgan', { a: done, b: total }) : t('Hali boshlanmagan')}</span>
+          <b>
+            {t("Ko'rish")} <ArrowRight />
+          </b>
+        </span>
+      </span>
     </button>
   )
 }
 
 function ExamDetail({ group, onBack }: { group: ExamGroup<TestSummary>; onBack: () => void }) {
+  const { t, lang } = useI18n()
+  const p = parseExam(group.name)
+  const title = p.month >= 0 ? `${MONTH_NAMES[lang][p.month]}${p.year ? ` ${p.year}` : ''}${p.rest ? ` ${p.rest}` : ''}` : group.name
   return (
     <>
       <button className="sd-back" onClick={onBack}>
-        <ChevronLeft size={15} /> Barcha imtihonlar
+        <ChevronLeft size={15} /> {t('Barcha imtihonlar')}
       </button>
-      <div className="sd-page-header">
+      <div className="sd-mo-hero" style={bannerStyle(p.month, group.name)}>
         <div>
-          <div className="sd-eyebrow">All Past Exams / {group.name}</div>
-          <h1>{group.name}</h1>
+          <div className="sd-eyebrow">
+            {t('Barcha o‘tgan imtihonlar')} / {title}
+          </div>
+          <h1>{title}</h1>
         </div>
-        <span className="sd-pill">{group.versions.length} ta versiya</span>
+        <span className="sd-pill">{t('{n} ta versiya', { n: group.versions.length })}</span>
       </div>
-      {group.versions.map(({ version, test: t }) => {
-        const ready = isReady(t)
-        return (
-          <div key={t.label} className={`sd-detail-card ${ready ? '' : 'sd-soon'}`}>
-            <div className="sd-version-badge">{version}</div>
-            <div className="sd-detail-body">
-              <strong>
-                Version {version} · {subjectLabel(t)}
-              </strong>
-              <div className="sd-chips">
-                {t.subject !== 'math' && (
-                  <span className="sd-chip">
-                    <PenLine /> {t.readingCount} R&amp;W savol
-                  </span>
-                )}
-                {t.subject !== 'english' && (
-                  <span className="sd-chip">
-                    <Calculator /> {t.mathCount} Math savol
-                  </span>
-                )}
-                {!t.scored && (
-                  <span className="sd-chip">
-                    <Timer /> Erkin mashq
-                  </span>
-                )}
-                {t.done && (
-                  <span className="sd-chip sd-done">
-                    <CheckCircle2 /> Bajarilgan
-                  </span>
-                )}
-                {t.hasVideo && (
-                  <span className="sd-chip">
-                    <MonitorPlay /> Video tahlil
+      <div className="sd-ver-grid">
+        {group.versions.map(({ version, test: x }) => {
+          const ready = isReady(x)
+          return (
+            <div key={x.label} className={`sd-ver-card ${ready ? '' : 'sd-soon'}`} style={bannerStyle(p.month, group.name)}>
+              <div className="sd-ver-top">
+                <span className="sd-ver-letter">{version}</span>
+                <div className="sd-ver-name">
+                  <small>{t('Versiya')}</small>
+                  <b>{t(subjectLabel(x))}</b>
+                </div>
+                {x.done && (
+                  <span className="sd-ver-done">
+                    <CheckCircle2 /> {t('Bajarilgan')}
                   </span>
                 )}
               </div>
+              <div className="sd-chips">
+                {x.subject !== 'math' && (
+                  <span className="sd-chip">
+                    <PenLine /> {t('{n} R&W savol', { n: x.readingCount })}
+                  </span>
+                )}
+                {x.subject !== 'english' && (
+                  <span className="sd-chip">
+                    <Calculator /> {t('{n} Math savol', { n: x.mathCount })}
+                  </span>
+                )}
+                {!x.scored && (
+                  <span className="sd-chip">
+                    <Timer /> {t('Erkin mashq')}
+                  </span>
+                )}
+                {x.hasVideo && (
+                  <span className="sd-chip">
+                    <MonitorPlay /> {t('Video tahlil')}
+                  </span>
+                )}
+              </div>
+              <div className="sd-ver-actions">
+                {ready ? (
+                  <Link href={`/exam?test=${encodeURIComponent(x.label)}`} className="sd-primary">
+                    <Play /> {x.done ? t('Qayta ishlash') : t('Boshlash')}
+                  </Link>
+                ) : (
+                  <span className="sd-soft sd-lock-btn">
+                    <Lock /> {t('Tez orada')}
+                  </span>
+                )}
+                {x.hasVideo && x.done && (
+                  <Link href={`/dashboard/analysis?test=${encodeURIComponent(x.label)}`} className="sd-soft">
+                    <MonitorPlay /> {t('Video tahlil')}
+                  </Link>
+                )}
+              </div>
             </div>
-            <div className="sd-detail-actions">
-              {ready ? (
-                <Link href={`/exam?test=${encodeURIComponent(t.label)}`} className="sd-primary">
-                  <Play /> Boshlash
-                </Link>
-              ) : (
-                <span className="sd-soft sd-lock-btn">
-                  <Lock /> Tez orada
-                </span>
-              )}
-              {t.hasVideo && t.done && (
-                <Link href={`/dashboard/analysis?test=${encodeURIComponent(t.label)}`} className="sd-soft">
-                  <MonitorPlay /> Video tahlil
-                </Link>
-              )}
-            </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </>
   )
 }

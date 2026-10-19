@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { createPortal } from 'react-dom'
 import { Bell, CheckCheck, Megaphone, MessageCircleReply, Sparkles, X } from 'lucide-react'
-import { useT } from '@/components/i18n-provider'
+import { useI18n } from '@/components/i18n-provider'
 import type { NotifItem } from '@/app/api/notifications/route'
 
 const POP_KEY = 'sp-notif-popped'
@@ -14,7 +14,7 @@ const POP_KEY = 'sp-notif-popped'
  * and a circular "grow out of the bell" popup for a message that arrived while the student was away.
  */
 export function NotifCenter() {
-  const t = useT()
+  const { t, lang } = useI18n()
   const [items, setItems] = useState<NotifItem[]>([])
   const [unread, setUnread] = useState(0)
   const [open, setOpen] = useState(false)
@@ -96,7 +96,7 @@ export function NotifCenter() {
     setTimeout(() => setPop(null), 450)
   }
 
-  const fmt = (iso: string) => new Date(iso).toLocaleString('uz-UZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })
+  const fmt = (iso: string) => new Date(iso).toLocaleString(lang === 'ru' ? 'ru-RU' : lang === 'en' ? 'en-GB' : 'uz-UZ', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })
 
   return (
     <div className="sd-notif" ref={wrap}>
@@ -150,7 +150,7 @@ export function NotifCenter() {
           onMouseDown={(e) => e.target === e.currentTarget && closePop()}
         >
           <div className="sd-burst-card" role="alertdialog" aria-label={pop.title}>
-            <button className="sd-modal-close" onClick={closePop} aria-label="Yopish">
+            <button className="sd-modal-close" onClick={closePop} aria-label={t("Yopish")}>
               <X size={15} />
             </button>
             <div className="sd-modal-icon">{pop.kind === 'reply' ? <MessageCircleReply /> : <Megaphone />}</div>

@@ -8,11 +8,13 @@ import { useDashboardData, type TestSummary } from '@/components/marketing/dashb
 import { useUser } from '@/components/marketing/dashboard/user-context'
 import { useSd } from '@/components/marketing/dashboard/sd-ui'
 import { CourseCard } from '@/components/marketing/dashboard/course-card'
+import { useT } from '@/components/i18n-provider'
 import { COURSE_GROUPS, groupsOfTask } from '@/lib/course-groups'
 
 type Course = { name: string; slug: string; tasks: { task: string; test: TestSummary }[] }
 
 export default function CourseTasksPage() {
+  const t = useT()
   const { tests } = useDashboardData()
   const user = useUser()
   const { openModal } = useSd()
@@ -63,41 +65,41 @@ export default function CourseTasksPage() {
             window.history.replaceState(null, '', '/dashboard/course-tasks')
           }}
         >
-          <ChevronLeft size={15} /> Kurslarga qaytish
+          <ChevronLeft size={15} /> {t('Kurslarga qaytish')}
         </button>
         <div className="sd-page-header">
           <div>
-            <div className="sd-eyebrow">My Courses / {current.name}</div>
+            <div className="sd-eyebrow">{t('Mening kurslarim')} / {current.name}</div>
             <h1>{current.name}</h1>
           </div>
-          <span className="sd-pill">A&apos;zo</span>
+          <span className="sd-pill">{t("A'zo")}</span>
         </div>
-        <p className="sd-note">Guruhingizning mashg&apos;ulotlari va vazifalari. Vazifalarda vaqt cheklovi yo&apos;q — taymer sarflangan vaqtingizni sanab boradi; vaqtli mocklarda vaqt tugasa, davom etish yoki yakunlashni tanlaysiz.</p>
-        {current.tasks.map(({ task, test: t }, i) => {
-          const count = t.subject === 'full' ? t.readingCount + t.mathCount : t.subject === 'math' ? t.mathCount : t.readingCount
+        <p className="sd-note">{t("Guruhingizning mashg'ulotlari va vazifalari. Vazifalarda vaqt cheklovi yo'q — taymer sarflangan vaqtingizni sanab boradi; vaqtli mocklarda vaqt tugasa, davom etish yoki yakunlashni tanlaysiz.")}</p>
+        {current.tasks.map(({ task, test: x }, i) => {
+          const count = x.subject === 'full' ? x.readingCount + x.mathCount : x.subject === 'math' ? x.mathCount : x.readingCount
           const ready = count >= 1
-          const isTask = t.placement === 'course_task'
+          const isTask = x.placement === 'course_task'
           return (
-            <div key={t.label} className={`sd-detail-card ${ready ? '' : 'sd-soon'}`}>
+            <div key={x.label} className={`sd-detail-card ${ready ? '' : 'sd-soon'}`}>
               <div className="sd-version-badge">{String(i + 1).padStart(2, '0')}</div>
               <div className="sd-detail-body">
                 <strong>{task}</strong>
                 <div className="sd-chips">
                   <span className="sd-chip">
-                    <Clock /> {count} savol
-                    {isTask ? ' · vaqt cheklovsiz' : ' · vaqtli mock'}
-                    {isTask && t.recommendedMinutes ? ` · tavsiya: ${t.recommendedMinutes} daq` : ''}
+                    <Clock /> {t('{n} savol', { n: count })}
+                    {isTask ? ` · ${t('vaqt cheklovsiz')}` : ` · ${t('vaqtli mock')}`}
+                    {isTask && x.recommendedMinutes ? ` · ${t('tavsiya: {n} daq', { n: x.recommendedMinutes })}` : ''}
                   </span>
                 </div>
               </div>
               <div className="sd-detail-actions">
                 {ready ? (
-                  <Link href={`/exam?test=${encodeURIComponent(t.label)}`} className="sd-primary">
-                    <Play /> Ishlash
+                  <Link href={`/exam?test=${encodeURIComponent(x.label)}`} className="sd-primary">
+                    <Play /> {t('Ishlash')}
                   </Link>
                 ) : (
                   <span className="sd-soft sd-lock-btn">
-                    <Lock /> Hali savol yo&apos;q
+                    <Lock /> {t("Hali savol yo'q")}
                   </span>
                 )}
               </div>
@@ -112,20 +114,20 @@ export default function CourseTasksPage() {
     <>
       <div className="sd-page-header">
         <div>
-          <div className="sd-eyebrow">SAT Akademiyasi / Kurslar</div>
-          <h1>Mening kurslarim</h1>
+          <div className="sd-eyebrow">{t('SAT Akademiyasi / Kurslar')}</div>
+          <h1>{t('Mening kurslarim')}</h1>
         </div>
         <button className="sd-soft" onClick={() => openModal('code')}>
-          <KeyRound size={14} /> Kod bilan qo&apos;shilish
+          <KeyRound size={14} /> {t("Kod bilan qo'shilish")}
         </button>
       </div>
       <p className="sd-note">
         {member
-          ? "Telegram guruhingizdagi darslarga tegishli vazifalar. Guruhingizni tanlang va ichidagi vazifalarni ishlang."
-          : "Hozirda faol kurslar. Vazifalarni ishlash uchun tayyorlov kurslarimizga qo'shilishingiz kerak."}
+          ? t('Telegram guruhingizdagi darslarga tegishli vazifalar. Guruhingizni tanlang va ichidagi vazifalarni ishlang.')
+          : t("Hozirda faol kurslar. Vazifalarni ishlash uchun tayyorlov kurslarimizga qo'shilishingiz kerak.")}
       </p>
       <div className="sd-section-title">
-        <h3>{member ? 'Kurs guruhlari' : 'Hozirda faol kurslar'}</h3>
+        <h3>{member ? t('Kurs guruhlari') : t('Hozirda faol kurslar')}</h3>
       </div>
       <div className="sd-course-grid">
         {tests === null && <div style={{ gridColumn: '1 / -1' }}><SatSkeleton kind="cards" count={3} /></div>}

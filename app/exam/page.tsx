@@ -27,6 +27,7 @@ import {
 } from '@/lib/test-data'
 import type { TestConfig } from '@/app/api/admin/test-config/route'
 import type { AnswerKey } from '@/app/api/exam/grade/route'
+import type { ExamProgress } from '@/lib/exam-progress'
 
 type Phase = 'moduleIntro' | 'testing' | 'autoNext' | 'break' | 'report'
 type ScoringMode = 'full' | 'single' | 'practice'
@@ -53,7 +54,10 @@ function ExamEngine({
   allowOvertime,
   recommendedMinutes,
   pdfAllowed,
+  resume,
 }: {
+  /** Saved progress of an unfinished exam ("continue where you left off"). */
+  resume?: ExamProgress | null
   /** From /api/exam/start — the grading request must present it. */
   startId?: string | null
   /** Course-group mock: when the time runs out the student may keep going (the clock turns negative). */
@@ -72,13 +76,13 @@ function ExamEngine({
 }) {
   const router = useRouter()
   const isMobile = useIsMobile()
-  const [moduleIdx, setModuleIdx] = useState(0)
-  const [phase, setPhase] = useState<Phase>(preview ? 'testing' : 'moduleIntro')
-  const [current, setCurrent] = useState(0)
-  const [timeLeft, setTimeLeft] = useState(timerMode === 'countdown' ? modules[0].durationSec : 0)
+  const [moduleIdx, setModuleIdx] = useState(resume?.moduleIdx ?? 0)
+  const [phase, setPhase] = useState<Phase>(preview ? 'testing' : (resume?.phase ?? 'moduleIntro'))
+  const [current, setCurrent] = useState(resume?.current ?? 0)
+  const [timeLeft, setTimeLeft] = useState(resume ? resume.timeLeft : timerMode === 'countdown' ? modules[0].durationSec : 0)
   // Time ran out in a course-group mock: ask once whether to keep going; "yes" → overtime (minus clock).
   const [overtimePrompt, setOvertimePrompt] = useState(false)
-  const [overtime, setOvertime] = useState(false)
+  const [overtime, setOvertime] = useState(resume?.overtime ?? false)
   const [calculatorOpen, setCalculatorOpen] = useState(false)
   // Where the Desmos panel sits — the question text shifts to the right of it.
   const [calcShift, setCalcShift] = useState(CONTENT_SHIFT)
@@ -99,9 +103,9 @@ function ExamEngine({
     return () => ro.disconnect()
   }, [phase])
 
-  const [answers, setAnswers] = useState<Record<string, string>>({})
-  const [flags, setFlags] = useState<Record<string, boolean>>({})
-  const [eliminated, setEliminated] = useState<Record<string, ChoiceId[]>>({})
+  const [answers, setAnswers] = useState<Record<string, string>>(resume?.answers ?? {})
+  const [flags, setFlags] = useState<Record<string, boolean>>(resume?.flags ?? {})
+  const [eliminated, setEliminated] = useState<Record<string, ChoiceId[]>>((resume?.eliminated as Record<string, ChoiceId[]>) ?? {})
 
   // Server grading: answer keys arrive only after submitting.
   const [keys, setKeys] = useState<Record<string, AnswerKey>>({})
@@ -110,7 +114,7 @@ function ExamEngine({
   const [videoReady, setVideoReady] = useState(false)
   // The score exactly as the server computed and saved it.
   const [serverScore, setServerScore] = useState<{ rw: SectionResult; math: SectionResult; composite: number } | null>(null)
-  const [startedAt] = useState(() => Date.now())
+  const [startedAt] = useState(() => Date.now() - (resume?.elapsedMs ?? 0))
   const [finishedAt, setFinishedAt] = useState<number | null>(null)
 
   /* ----------------------------- admin preview ----------------------------- */
@@ -377,6 +381,88 @@ function ExamEngine({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
+  /* ------------------- "continue where you left off" ------------------- */
+  // The exam writes its state to the student's open start: once ~20 s after a change, right away when a
+  // module changes, and when the page is hidden/closed. Reads nothing back until the exam is opened again.
+  const snapRef = useRef<ExamProgress | null>(null)
+  const dirtyRef = useRef(false)
+  const lastSaveRef = useRef(0)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const stopSavingRef = useRef(false)
+  stopSavingRef.current = gradeState === 'done' || gradeState === 'loading'
+  if (!preview && startId && phase !== 'moduleIntro') {
+    let answered = 0
+    let total = 0
+    for (const m of modules) {
+      total += m.total
+      for (let i = 0; i < m.total; i++) if (answers[keyFor(m.id, i)]) answered++
+    }
+    snapRef.current = {
+      v: 1,
+      moduleIdx,
+      phase: phase as ExamProgress['phase'],
+      current,
+      timeLeft,
+      overtime,
+      elapsedMs: Date.now() - startedAt,
+      answers,
+      flags,
+      eliminated,
+      answered,
+      total,
+      moduleLabel: modules[moduleIdx]?.label ?? '',
+    }
+  }
+  const flushProgress = useStableCallback(() => {
+    if (preview || !startId || stopSavingRef.current || !snapRef.current) return
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+    dirtyRef.current = false
+    lastSaveRef.current = Date.now()
+    try {
+      fetch('/api/exam/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ startId, progress: snapRef.current }),
+        keepalive: true,
+      }).catch(() => {})
+    } catch {
+      /* saving is best-effort */
+    }
+  })
+  // Answers / flags / position changed → save soon (at most one write per ~20 s).
+  useEffect(() => {
+    if (preview || !startId || phase === 'moduleIntro') return
+    dirtyRef.current = true
+    if (saveTimerRef.current) return
+    const wait = Math.max(1500, 20_000 - (Date.now() - lastSaveRef.current))
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null
+      if (dirtyRef.current) flushProgress()
+    }, wait)
+  }, [answers, flags, eliminated, current, preview, startId, phase, flushProgress])
+  // A new module / break / report → save right away.
+  useEffect(() => {
+    if (preview || !startId || phase === 'moduleIntro') return
+    flushProgress()
+  }, [moduleIdx, phase, preview, startId, flushProgress])
+  // Tab hidden or closed → save what the timer shows now.
+  useEffect(() => {
+    if (preview || !startId) return
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flushProgress()
+    }
+    document.addEventListener('visibilitychange', onHide)
+    window.addEventListener('pagehide', flushProgress)
+    return () => {
+      document.removeEventListener('visibilitychange', onHide)
+      window.removeEventListener('pagehide', flushProgress)
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [preview, startId, flushProgress])
+
   const selectAnswer = useStableCallback((value: string) => {
     setAnswers((a) => ({ ...a, [qKey]: value }))
   })
@@ -469,9 +555,10 @@ function ExamEngine({
     }
     const msg =
       timerMode === 'countup'
-        ? "Vazifadan chiqasizmi? Joriy jarayoningiz saqlanmaydi."
-        : 'Exit the practice test? Your progress in this session will be lost.'
+        ? "Vazifadan chiqasizmi? Javoblaringiz 7 kun saqlanadi, bosh sahifadan davom ettirasiz."
+        : 'Exit the practice test? Your progress is saved for 7 days — continue from the dashboard.'
     if (confirm(msg)) {
+      flushProgress()
       router.push('/dashboard')
     }
   }
@@ -820,7 +907,7 @@ function buildSequentialScoredModule(kind: SectionKind, questions: Question[], t
 type LoadError = { message: string; href?: string; hrefLabel?: string }
 
 /** Registers the start of a mock (daily/hourly limits) before any question is fetched. */
-async function startExam(testLabel: string | null): Promise<{ startId: string | null } | LoadError> {
+async function startExam(testLabel: string | null): Promise<{ startId: string | null; progress: ExamProgress | null } | LoadError> {
   try {
     const res = await fetch('/api/exam/start', {
       method: 'POST',
@@ -840,7 +927,7 @@ async function startExam(testLabel: string | null): Promise<{ startId: string | 
     if (!res.ok) {
       return { message: data.error ?? 'Testni boshlab bo‘lmadi.', href: '/dashboard/practice', hrefLabel: 'Mocklarga qaytish' }
     }
-    return { startId: data.startId ?? null }
+    return { startId: data.startId ?? null, progress: (data.progress as ExamProgress | null) ?? null }
   } catch {
     return { message: "Server bilan bog'lanib bo'lmadi. Internet aloqasini tekshiring." }
   }
@@ -848,6 +935,7 @@ async function startExam(testLabel: string | null): Promise<{ startId: string | 
 
 type LoadedExam = {
   startId?: string | null
+  resume?: ExamProgress | null
   /** Set only for an admin opening ?preview=1 ("Check it now"). */
   preview?: { published: boolean }
   modules: TestModule[]
@@ -885,6 +973,7 @@ function PageInner() {
 
           // Students: count this start against the limits before loading questions.
           let startId: string | null = null
+          let savedProgress: ExamProgress | null = null
           if (!preview) {
             const started = await startExam(testParam)
             if (cancelled) return
@@ -893,6 +982,7 @@ function PageInner() {
               return
             }
             startId = started.startId
+            savedProgress = started.progress
           }
 
           const config: TestConfig | null = configRes.config ?? null
@@ -949,7 +1039,10 @@ function PageInner() {
                   : 'Bu test uchun hali yetarli savol yuklanmagan.',
             })
           } else {
+            // Saved progress only fits if the test still has that module (the teacher may have changed it).
+            const resume = savedProgress && savedProgress.moduleIdx < built.length ? savedProgress : null
             setLoaded({
+              resume,
               modules: built,
               scoringMode,
               singleSubjectKind,
@@ -1013,6 +1106,7 @@ function PageInner() {
       timerMode={loaded.timerMode}
       preview={loaded.preview}
       startId={loaded.startId}
+      resume={loaded.resume}
       allowOvertime={loaded.allowOvertime}
       recommendedMinutes={loaded.recommendedMinutes}
       pdfAllowed={loaded.pdfAllowed}

@@ -446,3 +446,23 @@ returns setof question_bank language sql stable as $$
   order by (difficulty = p_difficulty) desc, random()
   limit p_limit;
 $$;
+
+-- v88: "Continue where you left off". The exam saves answers / timer / position on the student's open
+-- start; it is dropped when the result is graded and ignored after 7 days (see lib/exam-progress.ts).
+alter table mock_starts add column if not exists progress jsonb;
+alter table mock_starts add column if not exists progress_at timestamptz;
+create index if not exists mock_starts_unfinished_idx on mock_starts(user_id, progress_at desc)
+  where graded_at is null and progress is not null;
+
+-- v88: admin tahrir qilgan savollar (qayta import ularni ustiga yozmaydi).
+alter table question_bank add column if not exists edited_at timestamptz;
+
+-- v89: o'quvchi tomondagi "Questions bank": har bir o'quvchi qaysi savolga qanday javob bergani (oxirgi natija).
+create table if not exists bank_answers (
+  user_id uuid not null references users(id) on delete cascade,
+  question_id uuid not null references question_bank(id) on delete cascade,
+  correct boolean not null,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, question_id)
+);
+alter table bank_answers enable row level security;

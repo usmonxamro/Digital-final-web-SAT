@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { PartyPopper, X } from 'lucide-react'
+import { useT } from '@/components/i18n-provider'
 
 export const CELEBRATE_KEY = 'sd-celebrate'
 export type CelebrateInfo = { label: string; score: number; outOf: number }
@@ -10,6 +11,7 @@ const COLORS = ['#ff6a00', '#ffb800', '#22c55e', '#38bdf8', '#a78bfa', '#f43f5e'
 
 /** Festive pop-up shown once on the dashboard after the student finishes a scored mock. */
 export function Celebration({ name, total }: { name: string; total: number | null }) {
+  const t = useT()
   const [info, setInfo] = useState<CelebrateInfo | null>(null)
 
   useEffect(() => {
@@ -65,26 +67,26 @@ export function Celebration({ name, total }: { name: string; total: number | nul
           />
         ))}
       </div>
-      <div className="sd-modal sd-celebrate" role="dialog" aria-modal="true" aria-label="Tabriklaymiz">
-        <button className="sd-modal-close" onClick={() => setInfo(null)} aria-label="Yopish">
+      <div className="sd-modal sd-celebrate" role="dialog" aria-modal="true" aria-label={t('Tabriklaymiz')}>
+        <button className="sd-modal-close" onClick={() => setInfo(null)} aria-label={t('Yopish')}>
           <X size={15} />
         </button>
         <div className="sd-modal-icon sd-pop">
           <PartyPopper />
         </div>
-        <h2>Tabriklaymiz, {name}! 🎉</h2>
+        <h2>{t('Tabriklaymiz, {name}!', { name })} 🎉</h2>
         <p>
-          Siz <b>{info.label}</b> mockini muvaffaqiyatli yechdingiz.
+          {t('Siz {label} mockini muvaffaqiyatli yechdingiz.', { label: '\u0000' }).split('\u0000').flatMap((part, i) => (i === 0 ? [part] : [<b key="l">{info.label}</b>, part]))}
         </p>
         <div className="sd-celebrate-score">
           <strong>{info.score}</strong>
           <small>/ {info.outOf}</small>
         </div>
         <p className="sd-celebrate-count">
-          Mocklaringiz yana bittaga ko&apos;paydi{total ? ` — jami ${total} ta` : ''}. Shunday davom eting!
+          {total ? t("Mocklaringiz yana bittaga ko'paydi — jami {n} ta. Shunday davom eting!", { n: total }) : t("Mocklaringiz yana bittaga ko'paydi. Shunday davom eting!")}
         </p>
         <button className="sd-primary" onClick={() => setInfo(null)}>
-          Rahmat, davom etamiz
+          {t('Rahmat, davom etamiz')}
         </button>
       </div>
     </div>

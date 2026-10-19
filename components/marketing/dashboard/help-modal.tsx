@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { ImagePlus, Loader2, Mail, Send, CheckCircle2, X } from 'lucide-react'
+import { useT } from '@/components/i18n-provider'
 import { CONTACT_EMAIL, SITE_DOMAIN, TG_CHANNELS, TG_PERSONAL, TG_PERSONAL_URL } from '@/lib/contact'
 
 /** Shrinks a screenshot to a small JPEG data URL (≤ ~600 KB) so it can be stored with the message. */
@@ -23,6 +24,7 @@ async function compress(file: File): Promise<string> {
 }
 
 export function HelpModal({ onClose }: { onClose: () => void }) {
+  const t = useT()
   const [text, setText] = useState('')
   const [image, setImage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -36,7 +38,7 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
     try {
       setImage(await compress(f))
     } catch {
-      setError('Rasmni o‘qib bo‘lmadi yoki juda katta.')
+      setError(t('Rasmni o‘qib bo‘lmadi yoki juda katta.'))
     }
   }
 
@@ -51,10 +53,10 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({ message: text, image }),
       })
       const d = await res.json().catch(() => ({}))
-      if (!res.ok) setError(d.error ?? 'Yuborib bo‘lmadi.')
+      if (!res.ok) setError(d.error ?? t('Yuborib bo‘lmadi.'))
       else setSent(true)
     } catch {
-      setError("Server bilan bog'lanib bo'lmadi.")
+      setError(t("Server bilan bog'lanib bo'lmadi."))
     } finally {
       setBusy(false)
     }
@@ -66,10 +68,10 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
         <div className="sd-modal-icon sd-pop">
           <CheckCircle2 />
         </div>
-        <h2>Xabaringiz yuborildi!</h2>
-        <p>Tez orada ko‘rib chiqamiz. Shoshilinch bo‘lsa, Telegramda ham yozishingiz mumkin.</p>
+        <h2>{t('Xabaringiz yuborildi!')}</h2>
+        <p>{t('Tez orada ko‘rib chiqamiz. Shoshilinch bo‘lsa, Telegramda ham yozishingiz mumkin.')}</p>
         <button className="sd-primary" onClick={onClose}>
-          Yopish
+          {t('Yopish')}
         </button>
       </>
     )
@@ -77,8 +79,8 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="sd-help">
-      <h2>Yordam markazi</h2>
-      <p>Sayt xatosi yoki savolingiz bormi? Quyidagi shakl orqali yozing, yoki to‘g‘ridan-to‘g‘ri bog‘laning.</p>
+      <h2>{t('Yordam markazi')}</h2>
+      <p>{t('Sayt xatosi yoki savolingiz bormi? Quyidagi shakl orqali yozing, yoki to‘g‘ridan-to‘g‘ri bog‘laning.')}</p>
 
       <div className="sd-help-links">
         <a href={TG_PERSONAL_URL} target="_blank" rel="noopener noreferrer" className="sd-primary">
@@ -89,32 +91,32 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
         </a>
       </div>
 
-      <label className="sd-help-label">Xabar yuborish (xato, kamchilik yoki taklif)</label>
+      <label className="sd-help-label">{t('Xabar yuborish (xato, kamchilik yoki taklif)')}</label>
       <textarea
         className="sd-help-text"
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={4}
         maxLength={3000}
-        placeholder="Nima bo‘ldi? Qaysi sahifada? Iloji bo‘lsa batafsil yozing…"
+        placeholder={t('Nima bo‘ldi? Qaysi sahifada? Iloji bo‘lsa batafsil yozing…')}
       />
       {image ? (
         <div className="sd-help-shot">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image} alt="Skrinshot" />
-          <button onClick={() => setImage(null)} aria-label="Rasmni olib tashlash">
+          <img src={image} alt={t('Skrinshot')} />
+          <button onClick={() => setImage(null)} aria-label={t('Rasmni olib tashlash')}>
             <X size={13} />
           </button>
         </div>
       ) : (
         <button type="button" className="sd-help-attach" onClick={() => file.current?.click()}>
-          <ImagePlus size={16} /> Skrinshot qo‘shish
+          <ImagePlus size={16} /> {t('Skrinshot qo‘shish')}
         </button>
       )}
       <input ref={file} type="file" accept="image/*" hidden onChange={(e) => pick(e.target.files?.[0])} />
       {error && <div className="sd-code-error">{error}</div>}
       <button className="sd-primary" onClick={send} disabled={busy || text.trim().length < 5}>
-        {busy ? <Loader2 size={16} className="animate-spin" /> : 'Yuborish'}
+        {busy ? <Loader2 size={16} className="animate-spin" /> : t('Yuborish')}
       </button>
 
       <div className="sd-help-foot">

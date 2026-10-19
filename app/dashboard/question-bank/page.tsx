@@ -1,76 +1,80 @@
 'use client'
 
-import { SatSkeleton } from '@/components/sat-loader'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Play, TrendingDown } from 'lucide-react'
+import { ArrowRight, Layers, Target } from 'lucide-react'
+import { SatSkeleton } from '@/components/sat-loader'
+import { useI18n } from '@/components/i18n-provider'
+import { BANK_SECTIONS } from '@/lib/bank-meta'
+import type { BankSectionStat } from '@/app/api/bank/overview/route'
 
-type SkillStat = { domain: string; correct: number; total: number; accuracy: number }
-
+/** "Questions bank": the four sections of the book with the student's progress; each opens its topics + practice. */
 export default function QuestionBankPage() {
-  const [skills, setSkills] = useState<SkillStat[] | null>(null)
+  const { t, lang } = useI18n()
+  const [sections, setSections] = useState<BankSectionStat[] | null>(null)
 
   useEffect(() => {
-    fetch('/api/skills')
+    fetch('/api/bank/overview')
       .then((r) => r.json())
-      .then((d) => setSkills(d.skills ?? []))
-      .catch(() => setSkills([]))
+      .then((d) => setSections(d.sections ?? []))
+      .catch(() => setSections([]))
   }, [])
 
-  const weakest = skills?.filter((s) => s.total > 0).slice(0, 1)[0]
+  const total = sections?.reduce((s, x) => s + x.total, 0) ?? 0
+  const answered = sections?.reduce((s, x) => s + x.answered, 0) ?? 0
 
   return (
-    <div className="max-w-[680px]">
-      <h1 className="text-[24px] font-extrabold text-sp-text">Savol banki</h1>
-      <p className="mt-1.5 text-sp-text-muted text-[14px]">
-        Har bir ko&apos;nikmadagi aniqligingiz — eng zaif joydan mashq qiling.
-      </p>
-
-      {weakest && (
-        <Link
-          href={`/dashboard/question-bank/practice/${encodeURIComponent(weakest.domain)}`}
-          className="mt-6 flex items-center justify-between sp-glass sp-hover-glow-orange rounded-2xl p-5 border-sp-orange/30"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sp-orange/10 flex items-center justify-center text-sp-orange shrink-0">
-              <TrendingDown size={18} />
-            </div>
-            <div>
-              <div className="text-[12px] font-bold text-sp-text-muted uppercase tracking-wide">Tavsiya</div>
-              <div className="text-[15px] font-bold text-sp-text">{weakest.domain} — {weakest.accuracy}% aniqlik</div>
-            </div>
-          </div>
-          <span className="text-[13px] font-bold text-sp-orange">Mashq qilish →</span>
-        </Link>
-      )}
-
-      <div className="mt-7 space-y-2.5">
-        {skills === null && <SatSkeleton kind="list" count={4} />}
-        {skills?.map((s) => (
-          <div key={s.domain} className="sp-glass sp-hover-glow-orange rounded-xl p-4 flex items-center gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[13.5px] font-bold text-sp-text truncate">{s.domain}</span>
-                <span className="text-[12.5px] font-semibold text-sp-text-muted shrink-0 ml-2">
-                  {s.total > 0 ? `${s.accuracy}% · ${s.correct}/${s.total}` : "hali sinalmagan"}
-                </span>
-              </div>
-              <div className="h-1.5 rounded bg-sp-border overflow-hidden">
-                <div
-                  className="h-full rounded bg-sp-orange transition-all duration-500"
-                  style={{ width: `${s.total > 0 ? s.accuracy : 0}%` }}
-                />
-              </div>
-            </div>
-            <Link
-              href={`/dashboard/question-bank/practice/${encodeURIComponent(s.domain)}`}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-[#1A1200] shrink-0 bg-sp-orange shadow-[0_4px_15px_rgba(255,102,0,0.25)] hover:shadow-[0_0_20px_rgba(255,102,0,0.5)] transition-all duration-300"
-            >
-              <Play size={14} />
-            </Link>
-          </div>
-        ))}
+    <>
+      <div className="sd-page-header">
+        <div>
+          <div className="sd-eyebrow">{t('SAT Akademiyasi / Mashq')}</div>
+          <h1>{t('Savollar banki')}</h1>
+        </div>
+        {sections && total > 0 && (
+          <span className="sd-pill">
+            {t('{a} / {b} savol yechilgan', { a: answered, b: total })}
+          </span>
+        )}
       </div>
-    </div>
+      <p className="sd-note">{t("Bo'limni tanlang, mavzu va qiyinlik bo'yicha mashq qiling. Har javobdan so'ng to'g'ri javob va yechimni darhol ko'rasiz; ko'rmagan va xato qilgan savollaringiz birinchi beriladi.")}</p>
+
+      {sections === null && <SatSkeleton kind="cards" count={4} />}
+      {sections && total === 0 && <div className="sd-panel sd-empty">{t("Savollar banki tez orada ochiladi.")}</div>}
+
+      <div className="sd-qb-sections">
+        {sections?.map((s) => {
+          const meta = BANK_SECTIONS.find((m) => m.key === s.key)!
+          if (s.total === 0) return null
+          const pct = s.answered ? Math.round((s.correct / s.answered) * 100) : 0
+          return (
+            <Link key={s.key} href={`/dashboard/question-bank/${s.key}`} className="sd-mo-card" style={{ ['--h' as string]: meta.hue }}>
+              <span className="sd-mo-banner">
+                <span className="sd-mo-year">{t('{n} ta savol', { n: s.total })}</span>
+                <span className="sd-mo-title" style={{ fontSize: 22 }}>
+                  {meta.names[lang]}
+                </span>
+                <span className="sd-mo-rest">{t('{n} ta mavzu', { n: s.topics.length })}</span>
+              </span>
+              <span className="sd-mo-body">
+                <span className="sd-mo-line">
+                  <Layers /> {t('{a} / {b} yechilgan', { a: s.answered, b: s.total })}
+                </span>
+                <span className="sd-qb-bar-mini">
+                  <i style={{ width: `${s.total ? (s.answered / s.total) * 100 : 0}%` }} />
+                </span>
+                <span className="sd-mo-foot">
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                    <Target size={13} /> {s.answered ? t('Aniqlik {p}%', { p: pct }) : t('Hali boshlanmagan')}
+                  </span>
+                  <b>
+                    {t('Mavzular')} <ArrowRight />
+                  </b>
+                </span>
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+    </>
   )
 }

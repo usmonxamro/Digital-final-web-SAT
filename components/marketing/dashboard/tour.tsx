@@ -83,8 +83,8 @@ export function Tour({ onMenu, menuOpen }: { onMenu: (open: boolean) => void; me
         <b>{step === 1 ? t('Menyu shu yerda 👆') : t('Mocklar va guruhlar shu yerda')}</b>
         <p>
           {step === 1
-            ? t("Chap tomondagi 3 ta chiziqni bosing — mocklar, kurs guruhlari, savol banki va natijalaringiz shu menyuda.")
-            : t("«All Past Exams» va «Free Mocks» — mock testlar, «My Courses» — kurs guruhlari vazifalari. Savol banki va natijalar ham shu yerda.")}
+            ? t("Chap tomondagi 3 ta chiziqni bosing — mocklar, kurs guruhlari, savollar banki va natijalaringiz shu menyuda.")
+            : t("«Barcha o'tgan imtihonlar» va «Bepul mocklar» — mock testlar, «Mening kurslarim» — kurs guruhlari vazifalari. Savollar banki va natijalar ham shu yerda.")}
         </p>
         <div className="row">
           <button className="skip" onClick={finish}>

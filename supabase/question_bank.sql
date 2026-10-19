@@ -34,3 +34,16 @@ returns setof question_bank language sql stable as $$
   order by (difficulty = p_difficulty) desc, random()
   limit p_limit;
 $$;
+
+-- v88: admin tahrir qilgan savollar (qayta import ularni ustiga yozmaydi).
+alter table question_bank add column if not exists edited_at timestamptz;
+
+-- v89: o'quvchi tomondagi "Questions bank" progressi.
+create table if not exists bank_answers (
+  user_id uuid not null references users(id) on delete cascade,
+  question_id uuid not null references question_bank(id) on delete cascade,
+  correct boolean not null,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, question_id)
+);
+alter table bank_answers enable row level security;

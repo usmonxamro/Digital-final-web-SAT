@@ -104,7 +104,14 @@ export async function bankStatus(supabase: SupabaseClient): Promise<BankStatus> 
 
 /** Upserts one section by `source_id`, so running it again updates instead of duplicating. */
 export async function importBankDomain(supabase: SupabaseClient, key: string, skipNeedsCheck: boolean) {
-  const { rows } = await loadBookRows(key, skipNeedsCheck)
+  const loaded = await loadBookRows(key, skipNeedsCheck)
+  // Questions the admin edited by hand are left alone (re-importing must not undo the fixes).
+  const edited = new Set<string>()
+  {
+    const { data } = await supabase.from('question_bank').select('source_id').not('edited_at', 'is', null)
+    for (const r of data ?? []) edited.add(r.source_id as string)
+  }
+  const rows = loaded.rows.filter((r) => !edited.has(r.source_id))
   for (let i = 0; i < rows.length; i += 100) {
     const { error } = await supabase.from('question_bank').upsert(rows.slice(i, i + 100), { onConflict: 'source_id' })
     if (error) {

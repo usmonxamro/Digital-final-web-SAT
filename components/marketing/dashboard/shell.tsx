@@ -15,11 +15,11 @@ import { NotifCenter } from '@/components/marketing/dashboard/notif-center'
 import { Tour } from '@/components/marketing/dashboard/tour'
 
 const NAV = [
-  { href: '/dashboard', hash: '', label: 'Dashboard', Icon: House },
-  { href: '/dashboard/practice', hash: '', label: 'All Past Exams', Icon: FileText, badge: 'NEW' },
-  { href: '/dashboard/free-mocks', hash: '', label: 'Free Mocks', Icon: Sparkles, badge: 'FREE' },
-  { href: '/dashboard/course-tasks', hash: '', label: 'My Courses', Icon: BookOpen },
-  { href: '/dashboard/question-bank', hash: '', label: 'Savol banki', Icon: Layers },
+  { href: '/dashboard', hash: '', label: 'Bosh sahifa', Icon: House },
+  { href: '/dashboard/practice', hash: '', label: 'Barcha o‘tgan imtihonlar', Icon: FileText, badge: 'NEW' },
+  { href: '/dashboard/free-mocks', hash: '', label: 'Bepul mocklar', Icon: Sparkles, badge: 'FREE' },
+  { href: '/dashboard/course-tasks', hash: '', label: 'Mening kurslarim', Icon: BookOpen },
+  { href: '/dashboard/question-bank', hash: '', label: 'Savollar banki', Icon: Layers },
   { href: '/dashboard', hash: '#results', label: 'Natijalarim', Icon: ChartColumn },
   { href: '/dashboard/profile', hash: '', label: 'Sozlamalar', Icon: Settings },
 ]
@@ -138,7 +138,7 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
           <Link
             href="/dashboard/profile"
             className="sd-pill-user"
-            aria-label="Profil"
+            aria-label={t('Profil')}
             onClick={(e) => {
               // Already on the profile page: a second tap closes it (back to where you came from).
               if (!onProfile) return

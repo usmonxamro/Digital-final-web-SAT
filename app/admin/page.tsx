@@ -38,6 +38,7 @@ import { UsersPanel } from '@/components/admin/users-panel'
 import { AdminsPanel } from '@/components/admin/admins-panel'
 import { ModuleImportCard } from '@/components/admin/module-import-card'
 import { BookBankImport } from '@/components/admin/book-bank-import'
+import { BookBankBrowser } from '@/components/admin/book-bank-browser'
 import { ChoiceImageRow, uploadQuestionImage } from '@/components/admin/choice-image-slot'
 import { AnswerEntry, AnswerSheet, type AnswerSection } from '@/components/admin/answer-entry'
 import { PublishActions } from '@/components/admin/publish-actions'
@@ -1441,16 +1442,38 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
           </div>
         </KeepAlive>
 
-        {tab === 'bank' && (
-          <div className="bg-white border border-line rounded-2xl p-5">
-            <SkillBankImport />
-          </div>
-        )}
-        {tab === 'bank' && (
-          <div className="mt-4 bg-white border border-line rounded-2xl p-5">
-            <BookBankImport />
-          </div>
-        )}
+        {tab === 'bank' && <BankTab />}
+      </div>
+    </div>
+  )
+}
+
+/** "Savol banki": the book (1925 questions: browse / edit / load) and the skill-drill import, in two views. */
+function BankTab() {
+  const [view, setView] = useState<'book' | 'import' | 'skill'>('book')
+  const tabs: { id: typeof view; label: string }[] = [
+    { id: 'book', label: 'Kitob banki — ko‘rish / tahrirlash' },
+    { id: 'import', label: 'Kitob banki — yuklash' },
+    { id: 'skill', label: 'Skill-drill import' },
+  ]
+  return (
+    <div>
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setView(t.id)}
+            className={`rounded-full px-3.5 py-1.5 text-[12.5px] font-bold transition-colors ${view === t.id ? 'bg-green text-white' : 'bg-white border border-line text-ink-soft hover:text-ink'}`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <div className="bg-white border border-line rounded-2xl p-5">
+        {view === 'book' && <BookBankBrowser />}
+        {view === 'import' && <BookBankImport />}
+        {view === 'skill' && <SkillBankImport />}
       </div>
     </div>
   )

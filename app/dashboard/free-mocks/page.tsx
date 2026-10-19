@@ -8,6 +8,7 @@ import { Calculator, CheckCircle2, Crown, Lock, PenLine, Play, Sparkles, Timer }
 import { useDashboardData, type TestSummary } from '@/components/marketing/dashboard/dashboard-data'
 import { useUser } from '@/components/marketing/dashboard/user-context'
 import { useSd } from '@/components/marketing/dashboard/sd-ui'
+import { useT } from '@/components/i18n-provider'
 import { inSection } from '@/lib/mock-sections'
 
 type Filter = 'all' | 'math' | 'english' | 'full'
@@ -25,6 +26,7 @@ const SUBJECT = {
 } as const
 
 export default function FreeMocksPage() {
+  const t = useT()
   const { tests } = useDashboardData()
   const user = useUser()
   const { openModal } = useSd()
@@ -41,29 +43,29 @@ export default function FreeMocksPage() {
     <>
       <div className="sd-page-header">
         <div>
-          <div className="sd-eyebrow">SAT Akademiyasi / Testlar</div>
-          <h1>Free Mocks</h1>
+          <div className="sd-eyebrow">{t('SAT Akademiyasi / Testlar')}</div>
+          <h1>{t('Bepul mocklar')}</h1>
         </div>
-        <span className="sd-pill">Mashq testlar</span>
+        <span className="sd-pill">{t('Mashq testlar')}</span>
       </div>
 
       <section className="sd-fm-hero">
         <div className="sd-fm-hero-copy">
           <span className="sd-fm-kicker">
-            <Sparkles /> O&apos;qituvchi tuzgan testlar
+            <Sparkles /> {t("O'qituvchi tuzgan testlar")}
           </span>
-          <h2>Mashq qiling. Qiyinroq savollar bilan sinang.</h2>
-          <p>Bu yerda imtihon versiyalari emas, o&apos;zimiz tuzgan mashq mocklar bor. Kirib bemalol yeching va natijangizni kuzating.</p>
+          <h2>{t('Mashq qiling. Qiyinroq savollar bilan sinang.')}</h2>
+          <p>{t("Bu yerda imtihon versiyalari emas, o'zimiz tuzgan mashq mocklar bor. Kirib bemalol yeching va natijangizni kuzating.")}</p>
           <div className="sd-fm-stats">
             <span>
-              <b>{mocks.length}</b> ta mock
+              <b>{mocks.length}</b> {t('ta mock')}
             </span>
             <span>
-              <b>{free}</b> ta bepul
+              <b>{free}</b> {t('ta bepul')}
             </span>
             {paid > 0 && (
               <span>
-                <b>{paid}</b> ta pullik
+                <b>{paid}</b> {t('ta pullik')}
               </span>
             )}
           </div>
@@ -85,21 +87,21 @@ export default function FreeMocksPage() {
           ] as [Filter, string][]
         ).map(([k, label]) => (
           <button key={k} className={`sd-filter ${filter === k ? 'sd-selected' : ''}`} onClick={() => setFilter(k)}>
-            {label}
+            {t(label)}
           </button>
         ))}
       </div>
 
       <div className="sd-fm-grid">
         {tests === null && <div style={{ gridColumn: '1 / -1' }}><SatSkeleton kind="cards" count={3} /></div>}
-        {shown.map((t) => {
-          const sub = SUBJECT[t.subject]
-          const ready = isReady(t)
-          const isPaid = t.access === 'paid'
+        {shown.map((x) => {
+          const sub = SUBJECT[x.subject]
+          const ready = isReady(x)
+          const isPaid = x.access === 'paid'
           const locked = isPaid && !unlocked
           return (
             <article
-              key={t.label}
+              key={x.label}
               className={`sd-fm-card ${locked ? 'sd-fm-locked' : ''}`}
               style={{ ['--c' as string]: sub.c, ['--c2' as string]: sub.c2 }}
             >
@@ -109,59 +111,59 @@ export default function FreeMocksPage() {
                 </span>
                 {isPaid ? (
                   <span className="sd-fm-badge sd-paid">
-                    <Lock /> PULLIK
+                    <Lock /> {t('PULLIK')}
                   </span>
                 ) : (
-                  <span className="sd-fm-badge sd-free">BEPUL</span>
+                  <span className="sd-fm-badge sd-free">{t('BEPUL')}</span>
                 )}
               </div>
-              <h3>{t.label}</h3>
-              <div className="sd-fm-sub">{sub.label}</div>
+              <h3>{x.label}</h3>
+              <div className="sd-fm-sub">{t(sub.label)}</div>
               <div className="sd-chips">
-                {t.subject !== 'math' && (
+                {x.subject !== 'math' && (
                   <span className="sd-chip">
-                    <PenLine /> {t.readingCount} R&amp;W
+                    <PenLine /> {x.readingCount} R&amp;W
                   </span>
                 )}
-                {t.subject !== 'english' && (
+                {x.subject !== 'english' && (
                   <span className="sd-chip">
-                    <Calculator /> {t.mathCount} Math
+                    <Calculator /> {x.mathCount} Math
                   </span>
                 )}
-                {!t.scored && (
+                {!x.scored && (
                   <span className="sd-chip">
-                    <Timer /> Erkin mashq
+                    <Timer /> {t('Erkin mashq')}
                   </span>
                 )}
-                {t.done && (
+                {x.done && (
                   <span className="sd-chip sd-done">
-                    <CheckCircle2 /> Bajarilgan
+                    <CheckCircle2 /> {t('Bajarilgan')}
                   </span>
                 )}
               </div>
               {locked ? (
                 <button className="sd-fm-btn sd-fm-btn-lock" onClick={() => openModal('paid')}>
-                  <Lock /> Ochish
+                  <Lock /> {t('Ochish')}
                 </button>
               ) : ready ? (
-                <Link href={`/exam?test=${encodeURIComponent(t.label)}`} className="sd-fm-btn">
-                  <Play /> Boshlash
+                <Link href={`/exam?test=${encodeURIComponent(x.label)}`} className="sd-fm-btn">
+                  <Play /> {t('Boshlash')}
                 </Link>
               ) : (
                 <span className="sd-fm-btn sd-fm-btn-soon">
-                  <Timer /> Tez orada
+                  <Timer /> {t('Tez orada')}
                 </span>
               )}
             </article>
           )
         })}
-        {tests !== null && <GhostCards count={3} label="Yangi mock tayyorlanmoqda" />}
+        {tests !== null && <GhostCards count={3} label={t('Yangi mock tayyorlanmoqda')} />}
       </div>
       {tests !== null && shown.length === 0 && (
         <div className="sd-panel sd-empty">
           {mocks.length === 0
-            ? "Hozircha Free Mocks yo'q — tez orada qo'shiladi."
-            : 'Bu turda hozircha mock yo‘q.'}
+            ? t("Hozircha Free Mocks yo'q — tez orada qo'shiladi.")
+            : t('Bu turda hozircha mock yo‘q.')}
         </div>
       )}
     </>

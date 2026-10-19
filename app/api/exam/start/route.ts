@@ -9,6 +9,7 @@ import { adminIdentity } from '@/lib/admin-auth'
 import { planInfo } from '@/lib/plan'
 import { courseAccessFor } from '@/lib/course-access'
 import { canOpenTask, configGroups } from '@/lib/course-groups'
+import { progressCutoff } from '@/lib/exam-progress'
 
 /** How long an unfinished start can be resumed (page reload) without using up another mock. */
 const RESUME_HOURS = 3
@@ -68,21 +69,44 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Resume an unfinished attempt of the same test (reload / second tab).
-  const { data: open, error: openErr } = await supabase
-    .from('mock_starts')
-    .select('id')
-    .eq('user_id', session.userId)
-    .eq('test_label', testLabel)
-    .is('graded_at', null)
-    .gte('started_at', new Date(Date.now() - RESUME_HOURS * 3600_000).toISOString())
-    .order('started_at', { ascending: false })
-    .limit(1)
+  // Resume an unfinished attempt of the same test: a reload within a few hours, or a saved
+  // exam (progress) that is less than 7 days old. Either way it does not use up another mock.
+  const base = () =>
+    supabase.from('mock_starts').select('id').eq('user_id', session.userId).eq('test_label', testLabel).is('graded_at', null)
+  let open: { id: string; progress?: unknown; progress_at?: string | null; started_at?: string }[] | null = null
+  let openErr: { code?: string; message?: string } | null = null
+  {
+    const r = await supabase
+      .from('mock_starts')
+      .select('id, started_at, progress, progress_at')
+      .eq('user_id', session.userId)
+      .eq('test_label', testLabel)
+      .is('graded_at', null)
+      .or(`started_at.gte.${new Date(Date.now() - RESUME_HOURS * 3600_000).toISOString()},progress_at.gte.${progressCutoff()}`)
+      .order('started_at', { ascending: false })
+      .limit(1)
+    open = r.data
+    openErr = r.error
+    if (openErr && !isMissingTable(openErr)) {
+      // v88 columns not created yet → the old rule (3 hours, no saved progress).
+      const old = await base()
+        .gte('started_at', new Date(Date.now() - RESUME_HOURS * 3600_000).toISOString())
+        .order('started_at', { ascending: false })
+        .limit(1)
+      if (!old.error) {
+        open = old.data
+        openErr = null
+      }
+    }
+  }
   if (openErr) {
     if (isMissingTable(openErr)) return NextResponse.json({ startId: null }) // v38 SQL not run — fail open
     return NextResponse.json({ error: "Server xatosi. Birozdan keyin urinib ko'ring." }, { status: 503 })
   }
-  if (open && open.length > 0) return NextResponse.json({ startId: open[0].id, resumed: true })
+  if (open && open.length > 0) {
+    const fresh = open[0].progress_at && open[0].progress_at >= progressCutoff()
+    return NextResponse.json({ startId: open[0].id, resumed: true, progress: fresh ? open[0].progress ?? null : null })
+  }
 
   // The owner and admins have no limits at all ('admin' starts never count).
   const isAdmin = !!(await adminIdentity().catch(() => null))

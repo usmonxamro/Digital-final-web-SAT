@@ -2,6 +2,7 @@
 
 import { ArrowRight, BookOpen, Crown, FileText, Flame, Lock, Send, Trophy, Users } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useT } from '@/components/i18n-provider'
 
 type Variant = 'books' | 'chart'
 
@@ -138,6 +139,7 @@ export function CourseCard({
   onOpen: () => void
   children?: ReactNode
 }) {
+  const t = useT()
   const variant: Variant = index % 2 === 0 ? 'books' : 'chart'
   const v = VARIANTS[variant]
   const m = name.match(/^(.*?)(\d+\/\d+)(.*)$/)
@@ -147,30 +149,30 @@ export function CourseCard({
         <div className="sd-cc-top">
           <span className="sd-cc-icon"><BookOpen /></span>
           <span className={`sd-cc-tag ${v.hot ? 'sd-cc-tag-hot' : ''}`}>
-            <v.BadgeIcon size={14} /> {v.badge}
+            <v.BadgeIcon size={14} /> {t(v.badge)}
           </span>
-          <span className={`sd-course-badge ${unlocked ? '' : 'sd-locked'}`}>{unlocked ? "A'zo" : 'Qabul ochiq'}</span>
+          <span className={`sd-course-badge ${unlocked ? '' : 'sd-locked'}`}>{unlocked ? t("A'zo") : t('Qabul ochiq')}</span>
         </div>
         <h3 className="sd-cc-title">
           {m ? (<>{m[1]}<em>{m[2]}</em>{m[3]}</>) : name}
         </h3>
         <p className="sd-cc-sub">
-          {taskCount > 0 ? `${taskCount} ta mashg'ulot` : 'Vazifalar tez orada'} · Telegram guruhi vazifalari
+          {taskCount > 0 ? t("{n} ta mashg'ulot", { n: taskCount }) : t('Vazifalar tez orada')} · {t('Telegram guruhi vazifalari')}
         </p>
         <Art variant={variant} />
         <div className="sd-cc-chips">
-          {v.chips.map(({ Icon, t, s }) => (
-            <div key={t} className="sd-cc-chip">
+          {v.chips.map(({ Icon, t: ct, s }) => (
+            <div key={ct} className="sd-cc-chip">
               <span><Icon /></span>
               <div>
-                <b>{t}</b>
-                <small>{s}</small>
+                <b>{t(ct)}</b>
+                <small>{t(s)}</small>
               </div>
             </div>
           ))}
         </div>
         <button className={`sd-cc-cta ${unlocked ? '' : 'sd-cc-cta-soft'}`} onClick={onOpen}>
-          {unlocked ? 'Vazifalarni ko‘rish' : (<><Lock size={16} /> Kursni ko‘rish</>)}
+          {unlocked ? t('Vazifalarni ko‘rish') : (<><Lock size={16} /> {t('Kursni ko‘rish')}</>)}
           <span className="sd-cc-arrow"><ArrowRight size={18} /></span>
         </button>
         {children}

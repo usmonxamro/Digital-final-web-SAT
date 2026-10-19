@@ -8,6 +8,7 @@ import { studyStreak, useDashboardData, type Attempt } from '@/components/market
 import { groupExams } from '@/lib/exam-groups'
 import { GhostCards } from '@/components/marketing/dashboard/ghost-cards'
 import { Celebration } from '@/components/marketing/dashboard/celebration'
+import { UnfinishedExamBanner } from '@/components/unfinished-exam-banner'
 import { useI18n } from '@/components/i18n-provider'
 import type { Lang } from '@/lib/i18n'
 import { inSection } from '@/lib/mock-sections'
@@ -137,6 +138,8 @@ export default function DashboardPage() {
         <span className="sd-pill">{streak > 0 ? t('🔥 {n} kun ketma-ket', { n: streak }) : t('● Ta’lim jarayonida')}</span>
       </div>
 
+      <UnfinishedExamBanner />
+
       <section className="sd-hero">
         <img className="sd-hero-art sd-hero-art-day" src="/assets/student-banner.webp" alt="" width={1600} height={243} decoding="async" fetchPriority="high" />
         <img className="sd-hero-art sd-hero-art-night" src="/assets/student-banner-night.webp" alt="" width={1600} height={243} decoding="async" loading="lazy" />
@@ -240,7 +243,7 @@ export default function DashboardPage() {
                   <div>
                     <div className="sd-test-name">{a.test_label}</div>
                     <div className="sd-test-meta">
-                      {shortDate(a.created_at, lang)} · {a.subject === 'full' ? t('Full Test') : a.subject === 'math' ? 'Math' : 'Reading & Writing'}
+                      {shortDate(a.created_at, lang)} · {a.subject === 'full' ? t('Full Test') : a.subject === 'math' ? t('Math') : t('Reading & Writing')}
                     </div>
                   </div>
                   <div className={`sd-score ${tone(a)}`}>

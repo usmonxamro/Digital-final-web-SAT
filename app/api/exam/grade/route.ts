@@ -200,6 +200,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Bu imtihon natijasi allaqachon saqlangan.' }, { status: 409 })
     }
     await supabase.from('mock_starts').update({ result }).eq('id', startId) // best-effort (column may be missing)
+    await supabase.from('mock_starts').update({ progress: null, progress_at: null }).eq('id', startId) // saved progress no longer needed
   }
 
   if (scoringMode !== 'practice') {

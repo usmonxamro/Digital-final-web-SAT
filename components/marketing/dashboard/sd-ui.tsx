@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useT } from '@/components/i18n-provider'
 import { HelpModal } from '@/components/marketing/dashboard/help-modal'
 import { PlansModal } from '@/components/marketing/dashboard/plans-modal'
 import { X, Lock, LifeBuoy, Bell, KeyRound, CheckCircle2 } from 'lucide-react'
@@ -46,6 +47,7 @@ const MODALS: Record<ModalKind, { icon: React.ReactNode; title: string; text: st
 }
 
 export function SdUiProvider({ children }: { children: React.ReactNode }) {
+  const t = useT()
   const [msg, setMsg] = useState<string | null>(null)
   const [modal, setModal] = useState<ModalKind | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -79,10 +81,10 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ code }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) setCodeError(data.error ?? 'Kodni tekshirib bo‘lmadi.')
+      if (!res.ok) setCodeError(data.error ?? t('Kodni tekshirib bo‘lmadi.'))
       else setJoined(data.group ?? 'Kurs')
     } catch {
-      setCodeError("Server bilan bog'lanib bo'lmadi.")
+      setCodeError(t("Server bilan bog'lanib bo'lmadi."))
     } finally {
       setCodeBusy(false)
     }
@@ -109,8 +111,8 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
       {children}
       {m && (
         <div className="sd-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && setModal(null)}>
-          <div className={`sd-modal ${modal === 'help' ? 'sd-modal-wide' : ''} ${modal === 'plans' ? 'sd-modal-plans' : ''}`} role="dialog" aria-modal="true" aria-label={m.title}>
-            <button className="sd-modal-close" onClick={() => setModal(null)} aria-label="Yopish">
+          <div className={`sd-modal ${modal === 'help' ? 'sd-modal-wide' : ''} ${modal === 'plans' ? 'sd-modal-plans' : ''}`} role="dialog" aria-modal="true" aria-label={t(m.title)}>
+            <button className="sd-modal-close" onClick={() => setModal(null)} aria-label={t('Yopish')}>
               <X size={15} />
             </button>
             {modal === 'help' ? (
@@ -123,12 +125,12 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
                   <div className="sd-modal-icon sd-pop">
                     <CheckCircle2 />
                   </div>
-                  <h2>Guruhga qo&apos;shildingiz! 🎉</h2>
+                  <h2>{t("Guruhga qo'shildingiz!")} 🎉</h2>
                   <p>
-                    <b>{joined}</b> guruhining vazifalari endi siz uchun ochiq.
+                    {t('{g} guruhining vazifalari endi siz uchun ochiq.', { g: '\u0000' }).split('\u0000').flatMap((part, i) => (i === 0 ? [part] : [<b key="g">{joined}</b>, part]))}
                   </p>
                   <button className="sd-primary" onClick={() => (window.location.href = '/dashboard/course-tasks')}>
-                    Kurslarimga o&apos;tish
+                    {t("Kurslarimga o'tish")}
                   </button>
                 </>
               ) : (
@@ -136,8 +138,8 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
                   <div className="sd-modal-icon">
                     <KeyRound />
                   </div>
-                  <h2>Guruh kodini kiriting</h2>
-                  <p>O&apos;qituvchi Telegram guruhga yuborgan kodni kiriting (masalan: NOYABR-ABC123). Kod faqat bir marta kiritiladi.</p>
+                  <h2>{t('Guruh kodini kiriting')}</h2>
+                  <p>{t("O'qituvchi Telegram guruhga yuborgan kodni kiriting (masalan: NOYABR-ABC123). Kod faqat bir marta kiritiladi.")}</p>
                   <input
                     className="sd-code-input"
                     value={code}
@@ -150,21 +152,21 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
                   />
                   {codeError && <div className="sd-code-error">{codeError}</div>}
                   <button className="sd-primary" onClick={redeem} disabled={codeBusy || !code.trim()}>
-                    {codeBusy ? 'Tekshirilmoqda…' : 'Tasdiqlash'}
+                    {codeBusy ? t('Tekshirilmoqda…') : t('Tasdiqlash')}
                   </button>
                 </>
               )
             ) : (
               <>
                 <div className="sd-modal-icon">{m.icon}</div>
-                <h2>{m.title}</h2>
-                <p>{m.text}</p>
+                <h2>{t(m.title)}</h2>
+                <p>{t(m.text)}</p>
                 <button className="sd-primary" onClick={act}>
-                  {m.button}
+                  {t(m.button)}
                 </button>
                 {(modal === 'locked' || modal === 'paid') && (
                   <button className="sd-link" onClick={() => setModal(null)}>
-                    Hozircha yopish
+                    {t('Hozircha yopish')}
                   </button>
                 )}
               </>
