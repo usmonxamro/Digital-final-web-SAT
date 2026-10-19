@@ -3,7 +3,7 @@
 import { SatSkeleton } from '@/components/sat-loader'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Sparkles, Calculator, CheckCircle2, Crown, Lock, MonitorPlay, Play, Timer, ChevronLeft, PenLine, Layers } from 'lucide-react'
+import { ArrowRight, Search, Sparkles, Calculator, CheckCircle2, Crown, Lock, MonitorPlay, Play, Timer, ChevronLeft, PenLine, Layers } from 'lucide-react'
 import { useDashboardData, type TestSummary } from '@/components/marketing/dashboard/dashboard-data'
 import { groupExams, type ExamGroup } from '@/lib/exam-groups'
 import { GhostCards } from '@/components/marketing/dashboard/ghost-cards'
@@ -100,6 +100,8 @@ export default function PracticePage() {
   const [q, setQ] = useState('')
   const [open, setOpen] = useState<string | null>(null)
   const [year, setYear] = useState('all')
+  const [kind, setKind] = useState<'all' | 'full' | 'math' | 'english'>('all')
+  const [sort, setSort] = useState<'new' | 'old'>('new')
 
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search)
@@ -120,6 +122,7 @@ export default function PracticePage() {
   const visible = groups.filter(
     (g) =>
       (year === 'all' || g.year === year) &&
+      (kind === 'all' || g.versions.some((v) => v.test.subject === kind)) &&
       (!q || g.name.toLowerCase().includes(q) || g.versions.some((v) => v.test.label.toLowerCase().includes(q))),
   )
   // Sections: one per year (newest first), then everything without a year.
@@ -129,8 +132,11 @@ export default function PracticePage() {
       const k = g.year ?? ''
       by.set(k, [...(by.get(k) ?? []), g])
     }
-    return [...by.entries()].sort((a, b) => (a[0] === '' ? 1 : b[0] === '' ? -1 : b[0].localeCompare(a[0])))
-  }, [visible])
+    for (const [k, list] of by) by.set(k, [...list].sort((x, y) => parseExam(x.name).month - parseExam(y.name).month))
+    const dir = sort === 'new' ? 1 : -1
+    return [...by.entries()].sort((a, b) => (a[0] === '' ? 1 : b[0] === '' ? -1 : dir * b[0].localeCompare(a[0])))
+  }, [visible, sort])
+  const totalVersions = useMemo(() => groups.reduce((n, g) => n + g.versions.length, 0), [groups])
   const current = open ? groups.find((g) => g.name.toLowerCase() === open.toLowerCase()) ?? null : null
 
   function show(name: string | null) {
@@ -146,14 +152,37 @@ export default function PracticePage() {
         <ExamDetail group={current} onBack={() => show(null)} />
       ) : (
         <>
-          <div className="sd-page-header">
-            <div>
-              <div className="sd-eyebrow">{t('SAT Akademiyasi / Testlar')}</div>
-              <h1>{t('Barcha o‘tgan imtihonlar')}</h1>
+          <div className="sd-ex-hero">
+            <Cover srcs={['/covers/hero.jpg']}>
+              <HeroArt />
+            </Cover>
+            <div className="sd-ex-hero-fade" />
+            <div className="sd-ex-hero-text">
+              <h1>
+                {t("Barcha o'tgan SAT imtihonlari")
+                  .split('SAT')
+                  .flatMap((part, i, arr) => (i < arr.length - 1 ? [part, <span key={i}>SAT</span>] : [part]))}
+              </h1>
+              <p>{t("Barcha rasmiy SAT imtihonlari bir joyda. Mockni tanlab, hoziroq yechishni boshlang.")}</p>
             </div>
-            <span className="sd-pill">{t('Imtihonlar arxivi')}</span>
+            <div className="sd-ex-stats">
+              <div>
+                <Layers />
+                <b>{groups.length || '—'}</b>
+                <small>{t('Barcha imtihonlar')}</small>
+              </div>
+              <div>
+                <PenLine />
+                <b>{totalVersions ? `${totalVersions}` : '—'}</b>
+                <small>{t('Test variantlari')}</small>
+              </div>
+              <div>
+                <Calculator />
+                <b>{t('Cheksiz')}</b>
+                <small>{t('Amaliyot')}</small>
+              </div>
+            </div>
           </div>
-          <p className="sd-note">{t('Imtihon nomini tanlang va ichidagi versiyalardan birini ishlang. Barqarorlik — muvaffaqiyat kaliti.')}</p>
 
           <Link href="/dashboard/free-mocks" className="sd-promo">
             <span className="sd-promo-icon">
@@ -178,29 +207,48 @@ export default function PracticePage() {
             <QuotaBar quota={quota} />
           )}
 
-          {years.length > 0 && (
-            <div className="sd-filters">
-              {['all', ...years].map((y) => (
+          <div className="sd-ex-bar">
+            <div className="sd-ex-years">
+              {['all', ...years.slice(0, 6)].map((y) => (
                 <button key={y} className={`sd-filter ${year === y ? 'sd-selected' : ''}`} onClick={() => setYear(y)}>
-                  {y === 'all' ? t('Barcha imtihonlar') : t('{y} yil', { y })}
+                  {y === 'all' ? t('Barcha imtihonlar') : y}
                 </button>
               ))}
-              {q && (
-                <span className="sd-chip">
-                  {t('Qidiruv')}: “{q}”{' '}
-                  <button
-                    className="sd-text-btn"
-                    onClick={() => {
-                      setQ('')
-                      window.history.replaceState(null, '', '/dashboard/practice')
-                    }}
-                  >
-                    ✕
-                  </button>
-                </span>
+              {years.length > 6 && (
+                <select className={`sd-ex-select ${years.slice(6).includes(year) ? 'sd-selected' : ''}`} value={years.slice(6).includes(year) ? year : ''} onChange={(e) => e.target.value && setYear(e.target.value)} aria-label={t('Yana')}>
+                  <option value="">{t('Yana')}</option>
+                  {years.slice(6).map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
               )}
             </div>
-          )}
+            <div className="sd-ex-tools">
+              <label className="sd-ex-search">
+                <Search />
+                <input
+                  value={q}
+                  placeholder={t('Mock nomi yoki oy...')}
+                  onChange={(e) => {
+                    setQ(e.target.value.toLowerCase())
+                    window.history.replaceState(null, '', '/dashboard/practice')
+                  }}
+                />
+              </label>
+              <select className="sd-ex-select" value={kind} onChange={(e) => setKind(e.target.value as typeof kind)} aria-label={t('Barchasi')}>
+                <option value="all">{t('Barchasi')}</option>
+                <option value="full">{t('Full SAT Mock')}</option>
+                <option value="math">{t('Faqat Math')}</option>
+                <option value="english">{t('Faqat R&W')}</option>
+              </select>
+              <select className="sd-ex-select" value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label={t('Yangidan eski')}>
+                <option value="new">{t('Yangidan eski')}</option>
+                <option value="old">{t('Eskidan yangi')}</option>
+              </select>
+            </div>
+          </div>
 
           {tests === null && <SatSkeleton kind="cards" count={3} />}
           <div className="sd-tl">
@@ -209,6 +257,11 @@ export default function PracticePage() {
                 <div className="sd-year-head">
                   <h2>{y || t('Boshqa imtihonlar')}</h2>
                   <span>{t('{n} ta imtihon', { n: list.length })}</span>
+                  {y && year === 'all' && (
+                    <button className="sd-ex-all" onClick={() => setYear(y)}>
+                      {t("Barchasini ko'rish")} <ArrowRight />
+                    </button>
+                  )}
                 </div>
                 <div className="sd-ex-grid">
                   {list.map((g) => (
@@ -301,56 +354,95 @@ function MonthArt({ month, id }: { month: number; id: string }) {
   )
 }
 
-/** One exam (a month): season picture with the month badge, name, chips and the buttons — on the year timeline. */
+/** A real picture from /public/covers (month file first, then the season), the drawn scene underneath as the fallback. */
+function Cover({ srcs, children }: { srcs: string[]; children: React.ReactNode }) {
+  const [i, setI] = useState(0)
+  return (
+    <>
+      {children}
+      {i < srcs.length && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={srcs[i]} alt="" loading="lazy" decoding="async" className="sd-cover-img" onError={() => setI(i + 1)} />
+      )}
+    </>
+  )
+}
+
+/** Wide campus scene for the page banner (used until /covers/hero.jpg exists). */
+function HeroArt() {
+  return (
+    <svg viewBox="0 0 800 220" className="sd-ex-art" preserveAspectRatio="xMaxYMid slice" aria-hidden>
+      <defs>
+        <linearGradient id="hero-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffe3bd" />
+          <stop offset="1" stopColor="#ffb878" />
+        </linearGradient>
+      </defs>
+      <rect width="800" height="220" fill="url(#hero-sky)" />
+      <circle cx="560" cy="60" r="26" fill="#fff3d6" opacity=".9" />
+      <g transform="translate(470 40)">
+        <rect x="0" y="70" width="230" height="110" fill="#e9cfae" />
+        <rect x="90" y="10" width="50" height="170" fill="#e2c39b" />
+        <path d="M84 12 115 -24 146 12Z" fill="#9a4a14" />
+        <path d="M-6 70 40 36 86 70Z M144 70 190 36 236 70Z" fill="#a8531a" />
+        {[10, 34, 58, 150, 174, 198].map((x) => (
+          <rect key={x} x={x} y="92" width="14" height="30" rx="7" fill="#7c5a3a" opacity=".55" />
+        ))}
+        {[100, 118].map((x) => (
+          <rect key={x} x={x} y="40" width="10" height="26" rx="5" fill="#7c5a3a" opacity=".55" />
+        ))}
+      </g>
+      {[[420, 130, 34], [740, 120, 40], [380, 150, 24], [780, 150, 28]].map(([x, y, r], i) => (
+        <g key={i}>
+          <rect x={x - 3} y={y} width="7" height="60" rx="3" fill="#6b4423" />
+          <circle cx={x} cy={y - 6} r={r} fill={i % 2 ? '#e8590c' : '#f59e0b'} />
+          <circle cx={x - r * 0.5} cy={y + 8} r={r * 0.65} fill="#f97316" />
+        </g>
+      ))}
+      <ellipse cx="520" cy="228" rx="420" ry="40" fill="#c8742a" />
+    </svg>
+  )
+}
+
+/** One exam (a month): picture with the month badge, name, chips and the button — a column on the year timeline. */
 function ExamCard({ group, lang, onOpen }: { group: ExamGroup<TestSummary>; lang: Lang; onOpen: () => void }) {
   const { t } = useI18n()
   const done = group.versions.filter((v) => v.test.done).length
-  const hasFull = group.versions.some((v) => v.test.subject === 'full')
-  const video = group.versions.find((v) => v.test.hasVideo && v.test.done)
   const p = parseExam(group.name)
   const total = group.versions.length
   const monthName = p.month >= 0 ? MONTH_NAMES[lang][p.month] : ''
   const title = p.month >= 0 ? `${p.rest ? `${p.rest} ` : ''}${monthName}${p.year ? ` ${p.year}` : ''}` : group.name
-  const badge = p.month >= 0 ? monthName.slice(0, 3).toUpperCase() : ''
+  const badge = p.month >= 0 ? MONTH_NAMES[lang][p.month].slice(0, 3).toUpperCase() : ''
+  const mm = String(p.month + 1).padStart(2, '0')
+  const srcs = p.month >= 0 ? [`/covers/m${mm}.jpg`, `/covers/${seasonOf(p.month)}.jpg`] : []
   return (
     <div className="sd-ex-card" style={bannerStyle(p.month, group.name)} onClick={onOpen} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && onOpen()}>
       <div className="sd-ex-media">
-        <MonthArt month={p.month} id={group.name.replace(/\W/g, '')} />
+        <Cover srcs={srcs}>
+          <MonthArt month={p.month} id={group.name.replace(/\W/g, '')} />
+        </Cover>
         {(badge || p.year) && (
           <span className="sd-ex-badge">
             <b>{badge}</b>
             <small>{p.year}</small>
           </span>
         )}
+        {done === total && total > 0 && (
+          <span className="sd-ex-done" title={t('Bajarilgan')}>
+            <CheckCircle2 />
+          </span>
+        )}
       </div>
       <div className="sd-ex-body">
         <h3>{title}</h3>
         <div className="sd-ex-chips">
-          {done > 0 && (
-            <span className="sd-tag sd-done">
-              <CheckCircle2 /> {t('{a}/{b} bajarilgan', { a: done, b: total })}
-            </span>
-          )}
-          <span className="sd-tag">
-            <Layers /> {t('{n} ta versiya', { n: total })}
+          <span className={`sd-tag ${done > 0 ? 'sd-done' : ''}`}>
+            {done > 0 ? <CheckCircle2 /> : <Layers />} {done > 0 ? t('{a}/{b} bajarilgan', { a: done, b: total }) : t('{n} ta versiya', { n: total })}
           </span>
-          {hasFull && (
-            <span className="sd-tag sd-full">
-              <Crown /> {t("TO'LIQ")}
-            </span>
-          )}
         </div>
-        <p>{t("SAT Math va Reading & Writing bo'yicha imtihon variantlari.")}</p>
-        <div className="sd-ex-actions">
-          <button className="sd-primary" onClick={(e) => { e.stopPropagation(); onOpen() }}>
-            {t('Yechish')} <ArrowRight />
-          </button>
-          {video && (
-            <Link href={`/dashboard/analysis?test=${encodeURIComponent(video.test.label)}`} className="sd-soft" onClick={(e) => e.stopPropagation()}>
-              <MonitorPlay /> {t('Video tahlil')}
-            </Link>
-          )}
-        </div>
+        <button className="sd-ex-go" onClick={(e) => { e.stopPropagation(); onOpen() }}>
+          {t('Yechish')} <ArrowRight />
+        </button>
       </div>
     </div>
   )

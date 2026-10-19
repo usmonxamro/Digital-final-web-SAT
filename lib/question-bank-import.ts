@@ -1,21 +1,24 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { isMissingTable } from '@/lib/db-errors'
 
+/** The book JSON was already imported into the database and is no longer shipped with the site (the SVGs stay in /public/bank). */
+const noData = async () => ({ default: [] as unknown[] })
+
 /** The four book sections. `file` loads the bundled JSON lazily so the route stays small. */
 export const BANK_DOMAINS = [
-  { key: 'algebra', label: 'Algebra', domain: 'Algebra', load: () => import('@/lib/bank-data/bank-1-algebra.json') },
-  { key: 'advanced-math', label: 'Advanced Math', domain: 'Advanced Math', load: () => import('@/lib/bank-data/bank-2-advanced-math.json') },
+  { key: 'algebra', label: 'Algebra', domain: 'Algebra', load: noData },
+  { key: 'advanced-math', label: 'Advanced Math', domain: 'Advanced Math', load: noData },
   {
     key: 'problem-solving-data-analysis',
     label: 'Problem-Solving and Data Analysis',
     domain: 'Problem-Solving and Data Analysis',
-    load: () => import('@/lib/bank-data/bank-3-problem-solving-data-analysis.json'),
+    load: noData,
   },
   {
     key: 'geometry-trigonometry',
     label: 'Geometry and Trigonometry',
     domain: 'Geometry and Trigonometry',
-    load: () => import('@/lib/bank-data/bank-4-geometry-trigonometry.json'),
+    load: noData,
   },
 ] as const
 

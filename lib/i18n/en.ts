@@ -386,4 +386,13 @@ export const en: Record<string, string> = {
  "Hozircha yangi bildirishnomalar yo'q. Test natijalari va yangi vazifalar haqidagi xabarlar shu yerda chiqadi.": "No new notifications yet. Messages about test results and new tasks will appear here.",
  "Bosh sahifa": "Dashboard",
  "Yechish": "Take it",
+ "Barcha o'tgan SAT imtihonlari": "All Past SAT Exams",
+ "Barcha rasmiy SAT imtihonlari bir joyda. Mockni tanlab, hoziroq yechishni boshlang.": "All official SAT exams in one place. Pick a mock and start solving right now.",
+ "Test variantlari": "Test versions",
+ "Amaliyot": "Practice",
+ "Yana": "More",
+ "Yangidan eski": "Newest first",
+ "Eskidan yangi": "Oldest first",
+ "Mock nomi yoki oy...": "Mock name or month...",
+ "Barchasini ko'rish": "View all",
 }

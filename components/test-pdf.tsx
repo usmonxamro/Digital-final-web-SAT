@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
 import { AlertTriangle, FileDown, Loader2 } from 'lucide-react'
@@ -544,7 +544,7 @@ const PRINT_CSS = `
 ${FONT_CSS}
 .sat-pdf .font-serif { font-family: ${PDF_SERIF} !important; }
 .sat-pdf .font-sans { font-family: ${PDF_FONT} !important; }
-@media screen { #${PRINT_ROOT_ID} { position: fixed; left: -20000px; top: 0; width: ${PAGE_W}px; pointer-events: none; } }
+@media screen { #${PRINT_ROOT_ID} { position: fixed; left: -20000px; top: 0; width: ${PAGE_W}px; pointer-events: none; } #${PRINT_ROOT_ID} .sat-print-page { width: ${A4_W}px; height: 1122px; overflow: hidden; background: #fff; } }
 @media print {
   @page { size: A4; margin: 0; }
   html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; height: auto !important; min-height: 0 !important; overflow: visible !important; }
@@ -562,7 +562,7 @@ let activeCleanup: (() => void) | null = null
  * Draws every page, then opens the browser's print dialog ("Save as PDF"). Resolves once the dialog was requested.
  * Pages that are too tall are shrunk to fit (down to MIN_SCALE) and, failing that, continue on the next page.
  */
-export async function printTestPdf({ testTitle, items, onProgress, pack = true }: BuildOptions): Promise<void> {
+export async function printTestPdf({ testTitle, items, onProgress, pack = true, mode = 'print' }: BuildOptions & { mode?: 'print' | 'file' }): Promise<void> {
   const QRMod = await import('qrcode')
   const QRCode = QRMod.default ?? QRMod
   const qr: string = await QRCode.toDataURL(SITE_URL, { margin: 1, width: 340, color: { dark: '#0f6b35', light: '#ffffff' } })
@@ -698,6 +698,22 @@ export async function printTestPdf({ testTitle, items, onProgress, pack = true }
   await settle(host)
   onProgress?.(total, total)
 
+  if (mode === 'file') {
+    // phones: no print dialog — draw each page into an image and save one PDF file directly
+    try {
+      await savePagesAsPdf(host, fileNameOf(testTitle), onProgress)
+    } finally {
+      try {
+        root.unmount()
+      } catch {
+        /* ignore */
+      }
+      host.remove()
+      style.remove()
+    }
+    return
+  }
+
   const prevTitle = document.title
   let cleaned = false
   const cleanup = () => {
@@ -724,6 +740,37 @@ export async function printTestPdf({ testTitle, items, onProgress, pack = true }
   document.title = fileNameOf(testTitle).replace(/\.pdf$/i, '')
   await sleep(60)
   window.print()
+}
+
+/** Rasterises the hidden A4 pages one by one (keeps phone memory low) and downloads a single PDF. */
+async function savePagesAsPdf(host: HTMLElement, fileName: string, onProgress?: (done: number, total: number) => void) {
+  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')])
+  const pages = Array.from(host.querySelectorAll<HTMLElement>('.sat-print-page'))
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true })
+  const lowMem = typeof navigator !== 'undefined' && /Android|iPhone|iPad/i.test(navigator.userAgent)
+  for (let i = 0; i < pages.length; i++) {
+    const canvas = await html2canvas(pages[i], { scale: lowMem ? 1.5 : 2, backgroundColor: '#ffffff', useCORS: true, logging: false })
+    if (i > 0) pdf.addPage()
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.82), 'JPEG', 0, 0, 210, 297, undefined, 'FAST')
+    canvas.width = canvas.height = 0
+    onProgress?.(i + 1, pages.length)
+    await sleep(0)
+  }
+  const blob = pdf.output('blob')
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
+
+/** Phones and tablets get a straight file download; computers keep the sharper vector print path. */
+function prefersFileDownload() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 820
 }
 
 function fileNameOf(title: string) {
@@ -756,6 +803,8 @@ export function DownloadTestPdfButton({
   const [progress, setProgress] = useState({ done: 0, total: (items?.length ?? 0) + 1 })
   const [errText, setErrText] = useState('PDF yaratib bo‘lmadi. Qayta urinib ko‘ring.')
   const running = useRef(false)
+  const [fileMode, setFileMode] = useState(false)
+  useEffect(() => setFileMode(prefersFileDownload()), [])
 
   async function run() {
     if (running.current) return
@@ -770,7 +819,7 @@ export function DownloadTestPdfButton({
       }
       setProgress({ done: 0, total: list.length + 1 })
       setState('busy')
-      await printTestPdf({ testTitle, items: list, onProgress: (done, total) => setProgress({ done, total }) })
+      await printTestPdf({ testTitle, items: list, mode: prefersFileDownload() ? 'file' : 'print', onProgress: (done, total) => setProgress({ done, total }) })
       setState('done')
     } catch (e) {
       console.error('Test PDF failed', e)
@@ -816,8 +865,8 @@ export function DownloadTestPdfButton({
         </span>
       </button>
       {state === 'busy' && <p className="mt-2 text-xs font-semibold text-[#64748b]">Iltimos, sahifani yopmang — savollar sahifa-sahifa tayyorlanmoqda.</p>}
-      {state === 'done' && <p className="mt-2 text-xs font-semibold text-green-700">Chop etish oynasi ochildi.</p>}
-      {(state === 'idle' || state === 'done' || state === 'busy') && (
+      {state === 'done' && <p className="mt-2 text-xs font-semibold text-green-700">{fileMode ? 'PDF yuklab olindi — «Yuklamalar» (Downloads) papkasidan toping.' : 'Chop etish oynasi ochildi.'}</p>}
+      {(state === 'idle' || state === 'done' || state === 'busy') && !fileMode && (
         <p className="mx-auto mt-2 max-w-[340px] text-[11.5px] font-medium leading-relaxed text-[#64748b]">
           Chop etish oynasida <b className="text-[#0f172a]">Printer / Destination</b> qismidan <b className="text-green-700">«Save as PDF»</b> (PDF sifatida saqlash) ni tanlang.{' '}
           <b className="text-red-600">«Microsoft Print to PDF» ni tanlamang</b> — u sahifalarni xira rasmga aylantirib qo‘yadi.
