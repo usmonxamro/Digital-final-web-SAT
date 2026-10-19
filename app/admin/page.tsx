@@ -37,6 +37,7 @@ import { StatsPanel } from '@/components/admin/stats-panel'
 import { UsersPanel } from '@/components/admin/users-panel'
 import { AdminsPanel } from '@/components/admin/admins-panel'
 import { ModuleImportCard } from '@/components/admin/module-import-card'
+import { BookBankImport } from '@/components/admin/book-bank-import'
 import { ChoiceImageRow, uploadQuestionImage } from '@/components/admin/choice-image-slot'
 import { AnswerEntry, AnswerSheet, type AnswerSection } from '@/components/admin/answer-entry'
 import { PublishActions } from '@/components/admin/publish-actions'
@@ -1443,6 +1444,11 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
         {tab === 'bank' && (
           <div className="bg-white border border-line rounded-2xl p-5">
             <SkillBankImport />
+          </div>
+        )}
+        {tab === 'bank' && (
+          <div className="mt-4 bg-white border border-line rounded-2xl p-5">
+            <BookBankImport />
           </div>
         )}
       </div>

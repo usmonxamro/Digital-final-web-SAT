@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="123.153" height="53.723" viewBox="0 0 123.153 53.723"><rect data-bg="1" width="100%" height="100%" fill="#fff"/>
+<defs>
+<clipPath id="RIGHTq201-clip-0">
+<path clip-rule="nonzero" d="M 0 0.046875 L 62 0.046875 L 62 53.402344 L 0 53.402344 Z M 0 0.046875 "/>
+</clipPath>
+<clipPath id="RIGHTq201-clip-1">
+<path clip-rule="nonzero" d="M 0 0.046875 L 71 0.046875 L 71 53.402344 L 0 53.402344 Z M 0 0.046875 "/>
+</clipPath>
+<clipPath id="RIGHTq201-clip-2">
+<path clip-rule="nonzero" d="M 61 0.046875 L 122 0.046875 L 122 53.402344 L 61 53.402344 Z M 61 0.046875 "/>
+</clipPath>
+<clipPath id="RIGHTq201-clip-3">
+<path clip-rule="nonzero" d="M 51 0.046875 L 122.3125 0.046875 L 122.3125 53.402344 L 51 53.402344 Z M 51 0.046875 "/>
+</clipPath>
+<clipPath id="RIGHTq201-clip-4">
+<path clip-rule="nonzero" d="M 30 0.046875 L 92 0.046875 L 92 1 L 30 1 Z M 30 0.046875 "/>
+</clipPath>
+</defs>
+<g clip-path="url(#RIGHTq201-clip-0)">
+<path fill-rule="nonzero" fill="rgb(79.998779%, 79.998779%, 79.998779%)" fill-opacity="1" d="M 0.347656 53.054688 L 30.75 0.390625 L 61.15625 53.054688 Z M 0.347656 53.054688 "/>
+</g>
+<g clip-path="url(#RIGHTq201-clip-1)">
+<path fill="none" stroke-width="0.69739" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.0010473 0.000665611 L 30.612487 53.026932 L 61.22786 0.000665611 Z M 0.0010473 0.000665611 " transform="matrix(0.993169, 0, 0, -0.993169, 0.346616, 53.055349)"/>
+</g>
+<g clip-path="url(#RIGHTq201-clip-2)">
+<path fill-rule="nonzero" fill="rgb(79.998779%, 79.998779%, 79.998779%)" fill-opacity="1" d="M 61.15625 53.054688 L 91.5625 0.390625 L 121.96875 53.054688 Z M 61.15625 53.054688 "/>
+</g>
+<g clip-path="url(#RIGHTq201-clip-3)">
+<path fill="none" stroke-width="0.69739" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 61.22786 0.000665611 L 91.843232 53.026932 L 122.458605 0.000665611 Z M 61.22786 0.000665611 " transform="matrix(0.993169, 0, 0, -0.993169, 0.346616, 53.055349)"/>
+</g>
+<g clip-path="url(#RIGHTq201-clip-4)">
+<path fill="none" stroke-width="0.69739" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 30.612487 53.026932 L 91.843232 53.026932 " transform="matrix(0.993169, 0, 0, -0.993169, 0.346616, 53.055349)"/>
+</g>
+</svg>
