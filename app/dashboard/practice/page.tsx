@@ -153,7 +153,7 @@ export default function PracticePage() {
       ) : (
         <>
           <div className="sd-ex-hero">
-            <Cover srcs={['/covers/hero.jpg']}>
+            <Cover srcs={['/covers/hero.webp']}>
               <HeroArt />
             </Cover>
             <div className="sd-ex-hero-fade" />
@@ -414,7 +414,7 @@ function ExamCard({ group, lang, onOpen }: { group: ExamGroup<TestSummary>; lang
   const title = p.month >= 0 ? `${p.rest ? `${p.rest} ` : ''}${monthName}${p.year ? ` ${p.year}` : ''}` : group.name
   const badge = p.month >= 0 ? MONTH_NAMES[lang][p.month].slice(0, 3).toUpperCase() : ''
   const mm = String(p.month + 1).padStart(2, '0')
-  const srcs = p.month >= 0 ? [`/covers/m${mm}.jpg`, `/covers/${seasonOf(p.month)}.jpg`] : []
+  const srcs = p.month >= 0 ? [`/covers/m${mm}.webp`, `/covers/${seasonOf(p.month)}.webp`] : []
   return (
     <div className="sd-ex-card" style={bannerStyle(p.month, group.name)} onClick={onOpen} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && onOpen()}>
       <div className="sd-ex-media">
