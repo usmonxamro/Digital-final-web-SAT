@@ -1,0 +1,47 @@
+name: Mock PDF tayyorlash
+
+on:
+  workflow_dispatch:
+    inputs:
+      label:
+        description: "Bitta mock nomi (bo'sh qoldirsangiz - PDF'i yo'q hamma mocklar)"
+        required: false
+        default: ""
+      all:
+        description: "Yoqilgan HAMMA mockni qaytadan tayyorlash"
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: LaTeX va kerakli paketlarni o'rnatish
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-xetex texlive-latex-extra texlive-fonts-recommended \
+            texlive-science texlive-pictures texlive-plain-generic lmodern fonts-lmodern
+          pip install svglib reportlab pillow playwright
+          python -m playwright install --with-deps chromium
+
+      - name: PDF'larni tayyorlash va Supabase'ga yuklash
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+          PDF_JOB_KEY: ${{ secrets.PDF_JOB_KEY }}
+          LABEL: ${{ github.event.inputs.label }}
+          ALL: ${{ github.event.inputs.all }}
+        run: |
+          args=()
+          if [ -n "$LABEL" ]; then args+=(--label "$LABEL"); fi
+          if [ "$ALL" = "true" ]; then args+=(--all); fi
+          python pdf-tools/build_mock_pdfs.py "${args[@]}"
