@@ -8,7 +8,7 @@ import { ChoiceContent } from '@/components/choice-content'
 import type { Question } from '@/lib/test-data'
 import { VideoAnalysisCta } from '@/components/score-report'
 import { ReportQuestionButton } from '@/components/report-question'
-import { DownloadTestPdfButton } from '@/components/test-pdf'
+import { DownloadTestPdfButton, PdfLockedNote } from '@/components/test-pdf'
 
 export type PracticeReviewItem = {
   index: number
@@ -24,6 +24,7 @@ export function PracticeResultScreen({
   review,
   videoHref,
   pdfAllowed = false,
+  pdfLocked = false,
 }: {
   testTitle: string
   elapsedLabel: string
@@ -31,6 +32,8 @@ export function PracticeResultScreen({
   videoHref?: string
   /** The teacher allowed downloading this set's questions as a PDF. */
   pdfAllowed?: boolean
+  /** PDF is enabled for this mock, but the student finished too fast to be offered it. */
+  pdfLocked?: boolean
 }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const correct = review.filter((r) => r.correct).length
@@ -69,6 +72,7 @@ export function PracticeResultScreen({
               <Minus className="size-4" /> {omitted} o&apos;tkazilgan
             </span>
           </div>
+          {pdfLocked && <PdfLockedNote className="mt-5" />}
           {pdfAllowed && review.length > 0 && (
             <DownloadTestPdfButton
               className="mt-5 text-center"

@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
 
   /* ----------------------------- the start record ---------------------------- */
   let label: string
+  let wallSec: number | null = null
   if (startId) {
     const { data: start } = await supabase.from('mock_starts').select('*').eq('id', startId).maybeSingle()
     if (!start || start.user_id !== session.userId) {
@@ -84,6 +85,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Bu imtihon natijasi allaqachon saqlangan.' }, { status: 409 })
     }
     label = start.test_label as string
+    if (start.started_at) wallSec = Math.max(0, Math.round((Date.now() - new Date(start.started_at as string).getTime()) / 1000))
   } else {
     const { error: probe } = await supabase.from('mock_starts').select('id').limit(1)
     if (!probe || !isMissingTable(probe)) {
@@ -186,7 +188,8 @@ export async function POST(req: NextRequest) {
   const rw = section('reading')
   const math = section('math')
   const composite = subject === 'math' ? math.scaled : subject === 'english' ? rw.scaled : rw.scaled + math.scaled
-  const result = { keys, rw, math, composite, subject, scoringMode }
+  // wallSec: real time since the exam was started (server clock) — the PDF-download check never trusts the browser alone.
+  const result = { keys, rw, math, composite, subject, scoringMode, wallSec }
 
   /* ------------------------- record it exactly once ------------------------- */
   if (startId) {

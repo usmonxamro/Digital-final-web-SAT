@@ -17,6 +17,8 @@ export type ExamProgress = {
   answers: Record<string, string>
   flags: Record<string, boolean>
   eliminated: Record<string, string[]>
+  /** Seconds spent on each question (keyed like answers) — used for the PDF download check. */
+  pace?: Record<string, number>
   /** For the dashboard banner. */
   answered: number
   total: number
@@ -50,6 +52,12 @@ export function sanitizeProgress(raw: unknown): ExamProgress | null {
     if (++n > 400) break
     if (Array.isArray(v) && v.length) eliminated[str(k, 60)] = v.slice(0, 6).map((c) => str(c, 4))
   }
+  const pace: Record<string, number> = {}
+  n = 0
+  for (const [k, v] of Object.entries((r.pace as object) ?? {})) {
+    if (++n > 400) break
+    if (typeof v === 'number' && Number.isFinite(v) && v > 0) pace[str(k, 60)] = Math.min(7200, Math.round(v))
+  }
   const out: ExamProgress = {
     v: 1,
     moduleIdx: Math.max(0, num(r.moduleIdx, 20)),
@@ -61,6 +69,7 @@ export function sanitizeProgress(raw: unknown): ExamProgress | null {
     answers,
     flags,
     eliminated,
+    pace,
     answered: Math.max(0, num(r.answered, 1000)),
     total: Math.max(0, num(r.total, 1000)),
     moduleLabel: str(r.moduleLabel, 60),

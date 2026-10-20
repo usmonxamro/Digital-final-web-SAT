@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
-import { AlertTriangle, FileDown, Loader2 } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { AlertTriangle, Check, FileDown, Loader2, Lock } from 'lucide-react'
 import { ChoiceContent } from '@/components/choice-content'
 import { QuestionImage } from '@/components/question-image'
 import { QuestionStimulus } from '@/components/question-stimulus'
@@ -517,7 +518,7 @@ async function settle(el: HTMLElement) {
 export type BuildOptions = {
   testTitle: string
   items: PdfItem[]
-  onProgress?: (done: number, total: number) => void
+  onProgress?: (done: number, total: number, phase?: 'layout' | 'pages' | 'save') => void
   /** Put two short questions on one page when they fit (default true). */
   pack?: boolean
 }
@@ -742,29 +743,58 @@ export async function printTestPdf({ testTitle, items, onProgress, pack = true, 
   window.print()
 }
 
-/** Rasterises the hidden A4 pages one by one (keeps phone memory low) and downloads a single PDF. */
-async function savePagesAsPdf(host: HTMLElement, fileName: string, onProgress?: (done: number, total: number) => void) {
+/**
+ * Rasterises the hidden pages one by one (keeps phone memory low) and downloads a single PDF.
+ * Each page is drawn alone, unscaled, at the top-left corner of the viewport (the progress overlay covers it): boxes that
+ * are off-screen, scaled by CSS or measured while the page is scrolled come out shifted/cropped on phones.
+ */
+async function savePagesAsPdf(host: HTMLElement, fileName: string, onProgress?: BuildOptions['onProgress']) {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')])
   const pages = Array.from(host.querySelectorAll<HTMLElement>('.sat-print-page'))
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true })
-  const lowMem = typeof navigator !== 'undefined' && /Android|iPhone|iPad/i.test(navigator.userAgent)
-  for (let i = 0; i < pages.length; i++) {
-    const canvas = await html2canvas(pages[i], { scale: lowMem ? 1.5 : 2, backgroundColor: '#ffffff', useCORS: true, logging: false })
-    if (i > 0) pdf.addPage()
-    pdf.addImage(canvas.toDataURL('image/jpeg', 0.82), 'JPEG', 0, 0, 210, 297, undefined, 'FAST')
-    canvas.width = canvas.height = 0
-    onProgress?.(i + 1, pages.length)
-    await sleep(0)
+  const scrollY = window.scrollY
+  window.scrollTo(0, 0)
+  host.style.cssText = `position:fixed;left:0;top:0;width:${PAGE_W}px;z-index:-1;pointer-events:none;`
+  const OUT_W = 1400 // px across the A4 width ≈ 170 dpi: sharp on a phone, ~250 KB a page
+  try {
+    for (let i = 0; i < pages.length; i++) {
+      const w = i === 0 ? COVER_W : PAGE_W
+      const h = i === 0 ? COVER_H : PAGE_H
+      pages.forEach((pg, k) => {
+        pg.style.cssText = k === i ? `display:block;width:${w}px;height:${h}px;overflow:hidden;background:#fff;` : 'display:none;'
+        const inner = pg.firstElementChild as HTMLElement | null
+        if (inner) inner.style.transform = 'none'
+      })
+      await sleep(30)
+      const canvas = await html2canvas(pages[i], {
+        scale: OUT_W / w,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false,
+        windowWidth: PAGE_W,
+        windowHeight: PAGE_H,
+        scrollX: 0,
+        scrollY: 0,
+      })
+      if (i > 0) pdf.addPage()
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.8), 'JPEG', 0, 0, 210, 297, undefined, 'FAST')
+      canvas.width = canvas.height = 0
+      onProgress?.(i + 1, pages.length, 'pages')
+      await sleep(0)
+    }
+    onProgress?.(pages.length, pages.length, 'save')
+    const blob = pdf.output('blob')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  } finally {
+    window.scrollTo(0, scrollY)
   }
-  const blob = pdf.output('blob')
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
 /** Phones and tablets get a straight file download; computers keep the sharper vector print path. */
@@ -776,6 +806,136 @@ function prefersFileDownload() {
 function fileNameOf(title: string) {
   const base = title.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'SAT test'
   return `${base} - SAT AKADEMIYASI.pdf`
+}
+
+const OVERLAY_CSS = `
+@keyframes pdfIn { from { opacity: 0; transform: translateY(14px) scale(.97) } to { opacity: 1; transform: none } }
+@keyframes pdfFloat { 0%,100% { transform: translateY(0) rotate(var(--r)) } 50% { transform: translateY(-7px) rotate(var(--r)) } }
+@keyframes pdfScan { 0% { top: 8% } 100% { top: 86% } }
+@keyframes pdfPulse { 0%,100% { opacity: .55 } 50% { opacity: 1 } }
+@keyframes pdfPop { 0% { transform: scale(.4); opacity: 0 } 70% { transform: scale(1.12) } 100% { transform: scale(1); opacity: 1 } }
+@keyframes pdfDots { 0% { content: '' } 25% { content: '.' } 50% { content: '..' } 75% { content: '...' } }
+.pdf-ov { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: center; padding: 20px; background: radial-gradient(circle at 50% 30%, rgba(14,124,117,.38), rgba(5,12,12,.86)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.pdf-card { width: min(360px, 100%); padding: 26px 24px 22px; border-radius: 28px; text-align: center; color: #e8fffd; background: linear-gradient(160deg, rgba(15,40,39,.96), rgba(7,20,20,.96)); border: 1px solid rgba(94,234,212,.22); box-shadow: 0 30px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.07); animation: pdfIn .45s cubic-bezier(.2,.9,.3,1.2) both; }
+.pdf-stage { position: relative; width: 168px; height: 168px; margin: 0 auto 14px; }
+.pdf-ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+.pdf-ring circle { fill: none; stroke-width: 7; stroke-linecap: round; }
+.pdf-ring .bg { stroke: rgba(255,255,255,.08); }
+.pdf-ring .fg { stroke: url(#pdfGrad); transition: stroke-dashoffset .5s cubic-bezier(.3,.8,.3,1); filter: drop-shadow(0 0 8px rgba(45,212,191,.7)); }
+.pdf-sheets { position: absolute; inset: 30px; }
+.pdf-sheet { position: absolute; left: 50%; top: 50%; width: 62px; height: 80px; margin: -40px 0 0 -31px; border-radius: 9px; background: #f4fffe; box-shadow: 0 6px 18px rgba(0,0,0,.35); overflow: hidden; animation: pdfFloat 2.6s ease-in-out infinite; }
+.pdf-sheet:nth-child(1) { --r: -13deg; background: #bdeee8; animation-delay: -.8s; }
+.pdf-sheet:nth-child(2) { --r: 9deg; background: #d9f7f3; animation-delay: -1.5s; }
+.pdf-sheet:nth-child(3) { --r: 0deg; }
+.pdf-sheet i { position: absolute; left: 9px; right: 9px; height: 4px; border-radius: 3px; background: #0e7c75; opacity: .55; }
+.pdf-sheet i:nth-child(1) { top: 14px; right: 24px; opacity: .9 }
+.pdf-sheet i:nth-child(2) { top: 26px } .pdf-sheet i:nth-child(3) { top: 36px; right: 16px } .pdf-sheet i:nth-child(4) { top: 46px } .pdf-sheet i:nth-child(5) { top: 56px; right: 28px }
+.pdf-sheet b { position: absolute; left: 0; right: 0; height: 18px; top: 8%; background: linear-gradient(transparent, rgba(45,212,191,.55), transparent); animation: pdfScan 1.4s ease-in-out infinite alternate; }
+.pdf-pct { position: absolute; left: 0; right: 0; bottom: -2px; text-align: center; font-size: 13px; font-weight: 800; letter-spacing: .3px; color: #5eead4; }
+.pdf-big { font-size: 38px; font-weight: 800; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.pdf-title { margin: 0 0 4px; font-size: 17px; font-weight: 800; }
+.pdf-sub { margin: 0 0 16px; min-height: 36px; font-size: 13px; line-height: 1.45; color: #9bd1cb; }
+.pdf-sub::after { content: ''; animation: pdfDots 1.4s steps(1) infinite; }
+.pdf-ok .pdf-sub::after { content: none; animation: none; }
+.pdf-steps { display: flex; justify-content: center; gap: 6px; margin-bottom: 14px; }
+.pdf-steps span { flex: 1; padding: 6px 4px; border-radius: 10px; font-size: 10.5px; font-weight: 700; color: #6aa8a2; background: rgba(255,255,255,.05); border: 1px solid transparent; }
+.pdf-steps span.on { color: #021412; background: #5eead4; animation: pdfPulse 1.2s ease-in-out infinite; }
+.pdf-steps span.dn { color: #5eead4; border-color: rgba(94,234,212,.35); }
+.pdf-warn { margin: 0; font-size: 11.5px; color: #7fb3ad; }
+.pdf-check { display: grid; place-items: center; width: 92px; height: 92px; margin: 38px auto 28px; border-radius: 50%; background: linear-gradient(135deg, #34d399, #0e7c75); color: #fff; box-shadow: 0 0 0 10px rgba(52,211,153,.14), 0 0 40px rgba(52,211,153,.5); animation: pdfPop .55s cubic-bezier(.2,.9,.3,1.3) both; }
+.pdf-close { margin-top: 14px; width: 100%; height: 44px; border: 0; border-radius: 14px; background: #5eead4; color: #021412; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .pdf-sheet, .pdf-sheet b, .pdf-steps span.on, .pdf-sub::after { animation: none !important } }
+`
+
+type Prog = { pct: number; phase: 'layout' | 'pages' | 'save'; done: number; total: number }
+
+/** Full-screen "your PDF is being made" card: floating pages, a progress ring, three steps — and a success state. */
+function PdfProgressOverlay({ prog, finished, fileMode, onClose }: { prog: Prog; finished: boolean; fileMode: boolean; onClose: () => void }) {
+  const R = 74
+  const C = 2 * Math.PI * R
+  const pct = finished ? 100 : Math.min(99, Math.round(prog.pct))
+  const sub =
+    prog.phase === 'layout'
+      ? 'Savollar sahifalarga joylanmoqda'
+      : prog.phase === 'pages'
+        ? `Formulalar va rasmlar chizilmoqda — ${prog.done}/${prog.total}-sahifa`
+        : 'PDF fayl yig‘ilmoqda'
+  const stepState = (n: 1 | 2 | 3) => {
+    const cur = prog.phase === 'layout' ? 1 : prog.phase === 'pages' ? 2 : 3
+    return finished || n < cur ? 'dn' : n === cur ? 'on' : ''
+  }
+  return createPortal(
+    <div className="pdf-ov" role="dialog" aria-modal="true" aria-live="polite">
+      <style>{OVERLAY_CSS}</style>
+      <div className={`pdf-card ${finished ? 'pdf-ok' : ''}`}>
+        {finished ? (
+          <>
+            <div className="pdf-check">
+              <Check size={46} strokeWidth={3.2} />
+            </div>
+            <h3 className="pdf-title">PDF tayyor!</h3>
+            <p className="pdf-sub">{fileMode ? 'Fayl telefoningizning «Yuklamalar» (Downloads) papkasiga saqlandi.' : 'Chop etish oynasida «Save as PDF» ni tanlang.'}</p>
+            <button type="button" className="pdf-close" onClick={onClose}>
+              Yopish
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="pdf-stage">
+              <svg className="pdf-ring" viewBox="0 0 168 168" aria-hidden>
+                <defs>
+                  <linearGradient id="pdfGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stopColor="#34d399" />
+                    <stop offset="1" stopColor="#5eead4" />
+                  </linearGradient>
+                </defs>
+                <circle className="bg" cx="84" cy="84" r={R} />
+                <circle className="fg" cx="84" cy="84" r={R} strokeDasharray={C} strokeDashoffset={C * (1 - pct / 100)} />
+              </svg>
+              <div className="pdf-sheets" aria-hidden>
+                {[0, 1, 2].map((k) => (
+                  <div className="pdf-sheet" key={k}>
+                    <i />
+                    <i />
+                    <i />
+                    <i />
+                    <i />
+                    {k === 2 && <b />}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="pdf-big">{pct}%</div>
+            <h3 className="pdf-title" style={{ marginTop: 8 }}>
+              PDF tayyorlanmoqda
+            </h3>
+            <p className="pdf-sub">{sub}</p>
+            <div className="pdf-steps">
+              <span className={stepState(1)}>1 · Sahifalar</span>
+              <span className={stepState(2)}>2 · Chizish</span>
+              <span className={stepState(3)}>3 · Saqlash</span>
+            </div>
+            <p className="pdf-warn">Iltimos, sahifani yopmang va ekranni o‘chirmang.</p>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+/** Shown instead of the download button when the test was finished far too fast to have been worked through. */
+export function PdfLockedNote({ className }: { className?: string }) {
+  return (
+    <div className={`mx-auto max-w-[400px] rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-center ${className ?? ''}`}>
+      <p className="flex items-center justify-center gap-2 text-[13px] font-extrabold text-amber-900">
+        <Lock className="size-4" /> PDF yuklab olish hozircha yopiq
+      </p>
+      <p className="mt-1 text-[12px] font-medium leading-relaxed text-amber-900/80">
+        Test juda tez yakunlandi, savollar to‘liq ishlanmagan ko‘rinadi. Testni diqqat bilan, vaqt sarflab ishlab chiqsangiz, PDF yuklab olish ochiladi.
+      </p>
+    </div>
+  )
 }
 
 /**
@@ -800,44 +960,61 @@ export function DownloadTestPdfButton({
   compact?: boolean
 }) {
   const [state, setState] = useState<'idle' | 'loading' | 'busy' | 'done' | 'error'>('idle')
-  const [progress, setProgress] = useState({ done: 0, total: (items?.length ?? 0) + 1 })
+  const [prog, setProg] = useState<Prog>({ pct: 0, phase: 'layout', done: 0, total: (items?.length ?? 0) + 1 })
   const [errText, setErrText] = useState('PDF yaratib bo‘lmadi. Qayta urinib ko‘ring.')
+  const [overlay, setOverlay] = useState<'off' | 'busy' | 'done'>('off')
   const running = useRef(false)
   const [fileMode, setFileMode] = useState(false)
   useEffect(() => setFileMode(prefersFileDownload()), [])
+  useEffect(() => {
+    if (overlay !== 'done') return
+    const t = setTimeout(() => setOverlay('off'), 6000)
+    return () => clearTimeout(t)
+  }, [overlay])
 
-  async function run() {
+  async function run(forceMode?: 'print' | 'file') {
     if (running.current) return
     running.current = true
+    const mode = forceMode ?? (prefersFileDownload() ? 'file' : 'print')
     setState(loadItems ? 'loading' : 'busy')
+    if (!compact) setOverlay('busy')
     try {
       const list = items ?? (await loadItems!())
       if (list.length === 0) {
         setErrText('Bu mockda savol topilmadi.')
         setState('error')
+        setOverlay('off')
         return
       }
-      setProgress({ done: 0, total: list.length + 1 })
+      setProg({ pct: 0, phase: 'layout', done: 0, total: list.length + 1 })
       setState('busy')
-      await printTestPdf({ testTitle, items: list, mode: prefersFileDownload() ? 'file' : 'print', onProgress: (done, total) => setProgress({ done, total }) })
+      await printTestPdf({
+        testTitle,
+        items: list,
+        mode,
+        onProgress: (done, total, phase = 'layout') =>
+          setProg({ phase, done, total, pct: phase === 'layout' ? (done / Math.max(1, total)) * 40 : phase === 'pages' ? 40 + (done / Math.max(1, total)) * 57 : 99 }),
+      })
       setState('done')
+      setOverlay(!compact && mode === 'file' ? 'done' : 'off')
     } catch (e) {
       console.error('Test PDF failed', e)
       setErrText('PDF yaratib bo‘lmadi. Qayta urinib ko‘ring.')
       setState('error')
+      setOverlay('off')
     } finally {
       running.current = false
     }
   }
 
-  const pct = Math.round((progress.done / Math.max(1, progress.total)) * 100)
+  const pct = Math.round(prog.pct)
   const working = state === 'busy' || state === 'loading'
 
   if (compact) {
     return (
       <button
         type="button"
-        onClick={run}
+        onClick={() => run()}
         disabled={working}
         title={state === 'error' ? errText : 'Mockning savollarini PDF qilib yuklab olish (chop etish oynasida «Save as PDF» ni tanlang, «Microsoft Print to PDF» ni emas)'}
         className={`flex items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-extrabold transition-colors disabled:cursor-wait ${
@@ -852,21 +1029,28 @@ export function DownloadTestPdfButton({
 
   return (
     <div className={className}>
+      {overlay !== 'off' && <PdfProgressOverlay prog={prog} finished={overlay === 'done'} fileMode={fileMode} onClose={() => setOverlay('off')} />}
       <button
         type="button"
-        onClick={run}
+        onClick={() => run()}
         disabled={working}
         className="relative inline-flex min-w-[260px] items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#7c3aed,#6366f1)] px-6 py-3 text-[15px] font-extrabold text-white shadow-[0_8px_22px_rgba(99,102,241,.38)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait disabled:hover:translate-y-0"
       >
-        {state === 'busy' && <span aria-hidden className="absolute inset-y-0 left-0 bg-white/20 transition-[width] duration-300" style={{ width: `${pct}%` }} />}
         <span className="relative inline-flex items-center gap-2.5">
           {working ? <Loader2 className="size-5 animate-spin" /> : <FileDown className="size-5" />}
           {state === 'loading' ? 'Savollar yuklanmoqda…' : state === 'busy' ? `PDF tayyorlanmoqda… ${pct}%` : state === 'done' ? 'Yana yuklab olish (PDF)' : label ?? 'Testni yuklab olish (PDF)'}
         </span>
       </button>
-      {state === 'busy' && <p className="mt-2 text-xs font-semibold text-[#64748b]">Iltimos, sahifani yopmang — savollar sahifa-sahifa tayyorlanmoqda.</p>}
-      {state === 'done' && <p className="mt-2 text-xs font-semibold text-green-700">{fileMode ? 'PDF yuklab olindi — «Yuklamalar» (Downloads) papkasidan toping.' : 'Chop etish oynasi ochildi.'}</p>}
-      {(state === 'idle' || state === 'done' || state === 'busy') && !fileMode && (
+      {fileMode && (
+        <p className="mx-auto mt-2 max-w-[340px] text-[11.5px] font-medium leading-relaxed text-[#64748b]">
+          Tugmani bossangiz PDF o‘zi yuklanadi. Matnini belgilab ko‘chirish kerak bo‘lsa —{' '}
+          <button type="button" onClick={() => run('print')} disabled={working} className="font-bold text-violet-700 underline underline-offset-2">
+            matnli PDF
+          </button>{' '}
+          (chop etish oynasi orqali).
+        </p>
+      )}
+      {!fileMode && (state === 'idle' || state === 'done' || state === 'busy') && (
         <p className="mx-auto mt-2 max-w-[340px] text-[11.5px] font-medium leading-relaxed text-[#64748b]">
           Chop etish oynasida <b className="text-[#0f172a]">Printer / Destination</b> qismidan <b className="text-green-700">«Save as PDF»</b> (PDF sifatida saqlash) ni tanlang.{' '}
           <b className="text-red-600">«Microsoft Print to PDF» ni tanlamang</b> — u sahifalarni xira rasmga aylantirib qo‘yadi.

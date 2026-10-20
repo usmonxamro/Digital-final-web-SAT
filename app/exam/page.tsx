@@ -1,4 +1,5 @@
 'use client'
+import { paceVerdict } from '@/lib/pdf-pace'
 import { SatLoader } from '@/components/sat-loader'
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
@@ -116,6 +117,21 @@ function ExamEngine({
   const [serverScore, setServerScore] = useState<{ rw: SectionResult; math: SectionResult; composite: number } | null>(null)
   const [startedAt] = useState(() => Date.now() - (resume?.elapsedMs ?? 0))
   const [finishedAt, setFinishedAt] = useState<number | null>(null)
+
+  /* ---------------- pace: how long each question really held the student ---------------- */
+  const paceRef = useRef<Record<string, number>>({ ...(resume?.pace ?? {}) })
+  const [wallSec, setWallSec] = useState<number | null>(null)
+  const paceTick = useStableCallback(() => {
+    if (preview || phase !== 'testing' || document.visibilityState !== 'visible') return
+    const m = modules[moduleIdx]
+    if (!m) return
+    const k = keyFor(m.id, current)
+    paceRef.current[k] = (paceRef.current[k] ?? 0) + 1
+  })
+  useEffect(() => {
+    const id = setInterval(() => paceTick(), 1000)
+    return () => clearInterval(id)
+  }, [paceTick])
 
   /* ----------------------------- admin preview ----------------------------- */
   const [published, setPublished] = useState(preview?.published ?? true)
@@ -348,6 +364,7 @@ function ExamEngine({
       }
       setKeys(data.keys ?? {})
       if (data.rw && data.math) setServerScore({ rw: data.rw, math: data.math, composite: data.composite })
+      setWallSec(typeof data.wallSec === 'number' ? data.wallSec : null)
       setGradeState('done')
       if (scoringMode !== 'practice' && data.rw && data.math) {
         try {
@@ -408,6 +425,7 @@ function ExamEngine({
       answers,
       flags,
       eliminated,
+      pace: { ...paceRef.current },
       answered,
       total,
       moduleLabel: modules[moduleIdx]?.label ?? '',
@@ -633,6 +651,10 @@ function ExamEngine({
   }
 
   const videoHref = `/dashboard/analysis?test=${encodeURIComponent(testTitle)}`
+  // The PDF is offered only to students who really worked through the test (not flipped to the end).
+  const paceOk = !!preview || paceVerdict(paceRef.current, modules.map((m) => ({ id: m.id, kind: m.kind, total: m.total })), keyFor, wallSec).ok
+  const pdfOpen = !!pdfAllowed && paceOk
+  const pdfLocked = !!pdfAllowed && !paceOk
 
   if (phase === 'report') {
     const elapsedMs = (finishedAt ?? Date.now()) - startedAt
@@ -646,7 +668,8 @@ function ExamEngine({
           elapsedLabel={elapsedLabel}
           review={results.practiceReview}
           videoHref={videoReady ? videoHref : undefined}
-          pdfAllowed={pdfAllowed}
+          pdfAllowed={pdfOpen}
+          pdfLocked={pdfLocked}
         />
       )
     }
@@ -664,7 +687,8 @@ function ExamEngine({
         singleSection={scoringMode === 'single' ? singleSubjectKind : undefined}
         showCertificateButton
         videoHref={videoReady ? videoHref : undefined}
-        pdfAllowed={pdfAllowed}
+        pdfAllowed={pdfOpen}
+        pdfLocked={pdfLocked}
       />
     )
   }

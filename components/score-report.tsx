@@ -10,7 +10,7 @@ import { ChoiceContent } from '@/components/choice-content'
 import { Button } from '@/components/ui/button'
 import { Certificate } from '@/components/certificate'
 import { ReportQuestionButton } from '@/components/report-question'
-import { DownloadTestPdfButton } from '@/components/test-pdf'
+import { DownloadTestPdfButton, PdfLockedNote } from '@/components/test-pdf'
 import type { SectionResult } from '@/lib/scoring'
 import type { Question } from '@/lib/test-data'
 
@@ -42,6 +42,8 @@ type ScoreReportProps = {
   videoHref?: string
   /** The teacher allowed downloading this mock's questions as a PDF. */
   pdfAllowed?: boolean
+  /** PDF is enabled for this mock, but the student finished too fast to be offered it. */
+  pdfLocked?: boolean
 }
 
 function StatusBadge({ item }: { item: ReviewItem }) {
@@ -155,6 +157,7 @@ export function ScoreReport({
   showCertificateButton = true,
   videoHref,
   pdfAllowed = false,
+  pdfLocked = false,
 }: ScoreReportProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [showCertificate, setShowCertificate] = useState(false)
@@ -198,6 +201,7 @@ export function ScoreReport({
               Dashboard&apos;ga qaytish
             </Link>
           </div>
+          {pdfLocked && <PdfLockedNote className="mt-5" />}
           {pdfAllowed && review.length > 0 && (
             <DownloadTestPdfButton
               className="mt-5 text-center"
