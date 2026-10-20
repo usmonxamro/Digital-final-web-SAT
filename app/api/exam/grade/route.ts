@@ -206,21 +206,49 @@ export async function POST(req: NextRequest) {
     await supabase.from('mock_starts').update({ progress: null, progress_at: null }).eq('id', startId) // saved progress no longer needed
   }
 
+  let webAttemptId: string | null = null
   if (scoringMode !== 'practice') {
-    const { error } = await supabase.from('test_attempts').insert({
-      user_id: session.userId,
-      test_label: label,
-      subject,
-      rw_scaled: subject === 'math' ? 0 : rw.scaled,
-      math_scaled: subject === 'english' ? 0 : math.scaled,
-      composite,
-      correct_count: rw.correct + math.correct,
-      incorrect_count: rw.incorrect + math.incorrect,
-      omitted_count: rw.omitted + math.omitted,
-      elapsed_label: typeof body.elapsedLabel === 'string' ? body.elapsedLabel.slice(0, 20) : null,
-      review_json: review,
-    })
+    const { data: inserted, error } = await supabase
+      .from('test_attempts')
+      .insert({
+        user_id: session.userId,
+        test_label: label,
+        subject,
+        rw_scaled: subject === 'math' ? 0 : rw.scaled,
+        math_scaled: subject === 'english' ? 0 : math.scaled,
+        composite,
+        correct_count: rw.correct + math.correct,
+        incorrect_count: rw.incorrect + math.incorrect,
+        omitted_count: rw.omitted + math.omitted,
+        elapsed_label: typeof body.elapsedLabel === 'string' ? body.elapsedLabel.slice(0, 20) : null,
+        review_json: review,
+      })
+      .select('id')
+      .maybeSingle()
     if (error) console.error('Failed to save attempt:', error.message)
+    else webAttemptId = (inserted?.id as string | undefined) ?? null
+  }
+
+  // v94: one row per attempt in the shared log (also for practice/course tasks), next to the Telegram bot's results.
+  // Best-effort: a failure here must never break grading.
+  if (label) {
+    try {
+      const { error } = await supabase.from('attempt_log').insert({
+        source: 'web',
+        user_id: session.userId,
+        test_label: label,
+        correct: rw.correct + math.correct,
+        total: totals.reading + totals.math,
+        score_text: scoringMode === 'practice' ? null : String(composite),
+        answers: Object.fromEntries(review.map((r) => [r.questionId as string, r.answer])),
+        wrong_qids: review.filter((r) => r.correct === false).map((r) => r.questionId as string),
+        web_attempt_id: webAttemptId,
+        submitted_at: new Date().toISOString(),
+      })
+      if (error && !isMissingTable(error)) console.error('attempt_log:', error.message)
+    } catch (e) {
+      console.error('attempt_log:', e)
+    }
   }
 
   return NextResponse.json(result)
