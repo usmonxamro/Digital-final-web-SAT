@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidateMockPdf, invalidateMockPdfForQuestions } from '@/lib/mock-pdf-cache'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
@@ -116,6 +117,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: `Saqlashda xatolik: ${error.message}` }, { status: 500 })
   }
 
+  await invalidateMockPdf(supabase, [before?.test_label])
+
   // The answer key changed (e.g. via "Javob kiritish" or a manual fix) —
   // re-score any already-submitted attempt of this mock test that answered
   // this exact question, so a student who was actually right (against the
@@ -150,6 +153,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: e instanceof Error ? e.message : 'Server sozlanmagan.' }, { status: 503 })
   }
 
+  await invalidateMockPdfForQuestions(supabase, [id]) // before the row is gone, to still know its mock
   const { error } = await supabase.from('questions').delete().eq('id', id)
   if (error) {
     return NextResponse.json({ error: `O'chirishda xatolik: ${error.message}` }, { status: 500 })

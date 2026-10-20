@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidateMockPdf } from '@/lib/mock-pdf-cache'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
@@ -111,6 +112,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Bazaga saqlashda xatolik: ${error.message}` }, { status: 500 })
   }
 
+  await invalidateMockPdf(supabase, [testLabel])
   return NextResponse.json({ ok: true, inserted: data?.length ?? 0 })
 }
 

@@ -77,6 +77,7 @@ export function PracticeResultScreen({
             <DownloadTestPdfButton
               className="mt-5 text-center"
               testTitle={testTitle}
+              testLabel={testTitle}
               items={review.map((r) => ({ index: r.index, question: r.question }))}
             />
           )}

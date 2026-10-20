@@ -563,7 +563,7 @@ let activeCleanup: (() => void) | null = null
  * Draws every page, then opens the browser's print dialog ("Save as PDF"). Resolves once the dialog was requested.
  * Pages that are too tall are shrunk to fit (down to MIN_SCALE) and, failing that, continue on the next page.
  */
-export async function printTestPdf({ testTitle, items, onProgress, pack = true, mode = 'print' }: BuildOptions & { mode?: 'print' | 'file' }): Promise<void> {
+export async function printTestPdf({ testTitle, items, onProgress, pack = true, mode = 'print' }: BuildOptions & { mode?: 'print' | 'file' | 'job' }): Promise<void> {
   const QRMod = await import('qrcode')
   const QRCode = QRMod.default ?? QRMod
   const qr: string = await QRCode.toDataURL(SITE_URL, { margin: 1, width: 340, color: { dark: '#0f6b35', light: '#ffffff' } })
@@ -698,6 +698,11 @@ export async function printTestPdf({ testTitle, items, onProgress, pack = true, 
   )
   await settle(host)
   onProgress?.(total, total)
+
+  if (mode === 'job') {
+    // teacher's PDF job (headless browser): leave the finished pages in place; the job prints them itself
+    return
+  }
 
   if (mode === 'file') {
     // phones: no print dialog — draw each page into an image and save one PDF file directly
@@ -939,10 +944,33 @@ export function PdfLockedNote({ className }: { className?: string }) {
 }
 
 /**
+ * Instant path: the teacher's PDF job already built this mock's vector PDF and stored it. Returns true when the
+ * download was started (the signed link carries Content-Disposition: attachment, so the page itself stays put).
+ */
+async function downloadReadyPdf(label: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/mock-pdf?label=${encodeURIComponent(label)}`, { cache: 'no-store' })
+    if (!res.ok) return false
+    const data = (await res.json()) as { cached?: boolean; url?: string }
+    if (!data.cached || !data.url) return false
+    const a = document.createElement('a')
+    a.href = data.url
+    a.rel = 'noopener'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * The button shown on a finished mock's result screen — only when the teacher allowed it for this mock.
  */
 export function DownloadTestPdfButton({
   testTitle,
+  testLabel,
   items,
   loadItems,
   label,
@@ -950,6 +978,8 @@ export function DownloadTestPdfButton({
   compact,
 }: {
   testTitle: string
+  /** The mock's label: when given, a ready-made PDF (built once by the teacher's PDF job) is downloaded instantly if there is one. */
+  testLabel?: string
   /** Questions already in hand (student result screen)… */
   items?: PdfItem[]
   /** …or fetched when the button is pressed (admin list). */
@@ -979,6 +1009,11 @@ export function DownloadTestPdfButton({
     setState(loadItems ? 'loading' : 'busy')
     if (!compact) setOverlay('busy')
     try {
+      if (testLabel && (await downloadReadyPdf(testLabel))) {
+        setState('done')
+        setOverlay('off')
+        return
+      }
       const list = items ?? (await loadItems!())
       if (list.length === 0) {
         setErrText('Bu mockda savol topilmadi.')

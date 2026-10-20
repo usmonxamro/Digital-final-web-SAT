@@ -206,6 +206,7 @@ export function ScoreReport({
             <DownloadTestPdfButton
               className="mt-5 text-center"
               testTitle={testTitle}
+              testLabel={testTitle}
               items={review.map((r) => ({ moduleLabel: r.moduleLabel, sectionKind: r.sectionKind, index: r.index, question: r.question }))}
             />
           )}

@@ -1,22 +1,18 @@
 import type { PdfItem } from '@/components/test-pdf'
 import type { Question, SectionKind } from '@/lib/test-data'
 
+/** The mock settings that decide how its questions are split into modules for the PDF. */
+export type PdfCfg = { subject?: string; placement?: string; scored?: boolean; mathLayout?: string } | null
+
 /**
- * The questions of one mock, in exam order, ready for the PDF (admin: "PDF yuklab olish" on a mock's row).
- * Same module split / caps as the exam itself. Admins may read questions without starting the mock.
+ * Puts a mock's questions into exam order, ready for the PDF: same module split / caps as the exam itself.
+ * `get(kind)` supplies the questions of one section (from the admin API, or preloaded by the PDF job).
  */
-export async function loadMockPdfItems(label: string): Promise<PdfItem[]> {
-  const enc = encodeURIComponent(label)
-  const cfgRes = await fetch(`/api/admin/test-config?testLabel=${enc}`).then((r) => r.json()).catch(() => ({}))
-  const cfg = cfgRes?.config ?? null
+export async function assemblePdfItems(cfg: PdfCfg, get: (kind: SectionKind) => Promise<Question[]>): Promise<PdfItem[]> {
   const subject: 'full' | 'math' | 'english' = cfg?.subject === 'math' || cfg?.subject === 'english' ? cfg.subject : 'full'
   const flatOnly = cfg?.placement === 'course_task' || cfg?.scored === false
   const sequential = subject === 'math' && cfg?.mathLayout === 'sequential'
 
-  const get = async (kind: SectionKind): Promise<Question[]> => {
-    const res = await fetch(`/api/questions?kind=${kind}&test=${enc}`).then((r) => r.json()).catch(() => ({}))
-    return (res?.questions ?? []) as Question[]
-  }
   const halves = (all: Question[]): [Question[], Question[]] => {
     const m1 = all.filter((q) => q.moduleNumber === 1)
     const m2 = all.filter((q) => q.moduleNumber === 2)
@@ -47,4 +43,18 @@ export async function loadMockPdfItems(label: string): Promise<PdfItem[]> {
   const [p1, p2] = halves(all)
   const cap = kind === 'math' ? 22 : 27
   return [...toItems(p1, cap, kind, `${name} — Module 1`), ...toItems(p2, cap, kind, `${name} — Module 2`)]
+}
+
+/**
+ * The questions of one mock for the PDF (admin: "PDF yuklab olish" on a mock's row).
+ * Admins may read questions without starting the mock.
+ */
+export async function loadMockPdfItems(label: string): Promise<PdfItem[]> {
+  const enc = encodeURIComponent(label)
+  const cfgRes = await fetch(`/api/admin/test-config?testLabel=${enc}`).then((r) => r.json()).catch(() => ({}))
+  const get = async (kind: SectionKind): Promise<Question[]> => {
+    const res = await fetch(`/api/questions?kind=${kind}&test=${enc}`).then((r) => r.json()).catch(() => ({}))
+    return (res?.questions ?? []) as Question[]
+  }
+  return assemblePdfItems(cfgRes?.config ?? null, get)
 }
