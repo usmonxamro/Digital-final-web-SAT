@@ -7,7 +7,6 @@ import { NotifyPanel } from '@/components/admin/notify-panel'
 import { ReportsPanel } from '@/components/admin/reports-panel'
 import { GroupsPanel } from '@/components/admin/groups-panel'
 import { BotSyncPanel } from '@/components/admin/bot-sync-panel'
-import { BotTestPicker, type PickedBotTest } from '@/components/admin/bot-test-picker'
 import { ThemeSwitch } from '@/components/marketing/theme-switch'
 import {
   ArrowLeft,
@@ -80,28 +79,6 @@ async function saveModule(opts: {
     const data = await res.json()
     if (!res.ok) return { ok: false, message: data.error ?? 'Saqlashda xatolik yuz berdi.' }
     return { ok: true, message: `${data.inserted} ta savol saqlandi.` }
-  } catch {
-    return { ok: false, message: "Server bilan bog'lanib bo'lmadi." }
-  }
-}
-
-/** Copies a Telegram-bot test's answer key onto the mock that was just saved, and links the two (stats merge). */
-async function applyBotKeys(label: string, code: string): Promise<{ ok: boolean; message: string }> {
-  const post = async (url: string, body: object) => {
-    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    return { ok: res.ok, d: await res.json().catch(() => ({})) }
-  }
-  try {
-    const pv = await post('/api/admin/bot-sync', { action: 'preview', code, label })
-    if (!pv.ok) return { ok: false, message: pv.d.error ?? 'Bot kalitini solishtirib bo‘lmadi.' }
-    const patches = (pv.d.patches ?? []) as unknown[]
-    if (patches.length > 0) {
-      const sv = await post('/api/admin/questions/batch-answers', { answers: patches })
-      if (!sv.ok) return { ok: false, message: sv.d.error ?? 'Javoblarni saqlab bo‘lmadi.' }
-    }
-    const lk = await post('/api/admin/bot-sync', { action: 'link', code, label })
-    if (!lk.ok) return { ok: false, message: lk.d.error ?? 'Botga bog‘lab bo‘lmadi.' }
-    return { ok: true, message: `${pv.d.siteCount} ta javob botdan olindi va mock botdagi testga ulandi.` }
   } catch {
     return { ok: false, message: "Server bilan bog'lanib bo'lmadi." }
   }
@@ -200,9 +177,7 @@ function PostSaveAnswerEntry({
     <div className="mt-5 border-t border-line pt-4 pb-20">
       <PublishActions testLabel={testLabel} variant="floating" />
       <div className="text-[13px] font-bold text-ink-soft mb-1">
-        {sections && sections.length > 0 && sections.every((sec) => sec.questions.every((q) => !!(q.correct || q.correctValue)))
-          ? "JSON'dagi javoblar saqlandi — tekshirib chiqing (kerak bo'lsa o'zgartiring)"
-          : "Endi to'g'ri javoblarni kiriting"}
+        Endi to&apos;g&apos;ri javoblarni kiriting
       </div>
       <p className="text-[12px] text-ink-faint mb-3">
         Barcha modullar pastma-past turibdi. Hammasini belgilab bo&apos;lgach, eng pastdagi tugmani bosing —
@@ -223,19 +198,16 @@ function PostSaveAnswerEntry({
   )
 }
 
-function MockNameField({ value, onChange, right }: { value: string; onChange: (v: string) => void; right?: React.ReactNode }) {
+function MockNameField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <div className="mb-4">
       <label className="block text-[12px] font-bold text-ink-soft mb-1.5">Mock nomi</label>
-      <div className="flex gap-2">
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Masalan: Practice Test 3"
-          className="w-full px-3 py-2.5 rounded-[9px] border border-line text-[13.5px] focus:outline-none focus:border-green"
-        />
-        {right}
-      </div>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Masalan: Practice Test 3"
+        className="w-full px-3 py-2.5 rounded-[9px] border border-line text-[13.5px] focus:outline-none focus:border-green"
+      />
     </div>
   )
 }
@@ -346,8 +318,6 @@ function MathMockForm() {
   const [saving, setSaving] = useState(false)
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
   const [savedLabel, setSavedLabel] = useState<string | null>(null)
-  const [botTest, setBotTest] = useState<PickedBotTest | null>(null)
-  const [keysFromBot, setKeysFromBot] = useState(false)
 
   const ready = mockName.trim() && (layout === 'modules' ? math1 && math2 : mathAll)
 
@@ -356,7 +326,6 @@ function MathMockForm() {
     setSaving(true)
     setResult(null)
     setSavedLabel(null)
-    setKeysFromBot(false)
     const label = mockName.trim()
     await saveTestConfig({ testLabel: label, subject: 'math', mathLayout: layout })
 
@@ -369,22 +338,12 @@ function MathMockForm() {
         : [await saveModule({ kind: 'math', questions: mathAll!, testLabel: label })]
 
     const failed = results.find((r) => !r.ok)
-    if (failed) {
-      setResult({ ok: false, message: failed.message })
-    } else if (botTest) {
-      // The answers come from the bot's test: nothing to type in.
-      const applied = await applyBotKeys(label, botTest.code)
-      if (applied.ok) {
-        setKeysFromBot(true)
-        setResult({ ok: true, message: `"${label}" Math mock saqlandi. ${applied.message}` })
-      } else {
-        setResult({ ok: false, message: `"${label}" saqlandi, lekin bot kaliti qo'llanmadi: ${applied.message} Javoblarni qo'lda kiriting.` })
-      }
-      setSavedLabel(label)
-    } else {
-      setResult({ ok: true, message: `"${label}" Math mock saqlandi.` })
-      setSavedLabel(label)
-    }
+    setResult(
+      failed
+        ? { ok: false, message: failed.message }
+        : { ok: true, message: `"${label}" Math mock saqlandi.` },
+    )
+    if (!failed) setSavedLabel(label)
     setSaving(false)
   }
 
@@ -418,26 +377,7 @@ function MathMockForm() {
         </div>
       </div>
 
-      <MockNameField
-        value={mockName}
-        onChange={setMockName}
-        right={
-          <BotTestPicker
-            expectedCount={44}
-            hint="Faqat 44 talik testlar tanlanadi. 20, 22, 31 talik va boshqa hajmdagilar uchun «Vazifa qo'shish» bo'limidan foydalaning."
-            onPick={(t) => {
-              setBotTest(t)
-              if (!mockName.trim() && t.name) setMockName(t.name)
-            }}
-          />
-        }
-      />
-      {botTest && (
-        <div className="-mt-2 mb-4 flex items-center gap-2 rounded-lg bg-green-mist px-3 py-2 text-[12.5px] text-green-deep font-bold">
-          Javoblar botdagi &quot;{botTest.name ?? botTest.code}&quot; testidan olinadi ({botTest.questionCount} ta) — qo&apos;lda kiritish shart emas.
-          <button onClick={() => setBotTest(null)} className="ml-auto underline font-semibold">bekor qilish</button>
-        </div>
-      )}
+      <MockNameField value={mockName} onChange={setMockName} />
 
       {layout === 'modules' ? (
         <div className="grid sm:grid-cols-2 gap-3 mb-4">
@@ -459,7 +399,7 @@ function MathMockForm() {
         {saving ? 'Saqlanmoqda...' : 'Math mockni saqlash'}
       </button>
       <ResultBanner result={result} />
-      {savedLabel && !keysFromBot && (
+      {savedLabel && (
         <PostSaveAnswerEntry
           testLabel={savedLabel}
           targets={
@@ -552,8 +492,6 @@ function TaskForm() {
   const [saving, setSaving] = useState(false)
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
   const [savedLabel, setSavedLabel] = useState<string | null>(null)
-  const [botTest, setBotTest] = useState<PickedBotTest | null>(null)
-  const [keysFromBot, setKeysFromBot] = useState(false)
 
   const ready = name.trim() && questions && questions.length > 0
   const kind: SectionKind = subject === 'math' ? 'math' : 'reading'
@@ -563,7 +501,6 @@ function TaskForm() {
     setSaving(true)
     setResult(null)
     setSavedLabel(null)
-    setKeysFromBot(false)
     const label = name.trim()
     const mins = Number(minutes)
     try {
@@ -595,25 +532,15 @@ function TaskForm() {
       return
     }
     const r = await saveModule({ kind, questions, testLabel: label })
-    const base = r.ok
-      ? `"${label}" vazifasi saqlandi — ${questions.length} ta savol${groups.length ? `, guruh: ${groups.map((g) => COURSE_GROUPS.find((c) => c.slug === g)?.title).join(' + ')}` : ''}. Hozircha DRAFT.`
-      : ''
-    if (!r.ok) {
-      setResult(r)
-    } else if (botTest && subject === 'math') {
-      // The answers come from the bot's test: nothing to type in.
-      const applied = await applyBotKeys(label, botTest.code)
-      if (applied.ok) {
-        setKeysFromBot(true)
-        setResult({ ok: true, message: `${base} ${applied.message}` })
-      } else {
-        setResult({ ok: false, message: `${base} Lekin bot kaliti qo'llanmadi: ${applied.message} Javoblarni qo'lda kiriting.` })
-      }
-      setSavedLabel(label)
-    } else {
-      setResult({ ok: true, message: base })
-      setSavedLabel(label)
-    }
+    setResult(
+      r.ok
+        ? {
+            ok: true,
+            message: `"${label}" vazifasi saqlandi — ${questions.length} ta savol${groups.length ? `, guruh: ${groups.map((g) => COURSE_GROUPS.find((c) => c.slug === g)?.title).join(' + ')}` : ''}. Hozircha DRAFT.`,
+          }
+        : r,
+    )
+    if (r.ok) setSavedLabel(label)
     setSaving(false)
   }
 
@@ -624,26 +551,7 @@ function TaskForm() {
         Vaqt cheklanmaydi: o&apos;quvchida taymer <b>yuqoriga</b> sanab, nechi daqiqa ketganini ko&apos;rsatib turadi.
       </div>
 
-      <MockNameField
-        value={name}
-        onChange={setName}
-        right={
-          subject === 'math' ? (
-            <BotTestPicker
-              onPick={(bt) => {
-                setBotTest(bt)
-                if (!name.trim() && bt.name) setName(bt.name)
-              }}
-            />
-          ) : undefined
-        }
-      />
-      {botTest && subject === 'math' && (
-        <div className="-mt-2 mb-4 flex items-center gap-2 rounded-lg bg-green-mist px-3 py-2 text-[12.5px] text-green-deep font-bold">
-          Javoblar botdagi &quot;{botTest.name ?? botTest.code}&quot; testidan olinadi ({botTest.questionCount} ta) — qo&apos;lda kiritish shart emas.
-          <button onClick={() => setBotTest(null)} className="ml-auto underline font-semibold">bekor qilish</button>
-        </div>
-      )}
+      <MockNameField value={name} onChange={setName} />
 
       <div className="mb-4 grid gap-4 sm:grid-cols-2">
         <div>
@@ -707,13 +615,8 @@ function TaskForm() {
 
       <div className="mb-4">
         <ModuleImportCard
-          key={botTest?.code ?? 'any'}
-          title={
-            botTest && subject === 'math'
-              ? `Math savollari — ${botTest.questionCount} ta (botdagi testga mos, JSON)`
-              : `${subject === 'math' ? 'Math' : 'English'} savollari — istalgancha sonda (JSON)`
-          }
-          expectedCount={botTest && subject === 'math' ? botTest.questionCount : null}
+          title={`${subject === 'math' ? 'Math' : 'English'} savollari — istalgancha sonda (JSON)`}
+          expectedCount={null}
           onChange={setQuestions}
         />
       </div>
@@ -727,7 +630,7 @@ function TaskForm() {
         {saving ? 'Saqlanmoqda...' : 'Vazifani saqlash'}
       </button>
       <ResultBanner result={result} />
-      {savedLabel && !keysFromBot && <PostSaveAnswerEntry testLabel={savedLabel} targets={[{ kind, label: `${subject === 'math' ? 'Math' : 'English'} (barcha savollar)` }]} />}
+      {savedLabel && <PostSaveAnswerEntry testLabel={savedLabel} targets={[{ kind, label: `${subject === 'math' ? 'Math' : 'English'} (barcha savollar)` }]} />}
     </div>
   )
 }

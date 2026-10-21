@@ -62,9 +62,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Answer keys that come with the pasted JSON ("correct" / "correctValue") are saved as they are. A mock whose key is
-  // missing (or that is taken from the Telegram bot's test) is filled in afterwards: by hand in "Javob kiritish", or
-  // copied from the bot test chosen in the new-mock form.
+  // A mock test's answer key is always entered by hand afterward, through
+  // "Javob kiritish" — never trusted from an AI-generated JSON import, since
+  // that's exactly where wrong answer keys have come from. Any correct /
+  // correctValue the pasted JSON happens to carry is dropped on import;
+  // skill-bank questions (testLabel null, no per-module answer-entry UI)
+  // are unaffected, since there's no other way to fill those in.
+  const forceManualAnswers = !!testLabel
   // Every row of this one INSERT would otherwise get the identical
   // `created_at` (Postgres now() is per-transaction), and the exam / admin
   // lists order by created_at — so ties came back in arbitrary order (and a
@@ -85,8 +89,8 @@ export async function POST(req: NextRequest) {
     equations: q.equations ?? null,
     image: q.image ?? null,
     choices: q.choices ?? null,
-    correct: q.correct ?? null,
-    correct_value: q.correctValue ?? null,
+    correct: forceManualAnswers ? null : q.correct ?? null,
+    correct_value: forceManualAnswers ? null : q.correctValue ?? null,
     explanation: q.explanation ?? null,
     test_label: testLabel,
     module_number: moduleNumber,
