@@ -424,6 +424,7 @@ function MathMockForm() {
         right={
           <BotTestPicker
             expectedCount={44}
+            hint="Faqat 44 talik testlar tanlanadi. 20, 22, 31 talik va boshqa hajmdagilar uchun «Vazifa qo'shish» bo'limidan foydalaning."
             onPick={(t) => {
               setBotTest(t)
               if (!mockName.trim() && t.name) setMockName(t.name)
@@ -551,6 +552,8 @@ function TaskForm() {
   const [saving, setSaving] = useState(false)
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
   const [savedLabel, setSavedLabel] = useState<string | null>(null)
+  const [botTest, setBotTest] = useState<PickedBotTest | null>(null)
+  const [keysFromBot, setKeysFromBot] = useState(false)
 
   const ready = name.trim() && questions && questions.length > 0
   const kind: SectionKind = subject === 'math' ? 'math' : 'reading'
@@ -560,6 +563,7 @@ function TaskForm() {
     setSaving(true)
     setResult(null)
     setSavedLabel(null)
+    setKeysFromBot(false)
     const label = name.trim()
     const mins = Number(minutes)
     try {
@@ -591,15 +595,25 @@ function TaskForm() {
       return
     }
     const r = await saveModule({ kind, questions, testLabel: label })
-    setResult(
-      r.ok
-        ? {
-            ok: true,
-            message: `"${label}" vazifasi saqlandi — ${questions.length} ta savol${groups.length ? `, guruh: ${groups.map((g) => COURSE_GROUPS.find((c) => c.slug === g)?.title).join(' + ')}` : ''}. Hozircha DRAFT.`,
-          }
-        : r,
-    )
-    if (r.ok) setSavedLabel(label)
+    const base = r.ok
+      ? `"${label}" vazifasi saqlandi — ${questions.length} ta savol${groups.length ? `, guruh: ${groups.map((g) => COURSE_GROUPS.find((c) => c.slug === g)?.title).join(' + ')}` : ''}. Hozircha DRAFT.`
+      : ''
+    if (!r.ok) {
+      setResult(r)
+    } else if (botTest && subject === 'math') {
+      // The answers come from the bot's test: nothing to type in.
+      const applied = await applyBotKeys(label, botTest.code)
+      if (applied.ok) {
+        setKeysFromBot(true)
+        setResult({ ok: true, message: `${base} ${applied.message}` })
+      } else {
+        setResult({ ok: false, message: `${base} Lekin bot kaliti qo'llanmadi: ${applied.message} Javoblarni qo'lda kiriting.` })
+      }
+      setSavedLabel(label)
+    } else {
+      setResult({ ok: true, message: base })
+      setSavedLabel(label)
+    }
     setSaving(false)
   }
 
@@ -610,7 +624,26 @@ function TaskForm() {
         Vaqt cheklanmaydi: o&apos;quvchida taymer <b>yuqoriga</b> sanab, nechi daqiqa ketganini ko&apos;rsatib turadi.
       </div>
 
-      <MockNameField value={name} onChange={setName} />
+      <MockNameField
+        value={name}
+        onChange={setName}
+        right={
+          subject === 'math' ? (
+            <BotTestPicker
+              onPick={(bt) => {
+                setBotTest(bt)
+                if (!name.trim() && bt.name) setName(bt.name)
+              }}
+            />
+          ) : undefined
+        }
+      />
+      {botTest && subject === 'math' && (
+        <div className="-mt-2 mb-4 flex items-center gap-2 rounded-lg bg-green-mist px-3 py-2 text-[12.5px] text-green-deep font-bold">
+          Javoblar botdagi &quot;{botTest.name ?? botTest.code}&quot; testidan olinadi ({botTest.questionCount} ta) — qo&apos;lda kiritish shart emas.
+          <button onClick={() => setBotTest(null)} className="ml-auto underline font-semibold">bekor qilish</button>
+        </div>
+      )}
 
       <div className="mb-4 grid gap-4 sm:grid-cols-2">
         <div>
@@ -674,8 +707,13 @@ function TaskForm() {
 
       <div className="mb-4">
         <ModuleImportCard
-          title={`${subject === 'math' ? 'Math' : 'English'} savollari — istalgancha sonda (JSON)`}
-          expectedCount={null}
+          key={botTest?.code ?? 'any'}
+          title={
+            botTest && subject === 'math'
+              ? `Math savollari — ${botTest.questionCount} ta (botdagi testga mos, JSON)`
+              : `${subject === 'math' ? 'Math' : 'English'} savollari — istalgancha sonda (JSON)`
+          }
+          expectedCount={botTest && subject === 'math' ? botTest.questionCount : null}
           onChange={setQuestions}
         />
       </div>
@@ -689,7 +727,7 @@ function TaskForm() {
         {saving ? 'Saqlanmoqda...' : 'Vazifani saqlash'}
       </button>
       <ResultBanner result={result} />
-      {savedLabel && <PostSaveAnswerEntry testLabel={savedLabel} targets={[{ kind, label: `${subject === 'math' ? 'Math' : 'English'} (barcha savollar)` }]} />}
+      {savedLabel && !keysFromBot && <PostSaveAnswerEntry testLabel={savedLabel} targets={[{ kind, label: `${subject === 'math' ? 'Math' : 'English'} (barcha savollar)` }]} />}
     </div>
   )
 }

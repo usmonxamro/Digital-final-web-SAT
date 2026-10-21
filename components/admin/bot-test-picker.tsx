@@ -12,10 +12,13 @@ export type PickedBotTest = { code: string; name: string | null; kind: string | 
 export function BotTestPicker({
   onPick,
   expectedCount,
+  hint,
 }: {
   onPick: (t: PickedBotTest) => void
   /** If set, tests with a different number of answers are shown greyed out (their key cannot be applied). */
   expectedCount?: number
+  /** Short note under the search box. */
+  hint?: string
 }) {
   const [open, setOpen] = useState(false)
   const [tests, setTests] = useState<PickedBotTest[] | null>(null)
@@ -62,6 +65,7 @@ export function BotTestPicker({
                 className="w-full pl-8 pr-3 py-2 rounded-lg border border-line text-[13px] focus:outline-none focus:border-green"
               />
             </div>
+            {hint && <div className="px-4 py-2 text-[11.5px] text-ink-faint border-b border-line">{hint}</div>}
             <div className="overflow-y-auto p-2">
               {!tests && !error && <div className="p-4 text-[13px] text-ink-faint flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Yuklanmoqda…</div>}
               {error && <div className="p-4 text-[13px] text-red-600">{error}</div>}
@@ -78,7 +82,7 @@ export function BotTestPicker({
                     <div className="text-[13.5px] font-bold">{t.name ?? t.code}</div>
                     <div className="text-[11.5px] text-ink-faint">
                       kod: {t.code} · {t.questionCount} ta javob
-                      {mismatch ? ` (bu mockda ${expectedCount} ta savol kerak)` : ''}
+                      {mismatch ? ` (bu forma ${expectedCount} talik test uchun)` : ''}
                       {t.testLabel ? ` · allaqachon saytda: ${t.testLabel}` : ''}
                     </div>
                   </button>
