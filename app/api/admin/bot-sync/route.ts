@@ -227,13 +227,24 @@ async function previewKeys(supabase: SupabaseClient, code: string, label: string
   return { code, label, botCount, siteCount: items.length, rows, patches }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     await requireAdmin()
   } catch (e) {
     return adminErrorResponse(e)
   }
   try {
+    if (req.nextUrl.searchParams.get('light')) {
+      // Just the list of bot tests (name, code, question count, linked site mock) for the "Botdan tanlash" picker.
+      const { data, error } = await supabaseAdmin()
+        .from('bot_tests')
+        .select('code, name, kind, question_count, test_label')
+        .order('created_at', { ascending: false })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({
+        tests: (data ?? []).map((t) => ({ code: t.code, name: t.name, kind: t.kind, questionCount: t.question_count ?? 0, testLabel: t.test_label ?? null })),
+      })
+    }
     const out = await overview(supabaseAdmin())
     if ('missing' in out) {
       return NextResponse.json({ error: "Bot jadvallari yo'q. Avval v94 SQL'ni Supabase'da ishga tushiring." }, { status: 404 })

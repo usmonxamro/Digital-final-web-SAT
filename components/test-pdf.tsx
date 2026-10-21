@@ -994,8 +994,11 @@ export function DownloadTestPdfButton({
   const [errText, setErrText] = useState('PDF yaratib bo‘lmadi. Qayta urinib ko‘ring.')
   const [overlay, setOverlay] = useState<'off' | 'busy' | 'done'>('off')
   const running = useRef(false)
+  // The default is the print dialog ("Save as PDF": sharp, real text). `fileMode` marks a device where the dialog is awkward
+  // (phones / tablets), which gets an extra "download directly" link — and is the mode of the run in progress.
   const [fileMode, setFileMode] = useState(false)
-  useEffect(() => setFileMode(prefersFileDownload()), [])
+  const [phone, setPhone] = useState(false)
+  useEffect(() => setPhone(prefersFileDownload()), [])
   useEffect(() => {
     if (overlay !== 'done') return
     const t = setTimeout(() => setOverlay('off'), 6000)
@@ -1005,7 +1008,8 @@ export function DownloadTestPdfButton({
   async function run(forceMode?: 'print' | 'file') {
     if (running.current) return
     running.current = true
-    const mode = forceMode ?? (prefersFileDownload() ? 'file' : 'print')
+    const mode = forceMode ?? 'print'
+    setFileMode(mode === 'file')
     setState(loadItems ? 'loading' : 'busy')
     if (!compact) setOverlay('busy')
     try {
@@ -1076,16 +1080,16 @@ export function DownloadTestPdfButton({
           {state === 'loading' ? 'Savollar yuklanmoqda…' : state === 'busy' ? `PDF tayyorlanmoqda… ${pct}%` : state === 'done' ? 'Yana yuklab olish (PDF)' : label ?? 'Testni yuklab olish (PDF)'}
         </span>
       </button>
-      {fileMode && (
+      {phone && (
         <p className="mx-auto mt-2 max-w-[340px] text-[11.5px] font-medium leading-relaxed text-[#64748b]">
-          Tugmani bossangiz PDF o‘zi yuklanadi. Matnini belgilab ko‘chirish kerak bo‘lsa —{' '}
-          <button type="button" onClick={() => run('print')} disabled={working} className="font-bold text-violet-700 underline underline-offset-2">
-            matnli PDF
+          Chop etish oynasi chiqmasa yoki ishlamasa —{' '}
+          <button type="button" onClick={() => run('file')} disabled={working} className="font-bold text-violet-700 underline underline-offset-2">
+            to‘g‘ridan-to‘g‘ri yuklab olish
           </button>{' '}
-          (chop etish oynasi orqali).
+          (rasm ko‘rinishida, sekinroq).
         </p>
       )}
-      {!fileMode && (state === 'idle' || state === 'done' || state === 'busy') && (
+      {(state === 'idle' || state === 'done' || state === 'busy') && (
         <p className="mx-auto mt-2 max-w-[340px] text-[11.5px] font-medium leading-relaxed text-[#64748b]">
           Chop etish oynasida <b className="text-[#0f172a]">Printer / Destination</b> qismidan <b className="text-green-700">«Save as PDF»</b> (PDF sifatida saqlash) ni tanlang.{' '}
           <b className="text-red-600">«Microsoft Print to PDF» ni tanlamang</b> — u sahifalarni xira rasmga aylantirib qo‘yadi.
