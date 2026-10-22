@@ -6,6 +6,7 @@ import { adminErrorResponse } from '@/lib/admin-errors'
 import { isMissingTable } from '@/lib/db-errors'
 import { fetchAll } from '@/lib/db-paginate'
 import { assemblePdfItems } from '@/lib/mock-pdf-items'
+import { pushMockToBot } from '@/lib/bot-publish'
 import type { Question } from '@/lib/test-data'
 
 export type BotTestRow = {
@@ -34,6 +35,8 @@ export type GroupRow = { chatId: number; title: string | null; members: number; 
 export type BotSyncOverview = {
   tests: BotTestRow[]
   mocks: { label: string; subject: string }[]
+  /** Site mocks (not English) that the bot does not have yet. */
+  siteOnly: { label: string; subject: string; published: boolean }[]
   suspects: SuspectRow[]
   groups: GroupRow[]
 }
@@ -80,8 +83,12 @@ async function overview(supabase: SupabaseClient): Promise<BotSyncOverview | { m
     throw new Error(error.message)
   }
 
-  const { data: cfgs } = await supabase.from('test_configs').select('test_label, subject')
+  const { data: cfgs } = await supabase.from('test_configs').select('test_label, subject, published')
   const mocks = (cfgs ?? []).map((c) => ({ label: c.test_label as string, subject: (c.subject as string) ?? 'full' }))
+  const linkedLabels = new Set((tests ?? []).map((t) => t.test_label).filter(Boolean))
+  const siteOnly = (cfgs ?? [])
+    .filter((c) => c.subject !== 'english' && !linkedLabels.has(c.test_label))
+    .map((c) => ({ label: c.test_label as string, subject: (c.subject as string) ?? 'full', published: c.published !== false }))
   const labels = mocks.map((m) => m.label)
 
   const { data: att } = await fetchAll<{ bot_code: string | null; tg_id: number | null }>((from, to) =>
@@ -161,7 +168,7 @@ async function overview(supabase: SupabaseClient): Promise<BotSyncOverview | { m
     }
   }
 
-  return { tests: rows, mocks, suspects, groups }
+  return { tests: rows, mocks, siteOnly, suspects, groups }
 }
 
 async function previewKeys(supabase: SupabaseClient, code: string, label: string): Promise<KeyPreview | { error: string }> {
@@ -271,13 +278,17 @@ export async function POST(req: NextRequest) {
   const action = body?.action as string | undefined
   const code = typeof body?.code === 'string' ? body.code : ''
   const label = typeof body?.label === 'string' ? body.label.trim() : ''
-  if (!code) return NextResponse.json({ error: "'code' kerak." }, { status: 400 })
+  if (!code && action !== 'to_bot') return NextResponse.json({ error: "'code' kerak." }, { status: 400 })
   const supabase = supabaseAdmin()
 
   if (action === 'preview') {
     if (!label) return NextResponse.json({ error: "'label' kerak." }, { status: 400 })
     const out = await previewKeys(supabase, code, label)
     return 'error' in out ? NextResponse.json(out, { status: 400 }) : NextResponse.json(out)
+  }
+  if (action === 'to_bot') {
+    if (!label) return NextResponse.json({ error: "'label' kerak." }, { status: 400 })
+    return NextResponse.json(await pushMockToBot(supabase, label))
   }
   if (action === 'link' || action === 'unlink') {
     if (action === 'link' && !label) return NextResponse.json({ error: "'label' kerak." }, { status: 400 })

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Link2, Link2Off, Loader2, RefreshCw } from 'lucide-react'
 import type { BotSyncOverview, BotTestRow, KeyPreview } from '@/app/api/admin/bot-sync/route'
 
-type View = 'tests' | 'suspects' | 'groups'
+type View = 'tests' | 'toBot' | 'suspects' | 'groups'
 type Filter = 'all' | 'unlinked' | 'linked'
 
 const btn = 'px-3 py-1.5 rounded-lg text-[12.5px] font-bold border border-line hover:bg-slate-50 disabled:opacity-50'
@@ -48,6 +48,7 @@ export function BotSyncPanel() {
         {(
           [
             ['tests', `Bot testlari${data ? ` (${data.tests.length})` : ''}`],
+            ['toBot', `Saytda bor, botda yo'q${data ? ` (${data.siteOnly.length})` : ''}`],
             ['suspects', `Shubhali kalitlar${data ? ` (${data.suspects.length})` : ''}`],
             ['groups', 'Guruhlar'],
           ] as [View, string][]
@@ -92,6 +93,19 @@ export function BotSyncPanel() {
             {data.tests.length === 0 && <p className="text-ink-faint text-[13px]">Botdan hali test kelmagan.</p>}
           </div>
         </>
+      )}
+
+      {data && view === 'toBot' && (
+        <div className="space-y-2">
+          <p className="text-[12.5px] text-ink-faint mb-1">
+            Saytdagi mocklar (Math qismi), botda hali yo&apos;q. Tugmani bossangiz mockka bot kodi beriladi, bot uni ~1 daqiqada oladi va adminlarga
+            xabar yuboradi. Javoblar to&apos;liq kiritilgan bo&apos;lishi kerak. Nashr qilingan mocklar botga o&apos;zi qo&apos;shiladi.
+          </p>
+          {data.siteOnly.map((m) => (
+            <ToBotRow key={m.label} m={m} onChanged={load} />
+          ))}
+          {data.siteOnly.length === 0 && <p className="text-ink-faint text-[13px]">Hamma mock botda bor.</p>}
+        </div>
       )}
 
       {data && view === 'suspects' && (
@@ -274,6 +288,35 @@ function TestRow({ t, mocks, onChanged }: { t: BotTestRow; mocks: BotSyncOvervie
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+function ToBotRow({ m, onChanged }: { m: BotSyncOverview['siteOnly'][number]; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  async function push() {
+    setBusy(true)
+    setMsg(null)
+    try {
+      const res = await fetch('/api/admin/bot-sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'to_bot', label: m.label }) })
+      const d = await res.json().catch(() => ({}))
+      const ok = d.status === 'created' || d.status === 'exists'
+      setMsg({ ok, text: d.message ?? d.error ?? 'Xatolik.' })
+      if (ok) onChanged()
+    } catch {
+      setMsg({ ok: false, text: "Server bilan bog'lanib bo'lmadi." })
+    }
+    setBusy(false)
+  }
+  return (
+    <div className="rounded-xl border border-line p-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+      <span className="font-bold text-[14px]">{m.label}</span>
+      <span className="text-[12px] text-ink-faint">{m.published ? 'nashr qilingan' : 'qoralama'}</span>
+      <button className={`${btnPrimary} ml-auto`} disabled={busy} onClick={push}>
+        {busy ? <Loader2 size={13} className="animate-spin inline" /> : null} Botga qo&apos;shish
+      </button>
+      {msg && <div className={`basis-full text-[12.5px] ${msg.ok ? 'text-emerald-700' : 'text-amber-700'}`}>{msg.text}</div>}
     </div>
   )
 }

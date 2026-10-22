@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { isMissingColumn, MIGRATION_HINT } from '@/lib/db-columns'
+import { pushMockToBot } from '@/lib/bot-publish'
 
 /**
  * Publish / unpublish a mock: { testLabel, published: boolean }.
@@ -63,5 +64,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ error: `Saqlashda xatolik: ${error.message}` }, { status: 500 })
   }
-  return NextResponse.json({ ok: true, published, publishAt })
+  // A mock that goes live also becomes a bot test (code + answer key), unless the bot already has it.
+  const bot = published ? await pushMockToBot(supabase, testLabel) : null
+  return NextResponse.json({ ok: true, published, publishAt, bot })
 }

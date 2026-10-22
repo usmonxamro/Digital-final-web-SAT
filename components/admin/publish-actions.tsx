@@ -23,6 +23,8 @@ export function PublishActions({
   const [published, setPublished] = useState<boolean | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // What happened with the bot after publishing (code given / answer key missing / …).
+  const [botNote, setBotNote] = useState<{ ok: boolean; text: string } | null>(null)
   const [shown, setShown] = useState(false)
   const [publishAt, setPublishAt] = useState<string | null>(null)
   const [when, setWhen] = useState('')
@@ -168,6 +170,11 @@ export function PublishActions({
       const nowPublished = schedule === undefined ? !published : false
       setPublished(nowPublished)
       setPublishAt(data.publishAt ?? null)
+      setBotNote(
+        data.bot && data.bot.status !== 'skipped'
+          ? { ok: data.bot.status === 'created' || data.bot.status === 'exists', text: data.bot.message }
+          : null,
+      )
       setWhen('')
       onChange?.(nowPublished)
     } catch {
@@ -342,6 +349,9 @@ export function PublishActions({
             <AlertTriangle size={12} className="mt-0.5 shrink-0" /> {error}
           </div>
         )}
+        {botNote && (
+          <div className={`mt-1.5 text-[11.5px] font-semibold ${botNote.ok ? 'text-green-deep' : 'text-amber-700'}`}>🤖 {botNote.text}</div>
+        )}
       </div>
     )
   }
@@ -356,6 +366,11 @@ export function PublishActions({
       {error && (
         <div className="mt-1.5 rounded-lg bg-white px-3 py-1.5 text-center text-[11.5px] font-semibold text-red-600 shadow">
           {error}
+        </div>
+      )}
+      {botNote && (
+        <div className={`mt-1.5 rounded-lg bg-white px-3 py-1.5 text-center text-[11.5px] font-semibold shadow ${botNote.ok ? 'text-green-deep' : 'text-amber-700'}`}>
+          🤖 {botNote.text}
         </div>
       )}
     </div>
