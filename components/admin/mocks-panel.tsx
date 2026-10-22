@@ -10,6 +10,7 @@ import {
   ChevronDown,
   FileDown,
   FolderPlus,
+  Link2,
   GripVertical,
   Minus,
   Plus,
@@ -29,6 +30,7 @@ import type { MockFolder } from '@/app/api/admin/folders/route'
 import { PublishActions } from '@/components/admin/publish-actions'
 import { DownloadTestPdfButton } from '@/components/test-pdf'
 import { loadMockPdfItems } from '@/lib/mock-pdf-items'
+import { mockShareUrl } from '@/lib/safe-next'
 import { COURSE_GROUPS, groupBySlug, groupsOfTask } from '@/lib/course-groups'
 import { inSection, type MockSection } from '@/lib/mock-sections'
 
@@ -692,6 +694,7 @@ export function MocksPanel({ visible = true }: { visible?: boolean }) {
                     <PlaceBtn active={t.pdfDownload} tone="violet" onClick={() => patchMock(t.label, { pdfDownload: !t.pdfDownload })} title="O‘quvchi testni tugatgach savollarni PDF qilib yuklab olsinmi? (yoqish / o‘chirish)">
                       <FileDown size={11} /> O‘quvchiga PDF
                     </PlaceBtn>
+                    <CopyLinkButton label={t.label} />
                     <DownloadTestPdfButton compact testTitle={t.label} loadItems={() => loadMockPdfItems(t.label)} label="PDF yuklab olish" />
                   </div>
                 </div>
@@ -1061,5 +1064,34 @@ function AttemptsTable({ label }: { label: string }) {
         </tbody>
       </table>
     </div>
+  )
+}
+
+
+/** Copies the mock's share link (opens this exact mock after sign-in) — for channels and chats. */
+function CopyLinkButton({ label }: { label: string }) {
+  const [done, setDone] = useState(false)
+  async function copy() {
+    const url = mockShareUrl(window.location.origin, label)
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      window.prompt('Havolani nusxalang:', url)
+    }
+    setDone(true)
+    setTimeout(() => setDone(false), 2500)
+  }
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title="Testga havolani nusxalash: odamlar shu havola orqali kirib, to'g'ridan-to'g'ri shu mockka o'tadi"
+      className={`flex items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-extrabold transition-colors ${
+        done ? 'border-green bg-green-mist text-green-deep' : 'border-sky-300 bg-white text-sky-700 hover:bg-sky-50'
+      }`}
+    >
+      {done ? <Check size={11} /> : <Link2 size={11} />}
+      {done ? 'Nusxalandi' : 'Havolani nusxalash'}
+    </button>
   )
 }

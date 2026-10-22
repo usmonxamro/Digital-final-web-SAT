@@ -4,7 +4,8 @@ import { signSession, SESSION_COOKIE, SESSION_COOKIE_OPTIONS, safeEqual } from '
 import { clientIp, rateLimit } from '@/lib/rate-limit'
 import { trialEndFromNow } from '@/lib/plan'
 import { normalizeEmail, likeEscape } from '@/lib/email'
-import { appOrigin, GOOGLE_STATE_COOKIE } from '@/lib/google'
+import { appOrigin, GOOGLE_STATE_COOKIE, GOOGLE_NEXT_COOKIE } from '@/lib/google'
+import { safeNext } from '@/lib/safe-next'
 
 /**
  * Google sends the visitor back here with ?code. We exchange it (server to
@@ -145,8 +146,10 @@ export async function GET(req: NextRequest) {
   } catch {
     return fail('server')
   }
-  const res = NextResponse.redirect(`${origin}/dashboard`)
+  const next = safeNext(req.cookies.get(GOOGLE_NEXT_COOKIE)?.value)
+  const res = NextResponse.redirect(`${origin}${next ?? '/dashboard'}`)
   res.cookies.set(SESSION_COOKIE, token, SESSION_COOKIE_OPTIONS)
   res.cookies.delete(GOOGLE_STATE_COOKIE)
+  res.cookies.delete(GOOGLE_NEXT_COOKIE)
   return res
 }

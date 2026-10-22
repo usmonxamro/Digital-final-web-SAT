@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowRight, Check, Eye, EyeOff, GraduationCap, Lock, Mail, Phone, ShieldCheck, User } from 'lucide-react'
 import Link from 'next/link'
+import { safeNext } from '@/lib/safe-next'
 import { useT } from '@/components/i18n-provider'
 import { LangSwitch } from '@/components/lang-switch'
 
@@ -76,7 +77,7 @@ function SignIn() {
       setSuccess(true)
       setTimeout(() => setProgress(true), 50)
       setTimeout(() => {
-        router.push('/dashboard')
+        router.push(safeNext(params.get('next')) ?? '/dashboard')
         router.refresh()
       }, 1300)
     } catch {
@@ -321,7 +322,7 @@ function SignIn() {
 
             <div className="grid grid-cols-1 gap-3 mt-4">
               <a
-                href="/api/auth/google"
+                href={`/api/auth/google${safeNext(params.get('next')) ? `?next=${encodeURIComponent(safeNext(params.get('next'))!)}` : ''}`}
                 className="flex items-center justify-center gap-3 py-3 sm:py-3.5 px-4 bg-white hover:bg-slate-100 border border-white rounded-xl text-sm font-semibold text-slate-900 shadow-lg shadow-black/30 transition-all duration-200"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">

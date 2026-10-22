@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { appOrigin, GOOGLE_STATE_COOKIE } from '@/lib/google'
+import { appOrigin, GOOGLE_STATE_COOKIE, GOOGLE_NEXT_COOKIE } from '@/lib/google'
+import { safeNext } from '@/lib/safe-next'
 
 /** Starts "Sign in with Google": redirects to Google's consent screen. */
 export async function GET(req: NextRequest) {
@@ -26,5 +27,9 @@ export async function GET(req: NextRequest) {
     path: '/',
     maxAge: 600,
   })
+  const next = safeNext(req.nextUrl.searchParams.get('next'))
+  if (next) {
+    res.cookies.set(GOOGLE_NEXT_COOKIE, next, { httpOnly: true, sameSite: 'lax', secure: origin.startsWith('https'), path: '/', maxAge: 600 })
+  }
   return res
 }

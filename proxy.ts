@@ -36,9 +36,12 @@ export function proxy(req: NextRequest) {
     (pathname === '/dashboard' || pathname.startsWith('/dashboard/') || pathname === '/exam' || pathname.startsWith('/exam/')) &&
     !req.cookies.get('sat_session')?.value
   ) {
+    const target = pathname + req.nextUrl.search
     const url = req.nextUrl.clone()
     url.pathname = '/login'
     url.search = ''
+    // A shared mock link (/exam?test=…) comes back to that mock after signing in.
+    if (pathname === '/exam') url.searchParams.set('next', target)
     return NextResponse.redirect(url)
   }
 
