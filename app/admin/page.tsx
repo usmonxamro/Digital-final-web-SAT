@@ -1393,6 +1393,41 @@ function SkillBankImport() {
 type Tab = 'mocks' | 'new' | 'task' | 'groups' | 'botsync' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support' | 'notify' | 'reports'
 type NewMockType = 'full' | 'math' | 'english' | null
 
+/** Left menu of the admin panel, grouped like other admin dashboards: content · people · analytics · settings. */
+const ADMIN_NAV: { title: string; items: { key: Tab; label: string; desc: string; icon: React.ComponentType<{ size?: number }> }[] }[] = [
+  {
+    title: 'Kontent',
+    items: [
+      { key: 'mocks', label: 'Mocklar', desc: "Barcha mocklar: nashr qilish, bo'limlar, guruhlar, PDF va havolalar", icon: LayoutList },
+      { key: 'new', label: "Yangi mock qo'shish", desc: 'JSON / LaTeX / jadvaldan yangi mock yaratish', icon: ListChecks },
+      { key: 'task', label: "Vazifa qo'shish", desc: "Guruhlarga vaqtsiz, ballsiz vazifa berish", icon: ClipboardList },
+      { key: 'edit', label: 'Testni tahrirlash', desc: "Mavjud mock savollari va javoblarini o'zgartirish", icon: PenSquare },
+      { key: 'bank', label: 'Savol banki', desc: "Kitob savollar bankiga savol qo'shish", icon: UploadCloud },
+    ],
+  },
+  {
+    title: "O'quvchilar",
+    items: [
+      { key: 'groups', label: 'Guruhlar', desc: "Kurs guruhlari: berilgan mocklar va kim bajargani", icon: Users },
+      { key: 'users', label: 'Foydalanuvchilar', desc: "Ro'yxatdan o'tganlar, tariflar va kirish huquqlari", icon: Users },
+      { key: 'support', label: 'Xabarlar', desc: "O'quvchilardan kelgan murojaatlar", icon: MessageSquare },
+      { key: 'reports', label: 'Xato xabarlari', desc: "Savollardagi xatolar haqida o'quvchilar xabarlari", icon: Flag },
+      { key: 'notify', label: 'Bildirishnoma', desc: "Hamma yoki guruhga xabar yuborish", icon: Bell },
+    ],
+  },
+  {
+    title: 'Tahlil',
+    items: [
+      { key: 'stats', label: 'Statistika', desc: "Tashriflar, urinishlar va mocklar bo'yicha natijalar", icon: BarChart3 },
+      { key: 'botsync', label: 'Bot ↔ Sayt', desc: "Telegram bot testlari, shubhali kalitlar va guruh holati", icon: Link2 },
+    ],
+  },
+  {
+    title: 'Sozlamalar',
+    items: [{ key: 'admins', label: 'Adminlar', desc: "Admin qo'shish va olib tashlash", icon: ShieldCheck }],
+  },
+]
+
 export default function AdminPage() {
   return (
     <div className="admin-root min-h-screen">
@@ -1403,7 +1438,13 @@ export default function AdminPage() {
 
 function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void }) {
   const [tab, setTab] = useState<Tab>('mocks')
+  const [navOpen, setNavOpen] = useState(false)
   const [newMockType, setNewMockType] = useState<NewMockType>(null)
+  // Reopen the section the admin was in (#mocks, #botsync …) after a reload.
+  useEffect(() => {
+    const h = window.location.hash.slice(1) as Tab
+    if (ADMIN_NAV.some((g) => g.items.some((x) => x.key === h))) setTab(h)
+  }, [])
   // Students' error reports still waiting for the admin (red badge on the tab).
   const [openReports, setOpenReports] = useState(0)
   function refreshReportCount() {
@@ -1421,65 +1462,78 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
     document.title = openReports > 0 ? `(${openReports}) Admin panel` : 'Admin panel'
   }, [openReports])
 
+  const current = ADMIN_NAV.flatMap((g) => g.items).find((x) => x.key === tab) ?? ADMIN_NAV[0].items[0]
+  const go = (k: Tab) => {
+    setTab(k)
+    setNavOpen(false)
+    try {
+      window.history.replaceState(null, '', `#${k}`)
+    } catch {}
+    window.scrollTo({ top: 0 })
+  }
+
   return (
-    <div className="min-h-screen bg-bg">
-      <header className="border-b border-line bg-white">
-        <div className="max-w-[1000px] mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="text-ink-faint hover:text-ink">
-              <ArrowLeft size={18} />
-            </Link>
-            <div>
-              <h1 className="font-serif font-semibold text-[19px]">Admin panel</h1>
-              <p className="text-[12.5px] text-ink-faint">Mocklarni qo&apos;shish va tahrirlash</p>
+    <div className="adm">
+      <aside className={`adm-side ${navOpen ? 'adm-open' : ''}`}>
+        <div className="adm-brand">
+          <span className="adm-logo">
+            <ShieldCheck size={18} />
+          </span>
+          <span>
+            <b>SAT Akademiyasi</b>
+            <small>Boshqaruv paneli</small>
+          </span>
+        </div>
+        <nav className="adm-nav">
+          {ADMIN_NAV.map((g) => (
+            <div key={g.title} className="adm-group">
+              <div className="adm-group-title">{g.title}</div>
+              {g.items.map((it) => {
+                const Icon = it.icon
+                const badge = it.key === 'reports' ? openReports : 0
+                return (
+                  <button key={it.key} className={`adm-link ${tab === it.key ? 'adm-on' : ''}`} onClick={() => go(it.key)}>
+                    <Icon size={17} />
+                    <span>{it.label}</span>
+                    {badge > 0 && <em>{badge > 99 ? '99+' : badge}</em>}
+                  </button>
+                )
+              })}
             </div>
+          ))}
+        </nav>
+        <div className="adm-side-foot">
+          <span className="adm-role">{isOwner ? 'EGASI' : 'ADMIN'}</span>
+          <ThemeSwitch defaultTheme="light" />
+          <button type="button" onClick={onLock} title="Panelni qulflash" className="adm-iconbtn">
+            <Lock size={15} />
+          </button>
+        </div>
+      </aside>
+      <div className={`adm-backdrop ${navOpen ? 'adm-show' : ''}`} onClick={() => setNavOpen(false)} />
+
+      <div className="adm-main">
+        <header className="adm-top">
+          <button type="button" className="adm-iconbtn adm-burger" onClick={() => setNavOpen(true)} aria-label="Menyu">
+            <LayoutList size={18} />
+          </button>
+          <div className="adm-title">
+            <h1>{current.label}</h1>
+            <p>{current.desc}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <ThemeSwitch defaultTheme="light" />
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-1.5 rounded-lg bg-green px-3 py-1.5 text-[12px] font-extrabold text-white hover:brightness-110"
-            >
-              <Globe size={13} /> Saytga o&apos;tish
+          <div className="adm-top-actions">
+            {tab !== 'new' && (
+              <button type="button" className="adm-btn adm-btn-primary" onClick={() => go('new')}>
+                <ListChecks size={15} /> <span>Yangi mock</span>
+              </button>
+            )}
+            <Link href="/dashboard" className="adm-btn">
+              <Globe size={15} /> <span>Saytga o&apos;tish</span>
             </Link>
-            <span className="hidden sm:inline text-[11px] font-bold text-green-deep bg-green-mist px-2.5 py-1 rounded-full">
-              {isOwner ? 'EGASI' : 'ADMIN'}
-            </span>
-            <button
-              type="button"
-              onClick={onLock}
-              title="Panelni qulflash"
-              className="flex items-center gap-1 rounded-lg border border-line px-2.5 py-1 text-[11.5px] font-bold text-ink-soft hover:border-green"
-            >
-              <Lock size={12} /> Qulflash
-            </button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className="max-w-[1000px] mx-auto px-6 py-8">
-        <div className="flex flex-wrap gap-2 mb-6">
-          <TabButton icon={<LayoutList size={15} />} label="Mocklar" active={tab === 'mocks'} onClick={() => setTab('mocks')} />
-          <TabButton icon={<ListChecks size={15} />} label="Yangi mock qo'shish" active={tab === 'new'} onClick={() => setTab('new')} />
-          <TabButton icon={<ClipboardList size={15} />} label="Vazifa qo'shish" active={tab === 'task'} onClick={() => setTab('task')} />
-          <TabButton icon={<Users size={15} />} label="Guruhlar" active={tab === 'groups'} onClick={() => setTab('groups')} />
-          <TabButton icon={<Link2 size={15} />} label="Bot ↔ Sayt" active={tab === 'botsync'} onClick={() => setTab('botsync')} />
-          <TabButton icon={<PenSquare size={15} />} label="Testni tahrirlash" active={tab === 'edit'} onClick={() => setTab('edit')} />
-          <TabButton icon={<UploadCloud size={15} />} label="Savol banki" active={tab === 'bank'} onClick={() => setTab('bank')} />
-          <TabButton icon={<BarChart3 size={15} />} label="Statistika" active={tab === 'stats'} onClick={() => setTab('stats')} />
-          <TabButton icon={<Users size={15} />} label="Foydalanuvchilar" active={tab === 'users'} onClick={() => setTab('users')} />
-          <TabButton icon={<MessageSquare size={15} />} label="Xabarlar" active={tab === 'support'} onClick={() => setTab('support')} />
-          <TabButton icon={<Bell size={15} />} label="Bildirishnoma" active={tab === 'notify'} onClick={() => setTab('notify')} />
-          <TabButton
-            icon={<Flag size={15} />}
-            label="Xato xabarlari"
-            badge={openReports}
-            active={tab === 'reports'}
-            onClick={() => setTab('reports')}
-          />
-          <TabButton icon={<ShieldCheck size={15} />} label="Adminlar" active={tab === 'admins'} onClick={() => setTab('admins')} />
-        </div>
-
+        <div className="adm-content">
         {/* Visited tabs stay mounted (just hidden): switching back is instant — no reload, nothing lost. */}
         <KeepAlive active={tab === 'mocks'}>
           <div className="bg-white border border-line rounded-2xl p-5">
@@ -1565,6 +1619,7 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
         </KeepAlive>
 
         {tab === 'bank' && <BankTab />}
+        </div>
       </div>
     </div>
   )
@@ -1609,37 +1664,6 @@ function KeepAlive({ active, children }: { active: boolean; children: React.Reac
   }, [active])
   if (!seen && !active) return null
   return <div hidden={!active}>{children}</div>
-}
-
-function TabButton({
-  icon,
-  label,
-  active,
-  onClick,
-  badge = 0,
-}: {
-  icon: React.ReactNode
-  label: string
-  active: boolean
-  onClick: () => void
-  /** Red counter (e.g. new error reports). */
-  badge?: number
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[12.5px] font-bold border transition-colors ${
-        active ? 'bg-ink text-white border-ink' : 'border-line text-ink-soft hover:border-green bg-white'
-      }`}
-    >
-      {icon} {label}
-      {badge > 0 && (
-        <span className="ml-0.5 min-w-[18px] rounded-full bg-red-500 px-1.5 py-px text-center text-[10.5px] font-extrabold leading-4 text-white">
-          {badge > 99 ? '99+' : badge}
-        </span>
-      )}
-    </button>
-  )
 }
 
 function MockTypeCard({ title, subtitle, onClick }: { title: string; subtitle: string; onClick: () => void }) {

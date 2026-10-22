@@ -253,6 +253,8 @@ export async function PATCH(req: NextRequest) {
   }
   if (typeof body?.pdfDownload === 'boolean') patch.pdf_download = body.pdfDownload
   if (body?.access === 'free' || body?.access === 'paid') patch.access = body.access
+  // Task (untimed, shown in the groups' "My Courses") ↔ ordinary mock (shown in the public lists).
+  if (body?.placement === 'mock' || body?.placement === 'course_task') patch.placement = body.placement
   // The groups this mock / task is given to: { courseGroups: ['nov', 'dec'] } (empty = none).
   // It only decides where the mock is ALSO shown (My Courses of those groups); it is never hidden
   // from the normal lists and keeps its own rules (timed + scored, or an untimed "vazifa").

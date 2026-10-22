@@ -3,9 +3,9 @@
 import { SatSkeleton } from '@/components/sat-loader'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Search, Sparkles, Calculator, CheckCircle2, Crown, Lock, MonitorPlay, Play, Timer, ChevronLeft, PenLine, Layers } from 'lucide-react'
+import { ArrowRight, Search, Sparkles, Calculator, CheckCircle2, Clock, Globe2, Lock, MonitorPlay, Play, RotateCcw, Timer, ChevronLeft, PenLine, Layers } from 'lucide-react'
 import { useDashboardData, type TestSummary } from '@/components/marketing/dashboard/dashboard-data'
-import { groupExams, type ExamGroup } from '@/lib/exam-groups'
+import { groupExams, parseExamName, splitExamLabel, type ExamGroup } from '@/lib/exam-groups'
 import { GhostCards } from '@/components/marketing/dashboard/ghost-cards'
 import { inSection } from '@/lib/mock-sections'
 import { useI18n } from '@/components/i18n-provider'
@@ -64,23 +64,16 @@ function subjectLabel(t: TestSummary): string {
 
 /* ------------------------- month / year helpers ------------------------- */
 
-const EN_MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
 const MONTH_NAMES: Record<Lang, string[]> = {
   en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
   ru: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
   uz: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'],
 }
 
-/** "October 2026 SAT" → month index 9, year 2026 and the rest of the name ("SAT"). */
+/** The exam's month / year / rest of the name (the group name is already normalised: "SAT March 2025"). */
 function parseExam(name: string) {
-  const lower = name.toLowerCase()
-  const mi = EN_MONTHS.findIndex((m) => new RegExp(`\\b${m}\\b`).test(lower))
-  const year = name.match(/\b(20\d{2})\b/)?.[1] ?? null
-  let rest = name
-  if (mi >= 0) rest = rest.replace(new RegExp(EN_MONTHS[mi], 'i'), '')
-  if (year) rest = rest.replace(year, '')
-  rest = rest.replace(/[—–\-,()]/g, ' ').replace(/\s+/g, ' ').trim()
-  return { month: mi, year, rest }
+  const p = parseExamName(name)
+  return { month: p.month, year: p.year, rest: p.rest }
 }
 
 /** Banner colour: one hue per month, so a year reads like a colourful calendar. */
@@ -137,7 +130,12 @@ export default function PracticePage() {
     return [...by.entries()].sort((a, b) => (a[0] === '' ? 1 : b[0] === '' ? -1 : dir * b[0].localeCompare(a[0])))
   }, [visible, sort])
   const totalVersions = useMemo(() => groups.reduce((n, g) => n + g.versions.length, 0), [groups])
-  const current = open ? groups.find((g) => g.name.toLowerCase() === open.toLowerCase()) ?? null : null
+  // Old links named the exam differently ("SAT March 2025 US"): fall back to the group that holds such a mock.
+  const current = open
+    ? groups.find((g) => g.name.toLowerCase() === open.toLowerCase()) ??
+      groups.find((g) => g.versions.some((v) => splitExamLabel(v.test.label).group.toLowerCase() === open.toLowerCase())) ??
+      null
+    : null
 
   function show(name: string | null) {
     setOpen(name)
@@ -451,64 +449,112 @@ function ExamCard({ group, lang, onOpen }: { group: ExamGroup<TestSummary>; lang
 function ExamDetail({ group, onBack }: { group: ExamGroup<TestSummary>; onBack: () => void }) {
   const { t, lang } = useI18n()
   const p = parseExam(group.name)
-  const title = p.month >= 0 ? `${MONTH_NAMES[lang][p.month]}${p.year ? ` ${p.year}` : ''}${p.rest ? ` ${p.rest}` : ''}` : group.name
+  const monthName = p.month >= 0 ? MONTH_NAMES[lang][p.month] : ''
+  const title = p.month >= 0 ? `${monthName}${p.year ? ` ${p.year}` : ''}` : group.name
+  const done = group.versions.filter((v) => v.test.done).length
+  const total = group.versions.length
+  const questions = group.versions.reduce((n, v) => n + (v.test.subject !== 'english' ? v.test.mathCount : 0) + (v.test.subject !== 'math' ? v.test.readingCount : 0), 0)
+  const mm = String(p.month + 1).padStart(2, '0')
+  const srcs = p.month >= 0 ? [`/covers/m${mm}.webp`, `/covers/${seasonOf(p.month)}.webp`] : []
+  const regions = [...new Set(group.versions.map((v) => v.region).filter(Boolean))] as string[]
+
   return (
-    <>
+    <div className="sd-xd" style={bannerStyle(p.month, group.name)}>
       <button className="sd-back" onClick={onBack}>
         <ChevronLeft size={15} /> {t('Barcha imtihonlar')}
       </button>
-      <div className="sd-mo-hero" style={bannerStyle(p.month, group.name)}>
-        <div>
-          <div className="sd-eyebrow">
-            {t('Barcha o‘tgan imtihonlar')} / {title}
-          </div>
-          <h1>{title}</h1>
+
+      <section className="sd-xd-hero">
+        <div className="sd-xd-art">
+          <Cover srcs={srcs}>
+            <MonthArt month={p.month} id={`d${group.name.replace(/\W/g, '')}`} />
+          </Cover>
         </div>
-        <span className="sd-pill">{t('{n} ta versiya', { n: group.versions.length })}</span>
+        <div className="sd-xd-fade" />
+        <div className="sd-xd-copy">
+          <div className="sd-xd-kicker">{p.rest || 'SAT'} · {t('Barcha o‘tgan imtihonlar')}</div>
+          <h1>{title}</h1>
+          <div className="sd-xd-stats">
+            <span>
+              <Layers /> <b>{total}</b> {t('versiya')}
+            </span>
+            <span className={done ? 'sd-on' : ''}>
+              <CheckCircle2 /> <b>{done}</b>/{total} {t('bajarilgan')}
+            </span>
+            {questions > 0 && (
+              <span>
+                <PenLine /> <b>{questions}</b> {t('savol')}
+              </span>
+            )}
+            {regions.length > 0 && (
+              <span>
+                <Globe2 /> {regions.join(' · ')}
+              </span>
+            )}
+          </div>
+          <div className="sd-xd-progress" aria-hidden>
+            <i style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
+          </div>
+        </div>
+      </section>
+
+      <div className="sd-xd-head">
+        <h2>{t('Versiyani tanlang')}</h2>
+        <small>{t("Har bir versiya — alohida to'liq test. Istalganidan boshlang.")}</small>
       </div>
-      <div className="sd-ver-grid">
-        {group.versions.map(({ version, test: x }) => {
+
+      <div className="sd-xd-list">
+        {group.versions.map(({ version, region, test: x }) => {
           const ready = isReady(x)
+          const minutes = x.subject === 'math' ? 70 : x.subject === 'english' ? 64 : 134
           return (
-            <div key={x.label} className={`sd-ver-card ${ready ? '' : 'sd-soon'}`} style={bannerStyle(p.month, group.name)}>
-              <div className="sd-ver-top">
-                <span className="sd-ver-letter">{version}</span>
-                <div className="sd-ver-name">
-                  <small>{t('Versiya')}</small>
-                  <b>{t(subjectLabel(x))}</b>
+            <article key={x.label} className={`sd-xd-row ${ready ? '' : 'sd-soon'} ${x.done ? 'sd-done' : ''}`}>
+              <div className="sd-xd-letter">
+                <small>{t('Versiya')}</small>
+                <b>{version}</b>
+              </div>
+              <div className="sd-xd-main">
+                <div className="sd-xd-title">
+                  <strong>{t(subjectLabel(x))}</strong>
+                  {region && <span className="sd-xd-region">{region === 'International' ? t('International') : region}</span>}
+                  {x.done && (
+                    <span className="sd-ver-done">
+                      <CheckCircle2 /> {t('Bajarilgan')}
+                    </span>
+                  )}
                 </div>
-                {x.done && (
-                  <span className="sd-ver-done">
-                    <CheckCircle2 /> {t('Bajarilgan')}
-                  </span>
-                )}
+                <div className="sd-xd-label">{x.label}</div>
+                <div className="sd-chips">
+                  {x.subject !== 'math' && (
+                    <span className="sd-chip">
+                      <PenLine /> {t('{n} R&W savol', { n: x.readingCount })}
+                    </span>
+                  )}
+                  {x.subject !== 'english' && (
+                    <span className="sd-chip">
+                      <Calculator /> {t('{n} Math savol', { n: x.mathCount })}
+                    </span>
+                  )}
+                  {x.scored ? (
+                    <span className="sd-chip">
+                      <Clock /> ≈{minutes} {t('daq')}
+                    </span>
+                  ) : (
+                    <span className="sd-chip">
+                      <Timer /> {t('Erkin mashq')}
+                    </span>
+                  )}
+                  {x.hasVideo && (
+                    <span className="sd-chip">
+                      <MonitorPlay /> {t('Video tahlil')}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="sd-chips">
-                {x.subject !== 'math' && (
-                  <span className="sd-chip">
-                    <PenLine /> {t('{n} R&W savol', { n: x.readingCount })}
-                  </span>
-                )}
-                {x.subject !== 'english' && (
-                  <span className="sd-chip">
-                    <Calculator /> {t('{n} Math savol', { n: x.mathCount })}
-                  </span>
-                )}
-                {!x.scored && (
-                  <span className="sd-chip">
-                    <Timer /> {t('Erkin mashq')}
-                  </span>
-                )}
-                {x.hasVideo && (
-                  <span className="sd-chip">
-                    <MonitorPlay /> {t('Video tahlil')}
-                  </span>
-                )}
-              </div>
-              <div className="sd-ver-actions">
+              <div className="sd-xd-actions">
                 {ready ? (
-                  <Link href={`/exam?test=${encodeURIComponent(x.label)}`} className="sd-primary">
-                    <Play /> {x.done ? t('Qayta ishlash') : t('Boshlash')}
+                  <Link href={`/exam?test=${encodeURIComponent(x.label)}`} className={x.done ? 'sd-soft' : 'sd-primary'}>
+                    {x.done ? <RotateCcw /> : <Play />} {x.done ? t('Qayta ishlash') : t('Boshlash')}
                   </Link>
                 ) : (
                   <span className="sd-soft sd-lock-btn">
@@ -521,10 +567,10 @@ function ExamDetail({ group, onBack }: { group: ExamGroup<TestSummary>; onBack: 
                   </Link>
                 )}
               </div>
-            </div>
+            </article>
           )
         })}
       </div>
-    </>
+    </div>
   )
 }

@@ -36,23 +36,27 @@ export type TestSummary = {
 
 export type Platform = { totalUsers: number | null; ranked: number; rank: number | null; visits?: number | null }
 
+export type BotAttempt = { code: string; name: string; siteLabel: string | null; correct: number; total: number; score: string | null; at: string }
+
 type Data = {
   attempts: Attempt[] | null
+  /** Results the student sent to the Telegram bot (linked account), newest first. */
+  botAttempts: BotAttempt[] | null
   /** Every published test (mocks + course tasks). */
   tests: TestSummary[] | null
   platform: Platform | null
 }
 
-const Ctx = createContext<Data>({ attempts: null, tests: null, platform: null })
+const Ctx = createContext<Data>({ attempts: null, botAttempts: null, tests: null, platform: null })
 
 /** Loads the student's results, the test catalogue and platform numbers once for the whole dashboard. */
 export function DashboardDataProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState<Data>({ attempts: null, tests: null, platform: null })
+  const [data, setData] = useState<Data>({ attempts: null, botAttempts: null, tests: null, platform: null })
   useEffect(() => {
     fetch('/api/results')
       .then((r) => r.json())
-      .then((d) => setData((p) => ({ ...p, attempts: d.attempts ?? [] })))
-      .catch(() => setData((p) => ({ ...p, attempts: [] })))
+      .then((d) => setData((p) => ({ ...p, attempts: d.attempts ?? [], botAttempts: d.bot ?? [] })))
+      .catch(() => setData((p) => ({ ...p, attempts: [], botAttempts: [] })))
     fetch('/api/tests')
       .then((r) => r.json())
       .then((d) => setData((p) => ({ ...p, tests: d.tests ?? [] })))

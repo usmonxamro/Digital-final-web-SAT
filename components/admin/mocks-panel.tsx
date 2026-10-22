@@ -59,7 +59,7 @@ const SYSTEM_TABS: { key: Tab; label: string; hint: string }[] = [
 /** Tab key of a course group. */
 const gKey = (slug: string) => `g:${slug}`
 
-type Patch = Partial<Pick<MockTestSummary, 'sections' | 'access' | 'folderIds' | 'pdfDownload' | 'courseGroups'>>
+type Patch = Partial<Pick<MockTestSummary, 'sections' | 'access' | 'folderIds' | 'pdfDownload' | 'courseGroups' | 'placement'>>
 type Lists = { sections?: MockSection[]; folderIds?: string[]; courseGroups?: string[] }
 type BulkSet = { access?: 'free' | 'paid'; pdfDownload?: boolean }
 
@@ -640,7 +640,7 @@ export function MocksPanel({ visible = true }: { visible?: boolean }) {
                             })}
                           </span>
                         )}
-                        {t.placement === 'mock' && t.sections.length === 0 && t.courseGroups.length === 0 && (
+                        {((t.placement === 'mock' && t.sections.length === 0) || t.placement === 'course_task') && t.courseGroups.length === 0 && (
                           <span className="rounded-full bg-red-100 px-1.5 py-px text-[9.5px] font-extrabold text-red-700" title="Bu mock hech qaysi bo‘limda ko‘rinmayapti">
                             KO‘RINMAYDI
                           </span>
@@ -676,6 +676,22 @@ export function MocksPanel({ visible = true }: { visible?: boolean }) {
                     </PlaceBtn>
                     <PlaceBtn active={inSection(t, 'free')} tone="orange" onClick={() => toggleSection(t, 'free')} title="Free Mocks bo'limida ko'rsatish (yoqish / o‘chirish) — All Past Exams ga tegmaydi">
                       Free Mock
+                    </PlaceBtn>
+                    <PlaceBtn
+                      active={t.placement === 'course_task'}
+                      tone="indigo"
+                      onClick={() =>
+                        patchMock(
+                          t.label,
+                          { placement: t.placement === 'course_task' ? 'mock' : 'course_task' },
+                          t.placement === 'course_task'
+                            ? `"${t.label}" endi oddiy mock: All Past Exams / Free Mocks ro'yxatlarida ko'rinadi.`
+                            : `"${t.label}" vazifaga aylantirildi: faqat tanlangan guruhlarning "Mening kurslarim" bo'limida ko'rinadi.`,
+                        )
+                      }
+                      title="Vazifa (faqat guruhga, vaqtsiz) yoki oddiy mock (ro'yxatlarda ko'rinadi) — bosib almashtiring"
+                    >
+                      {t.placement === 'course_task' && <Check size={11} />} Vazifa
                     </PlaceBtn>
                     <PlaceBtn active={t.access === 'paid'} tone="amber" onClick={() => patchMock(t.label, { access: t.access === 'paid' ? 'free' : 'paid' })} title="Pullik / bepul">
                       <Lock size={11} /> Pullik

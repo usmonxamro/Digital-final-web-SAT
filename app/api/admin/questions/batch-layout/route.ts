@@ -9,12 +9,13 @@ import { invalidateCounts } from '@/lib/mock-catalog'
 
 type Item = { id: string; prompt: string; layout: QuestionLayout | null }
 
-function parseItem(raw: unknown): Item | null {
-  if (!raw || typeof raw !== 'object') return null
+function parseItem(raw: unknown): Item | string {
+  if (!raw || typeof raw !== 'object') return "Noto'g'ri formatdagi yozuv."
   const r = raw as Record<string, unknown>
-  if (typeof r.id !== 'string' || typeof r.prompt !== 'string' || !r.prompt.trim()) return null
+  if (typeof r.id !== 'string') return "Savol identifikatori yo'q."
+  if (typeof r.prompt !== 'string' || !r.prompt.trim()) return "Savolning matni butunlay bo'sh qolib ketdi — kamida bitta gap qolishi kerak."
   const layout = sanitizeLayout(r.layout)
-  if (layout === undefined) return null
+  if (layout === undefined) return "Bloklar joylashuvi buzilgan — shu savolda «Tiklash» ni bosib qaytadan joylang."
   return { id: r.id, prompt: r.prompt, layout }
 }
 
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
   const items: Item[] = []
   for (const raw of rawItems) {
     const it = parseItem(raw)
-    if (!it) return NextResponse.json({ error: "Noto'g'ri formatdagi yozuv." }, { status: 400 })
+    if (typeof it === 'string') return NextResponse.json({ error: it }, { status: 400 })
     items.push(it)
   }
 

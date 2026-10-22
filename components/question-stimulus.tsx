@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDown, ArrowUp, Check, Columns2, GripVertical, MoveHorizontal, Pencil, RotateCcw, Scissors, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check, Columns2, GripVertical, MoveHorizontal, Pencil, RotateCcw, Scissors, Trash2, X } from 'lucide-react'
 import { Math as MathTex } from '@/components/math'
 import { RichText } from '@/components/rich-text'
 import { QuestionImage } from '@/components/question-image'
@@ -159,11 +159,35 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
     if (next !== rows) commit(next)
   }
 
+  /** Text / table blocks of the prompt — at least one must stay (a question needs its sentence). */
+  const textBlockCount = [...blocks.values()].filter((x) => x.kind === 'text' || x.kind === 'table').length
+
+  /** Removes a whole text / table block (e.g. "Note: Figure not drawn to scale."). Asks first. */
+  function deleteBlock(id: string) {
+    const b = blocks.get(id)
+    if (!b || (b.kind !== 'text' && b.kind !== 'table')) return
+    if (textBlockCount <= 1) {
+      window.alert("Bu savolning yagona matn bloki — uni o'chirib bo'lmaydi. Matnni tahrirlang (✎).")
+      return
+    }
+    const preview = b.content.length > 90 ? `${b.content.slice(0, 90)}…` : b.content
+    if (!window.confirm(`Shu blok butunlay o'chirilsinmi?\n\n«${preview}»\n\n(Saqlamaguningizcha bekor qilsa bo'ladi.)`)) return
+    setEditingId(null)
+    const nextRows = rows.map((r) => r.filter((x) => x !== id)).filter((r) => r.length > 0)
+    const next = new Map(blocks)
+    next.delete(id)
+    commit(nextRows, next)
+  }
+
   function saveText(id: string, text: string) {
     const b = blocks.get(id)
     setEditingId(null)
     if (!b || text === b.content) return
-    if (!text.trim()) return // never silently delete content
+    // Emptied the whole box: that means "delete this block" — confirmed, never silently.
+    if (!text.trim()) {
+      deleteBlock(id)
+      return
+    }
     const next = new Map(blocks)
     next.set(id, { ...b, content: text })
     commit(rows, next)
@@ -338,10 +362,13 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
                   <Pencil className="size-3.5" />
                 </ToolBtn>
                 {b.kind === 'text' && (
-                  <ToolBtn title="Gaplarga ajratish" onClick={() => splitIntoSentences(b.id)}>
+                  <ToolBtn title="Gaplarga ajratish (keyin keraksiz gapni alohida o'chirasiz)" onClick={() => splitIntoSentences(b.id)}>
                     <Scissors className="size-3.5" />
                   </ToolBtn>
                 )}
+                <ToolBtn title="Blokni butunlay o'chirish" disabled={textBlockCount <= 1} onClick={() => deleteBlock(b.id)} danger>
+                  <Trash2 className="size-3.5" />
+                </ToolBtn>
               </>
             )}
           </div>
@@ -465,11 +492,13 @@ function ToolBtn({
   title,
   onClick,
   disabled,
+  danger,
   children,
 }: {
   title: string
   onClick: () => void
   disabled?: boolean
+  danger?: boolean
   children: React.ReactNode
 }) {
   return (
@@ -479,7 +508,7 @@ function ToolBtn({
       aria-label={title}
       disabled={disabled}
       onClick={onClick}
-      className="rounded p-1 text-[#0b4f4a] hover:bg-[#e3f4f1] disabled:opacity-30"
+      className={`rounded p-1 disabled:opacity-30 ${danger ? 'text-[#dc2626] hover:bg-[#fee2e2]' : 'text-[#0b4f4a] hover:bg-[#e3f4f1]'}`}
     >
       {children}
     </button>
@@ -519,8 +548,16 @@ function TextBlockEditor({
       />
       <div className="flex items-center gap-2">
         <span className="flex-1 text-[11px] text-[#64748b]">
-          Bo&apos;sh qator qoldirsangiz blok ikkiga bo&apos;linadi · Ctrl+Enter — saqlash · Esc — bekor
+          Bo&apos;sh qator qoldirsangiz blok ikkiga bo&apos;linadi · hammasini o&apos;chirib saqlasangiz — blok o&apos;chadi · Ctrl+Enter — saqlash · Esc — bekor
         </span>
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          className="rounded px-1.5 py-1 text-[11px] font-bold text-[#dc2626] hover:bg-[#fee2e2]"
+          title="Matnni tozalash"
+        >
+          Tozalash
+        </button>
         <button type="button" onClick={onCancel} className="rounded p-1 text-[#64748b] hover:bg-[#f1f5f9]" aria-label="Bekor qilish">
           <X className="size-4" />
         </button>

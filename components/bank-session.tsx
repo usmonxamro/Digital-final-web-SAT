@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { CheckCircle2, ChevronRight, Loader2, XCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, ChevronRight, Loader2, RotateCcw, XCircle } from 'lucide-react'
+import { Ring } from '@/components/marketing/dashboard/ring'
 import { QuestionStimulus } from '@/components/question-stimulus'
 import { ChoiceContent } from '@/components/choice-content'
 import { RichText } from '@/components/rich-text'
@@ -31,7 +32,18 @@ const asQuestion = (q: BankQ): Question => ({
 })
 
 /** A practice set from the book bank: answer, press «Tekshirish», see the right answer and the solution at once. */
-export function BankSession({ params, onExit }: { params: { section: string; topic?: string; difficulty?: string; n: number }; onExit: () => void }) {
+export function BankSession({
+  params,
+  onExit,
+  title,
+  crumb,
+}: {
+  params: { section: string; topic?: string; difficulty?: string; n: number }
+  onExit: () => void
+  /** Topic name (or «Aralash mashq») and the section it belongs to — shown in the session header. */
+  title?: string
+  crumb?: string
+}) {
   const { t, lang } = useI18n()
   const [qs, setQs] = useState<BankQ[] | null>(null)
   const [idx, setIdx] = useState(0)
@@ -83,42 +95,70 @@ export function BankSession({ params, onExit }: { params: { section: string; top
   }
 
   const done = idx >= qs.length
+  const head = (
+    <div className="sd-qbs-head">
+      <button className="sd-qbs-exit" onClick={onExit} aria-label={t('Chiqish')}>
+        <ArrowLeft />
+      </button>
+      <div className="sd-qbs-title">
+        {crumb && <small>{crumb}</small>}
+        <b>{title ?? t('Mashq')}</b>
+      </div>
+      {!done && <span className="sd-qbs-count">{idx + 1} / {qs.length}</span>}
+    </div>
+  )
+  const dots = (
+    <div className="sd-qbs-dots" aria-hidden={!done}>
+      {qs.map((x, i) => {
+        const c = checks[x.id]
+        const cls = c ? (c.correct ? 'sd-ok' : 'sd-bad') : i === idx ? 'sd-cur' : ''
+        return done ? (
+          <button
+            key={x.id}
+            className={cls}
+            onClick={() => {
+              setIdx(i)
+              setPick(picked[x.id] ?? '')
+            }}
+            title={`${t('Savol')} ${i + 1}`}
+          >
+            {i + 1}
+          </button>
+        ) : (
+          <i key={x.id} className={cls} />
+        )
+      })}
+    </div>
+  )
+
   if (done) {
     const right = qs.filter((q) => checks[q.id]?.correct).length
     const pct = Math.round((right / qs.length) * 100)
     return (
-      <div className="sd-qb-summary">
-        <div className="sd-qb-score">
-          <strong>
-            {right}/{qs.length}
-          </strong>
-          <span>{t('{p}% to‘g‘ri', { p: pct })}</span>
-        </div>
-        <div className="sd-qb-dots">
-          {qs.map((q, i) => (
-            <button
-              key={q.id}
-              className={checks[q.id]?.correct ? 'sd-ok' : 'sd-bad'}
-              onClick={() => {
-                setIdx(i)
-                setPick(picked[q.id] ?? '')
-              }}
-              title={`${t('Savol')} ${i + 1}`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-        <p className="sd-note" style={{ margin: '4px 0 18px' }}>
-          {t("Raqamni bosing — savolni yechimi bilan qayta ko'rasiz.")}
-        </p>
-        <div className="sd-qb-actions">
-          <button className="sd-primary" onClick={() => setRun((r) => r + 1)}>
-            {t('Yana mashq qilish')}
-          </button>
-          <button className="sd-soft" onClick={onExit}>
-            {t('Mavzularga qaytish')}
-          </button>
+      <div>
+        {head}
+        <div className="sd-qb-summary sd-qbs-summary">
+          <Ring value={pct} size={110} stroke={10} color={pct >= 75 ? 'var(--sp-green)' : pct >= 50 ? 'var(--sp-yellow)' : '#ef4444'} />
+          <div className="sd-qbs-summary-text">
+            <div className="sd-qb-score">
+              <strong>
+                {right}/{qs.length}
+              </strong>
+              <span>{t('{p}% to‘g‘ri', { p: pct })}</span>
+            </div>
+            <p className="sd-note" style={{ margin: '0 0 12px' }}>
+              {t("Raqamni bosing — savolni yechimi bilan qayta ko'rasiz.")}
+            </p>
+            {dots}
+            <div className="sd-qb-actions">
+              <button className="sd-primary" onClick={() => setRun((r) => r + 1)}>
+                <RotateCcw size={16} /> {t('Yana mashq qilish')}
+              </button>
+              <button className="sd-soft" onClick={onExit}>
+                {t('Mavzularga qaytish')}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -157,18 +197,11 @@ export function BankSession({ params, onExit }: { params: { section: string; top
   }
 
   return (
-    <div ref={topRef}>
-      <div className="sd-qb-bar">
-        <button className="sd-text-btn" onClick={onExit}>
-          ← {t('Chiqish')}
-        </button>
-        <span>
-          {t('Savol')} {idx + 1} / {qs.length}
-        </span>
+    <div ref={topRef} className="sd-qbs">
+      {head}
+      <div className="sd-qbs-sub">
+        {dots}
         <span className={`sd-qb-diff sd-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span>
-      </div>
-      <div className="sd-qb-prog">
-        <i style={{ width: `${((idx + (chk ? 1 : 0)) / qs.length) * 100}%` }} />
       </div>
 
       <div className="sd-qb-card">
@@ -234,7 +267,7 @@ export function BankSession({ params, onExit }: { params: { section: string; top
         {error && <div className="sd-code-error">{error}</div>}
       </div>
 
-      <div className="sd-qb-actions">
+      <div className="sd-qb-actions sd-qbs-actions">
         {!chk ? (
           <button className="sd-primary" onClick={check} disabled={!chosen || busy}>
             {busy ? <Loader2 className="animate-spin" size={16} /> : t('Tekshirish')}

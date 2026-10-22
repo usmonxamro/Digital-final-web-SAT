@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ArrowUpRight, Bell, ChartColumn, FileText, GraduationCap, House, Layers, BookOpen, Menu, Settings, Sparkles } from 'lucide-react'
+import { ArrowUpRight, ChartColumn, FileText, GraduationCap, House, Layers, BookOpen, LayoutGrid, Menu, Settings, Sparkles } from 'lucide-react'
 import { useUser } from '@/components/marketing/dashboard/user-context'
 import { DashboardDataProvider } from '@/components/marketing/dashboard/dashboard-data'
 import { SdUiProvider, useSd } from '@/components/marketing/dashboard/sd-ui'
@@ -20,7 +20,7 @@ const NAV = [
   { href: '/dashboard/free-mocks', hash: '', label: 'Bepul mocklar', Icon: Sparkles, badge: 'FREE' },
   { href: '/dashboard/course-tasks', hash: '', label: 'Mening kurslarim', Icon: BookOpen },
   { href: '/dashboard/question-bank', hash: '', label: 'Savollar banki', Icon: Layers },
-  { href: '/dashboard', hash: '#results', label: 'Natijalarim', Icon: ChartColumn },
+  { href: '/dashboard/results', hash: '', label: 'Natijalarim', Icon: ChartColumn },
   { href: '/dashboard/profile', hash: '', label: 'Sozlamalar', Icon: Settings },
 ]
 
@@ -63,8 +63,44 @@ function Frame({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
+      <BottomNav pathname={pathname} menuOpen={open} onMenu={() => setOpen((v) => !v)} />
       <Tour onMenu={setOpen} menuOpen={open} />
     </>
+  )
+}
+
+/** Phones: Telegram-style tab bar at the bottom — the main sections one thumb-tap away; «Menyu» opens the full sidebar. */
+const TABS = [
+  { href: '/dashboard', label: 'Bosh sahifa', Icon: House },
+  { href: '/dashboard/practice', label: 'Imtihonlar', Icon: FileText },
+  { href: '/dashboard/course-tasks', label: 'Kurslarim', Icon: BookOpen },
+  { href: '/dashboard/results', label: 'Natijalar', Icon: ChartColumn },
+]
+
+function BottomNav({ pathname, menuOpen, onMenu }: { pathname: string; menuOpen: boolean; onMenu: () => void }) {
+  const t = useT()
+  const isOn = (href: string) => (href === '/dashboard' ? pathname === '/dashboard' : pathname === href || pathname.startsWith(href + '/'))
+  const anyOn = TABS.some((x) => isOn(x.href))
+  return (
+    <nav className="sd-bnav" aria-label={t('MENU')}>
+      {TABS.map(({ href, label, Icon }) => {
+        const on = !menuOpen && isOn(href)
+        return (
+          <Link key={href} href={href} className={`sd-bnav-item ${on ? 'sd-on' : ''}`} aria-current={on ? 'page' : undefined}>
+            <span className="sd-bnav-ico">
+              <Icon />
+            </span>
+            <span className="sd-bnav-label">{t(label)}</span>
+          </Link>
+        )
+      })}
+      <button type="button" className={`sd-bnav-item ${menuOpen || !anyOn ? 'sd-on' : ''}`} onClick={onMenu} aria-expanded={menuOpen}>
+        <span className="sd-bnav-ico">
+          <LayoutGrid />
+        </span>
+        <span className="sd-bnav-label">{t('Menyu')}</span>
+      </button>
+    </nav>
   )
 }
 

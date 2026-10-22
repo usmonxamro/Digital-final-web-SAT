@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Play, X } from 'lucide-react'
+import { Hourglass, Play, X } from 'lucide-react'
 import { useT } from '@/components/i18n-provider'
 import type { UnfinishedExam } from '@/app/api/exam/unfinished/route'
 
@@ -26,34 +26,32 @@ export function UnfinishedExamBanner() {
 
   if (items.length === 0) return null
   return (
-    <div className="mb-4 grid gap-2.5">
+    <div className="sd-unf">
       {items.map((it) => (
-        <div
-          key={it.startId}
-          className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#0e7c75]/30 bg-[rgba(240,253,244,0.8)] px-4 py-3"
-        >
-          <div className="min-w-0 flex-1">
-            <div className="text-[13px] font-extrabold text-[#0b4f4a]">{t('Yakunlanmagan testingiz bor')}</div>
-            <div className="truncate text-[12.5px] text-[#334155]">
+        <div key={it.startId} className="sd-unf-card">
+          <span className="sd-unf-ico">
+            <Hourglass />
+          </span>
+          <div className="sd-unf-text">
+            <strong>{t('Yakunlanmagan testingiz bor')}</strong>
+            <span className="sd-unf-name" title={it.testLabel}>
               {it.testLabel}
-              {it.moduleLabel ? ` · ${it.moduleLabel}` : ''}
-              {it.total > 0 ? ` · ${t('{a}/{b} savolga javob berilgan', { a: it.answered, b: it.total })}` : ''}
-              <span className="text-[#64748b]"> · {t('{n} kun saqlanadi', { n: it.daysLeft })}</span>
-            </div>
+            </span>
+            <span className="sd-unf-meta">
+              {it.moduleLabel && <span>{it.moduleLabel}</span>}
+              {it.total > 0 && <span>{t('{a}/{b} savolga javob berilgan', { a: it.answered, b: it.total })}</span>}
+              <span>{t('{n} kun saqlanadi', { n: it.daysLeft })}</span>
+            </span>
+            {it.total > 0 && (
+              <span className="sd-unf-bar">
+                <i style={{ width: `${Math.min(100, (it.answered / it.total) * 100)}%` }} />
+              </span>
+            )}
           </div>
-          <Link
-            href={`/exam?test=${encodeURIComponent(it.testLabel)}`}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0e7c75] px-3.5 py-2 text-[13px] font-bold text-white hover:bg-[#0b4f4a]"
-          >
-            <Play size={14} /> {t('Davom ettirish')}
+          <Link href={`/exam?test=${encodeURIComponent(it.testLabel)}`} className="sd-unf-go">
+            <Play /> {t('Davom ettirish')}
           </Link>
-          <button
-            type="button"
-            onClick={() => discard(it)}
-            aria-label={t('Bekor qilish')}
-            title={t('Bekor qilish')}
-            className="rounded-lg p-2 text-[#64748b] hover:bg-white"
-          >
+          <button type="button" onClick={() => discard(it)} aria-label={t('Bekor qilish')} title={t('Bekor qilish')} className="sd-unf-x">
             <X size={16} />
           </button>
         </div>

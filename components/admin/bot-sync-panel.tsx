@@ -8,7 +8,7 @@ type View = 'tests' | 'toBot' | 'suspects' | 'groups'
 type Filter = 'all' | 'unlinked' | 'linked'
 
 const btn = 'px-3 py-1.5 rounded-lg text-[12.5px] font-bold border border-line hover:bg-slate-50 disabled:opacity-50'
-const btnPrimary = 'px-3 py-1.5 rounded-lg text-[12.5px] font-bold bg-navy text-white hover:opacity-90 disabled:opacity-50'
+const btnPrimary = 'px-3 py-1.5 rounded-lg text-[12.5px] font-bold bg-green text-white hover:brightness-110 disabled:opacity-50'
 
 /**
  * Admin "Bot ↔ Sayt": the tests that live in the Telegram bot's database (answer keys + who solved them),
@@ -56,7 +56,7 @@ export function BotSyncPanel() {
           <button
             key={v}
             onClick={() => setView(v)}
-            className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold border ${view === v ? 'bg-navy text-white border-navy' : 'border-line text-ink-faint hover:text-ink'}`}
+            className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold border ${view === v ? 'bg-ink text-white border-ink' : 'border-line text-ink-faint hover:text-ink'}`}
           >
             {label}
           </button>
@@ -101,6 +101,7 @@ export function BotSyncPanel() {
             Saytdagi mocklar (Math qismi), botda hali yo&apos;q. Tugmani bossangiz mockka bot kodi beriladi, bot uni ~1 daqiqada oladi va adminlarga
             xabar yuboradi. Javoblar to&apos;liq kiritilgan bo&apos;lishi kerak. Nashr qilingan mocklar botga o&apos;zi qo&apos;shiladi.
           </p>
+          {data.siteOnly.length > 0 && <BulkToBot labels={data.siteOnly.filter((m) => m.published).map((m) => m.label)} onDone={load} />}
           {data.siteOnly.map((m) => (
             <ToBotRow key={m.label} m={m} onChanged={load} />
           ))}
@@ -317,6 +318,61 @@ function ToBotRow({ m, onChanged }: { m: BotSyncOverview['siteOnly'][number]; on
         {busy ? <Loader2 size={13} className="animate-spin inline" /> : null} Botga qo&apos;shish
       </button>
       {msg && <div className={`basis-full text-[12.5px] ${msg.ok ? 'text-emerald-700' : 'text-amber-700'}`}>{msg.text}</div>}
+    </div>
+  )
+}
+
+/** "Hammasini botga qo'shish": every published site mock the bot lacks, one by one, with a running tally. */
+function BulkToBot({ labels, onDone }: { labels: string[]; onDone: () => void }) {
+  const [busy, setBusy] = useState(false)
+  const [prog, setProg] = useState<{ done: number; created: string[]; skipped: { label: string; why: string }[] } | null>(null)
+
+  async function run() {
+    if (labels.length === 0) return
+    if (!window.confirm(`${labels.length} ta nashr qilingan mock botga qo'shilsinmi? Har biriga bot kodi beriladi va bot adminlarga xabar yuboradi.`)) return
+    setBusy(true)
+    const created: string[] = []
+    const skipped: { label: string; why: string }[] = []
+    for (let i = 0; i < labels.length; i++) {
+      const label = labels[i]
+      try {
+        const res = await fetch('/api/admin/bot-sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'to_bot', label }) })
+        const d = await res.json().catch(() => ({}))
+        if (d.status === 'created') created.push(`${label} → ${d.code}`)
+        else if (d.status !== 'exists') skipped.push({ label, why: d.message ?? d.error ?? 'Xatolik.' })
+      } catch {
+        skipped.push({ label, why: "Server bilan bog'lanib bo'lmadi." })
+      }
+      setProg({ done: i + 1, created: [...created], skipped: [...skipped] })
+    }
+    setBusy(false)
+    onDone()
+  }
+
+  return (
+    <div className="rounded-xl border border-dashed border-line p-3 mb-2">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="text-[13px]">
+          <b>Ommaviy qo&apos;shish:</b> nashr qilingan {labels.length} ta mock botda yo&apos;q.
+        </div>
+        <button className={`${btnPrimary} ml-auto`} disabled={busy || labels.length === 0} onClick={run}>
+          {busy ? <Loader2 size={13} className="animate-spin inline" /> : null} Hammasini botga qo&apos;shish
+        </button>
+      </div>
+      {prog && (
+        <div className="mt-2 text-[12.5px] space-y-1">
+          <div className="text-ink-faint">
+            {prog.done} / {labels.length} tekshirildi · <span className="text-emerald-700 font-bold">{prog.created.length} ta qo&apos;shildi</span>
+            {prog.skipped.length > 0 && <span className="text-amber-700 font-bold"> · {prog.skipped.length} ta o&apos;tkazib yuborildi</span>}
+          </div>
+          {prog.created.length > 0 && <div className="text-emerald-700">{prog.created.join(' · ')}</div>}
+          {prog.skipped.map((x) => (
+            <div key={x.label} className="text-amber-700">
+              {x.label}: {x.why}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

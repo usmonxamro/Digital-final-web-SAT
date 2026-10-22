@@ -223,7 +223,7 @@ export default function DashboardPage() {
         <div>
           <div className="sd-section-title" id="results">
             <h3>{t("So'nggi ishlangan testlar")}</h3>
-            <Link href="/dashboard/practice" className="sd-link-btn">
+            <Link href="/dashboard/results" className="sd-link-btn">
               {t('Barchasi')} <ArrowRight size={13} />
             </Link>
           </div>
