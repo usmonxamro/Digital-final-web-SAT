@@ -8,6 +8,7 @@ import { ReportsPanel } from '@/components/admin/reports-panel'
 import { GroupsPanel } from '@/components/admin/groups-panel'
 import { BotSyncPanel } from '@/components/admin/bot-sync-panel'
 import { BotTestPicker, type PickedBotTest } from '@/components/admin/bot-test-picker'
+import { ModuleMinutesField, defaultMinutes, type ModuleMinutes } from '@/components/admin/module-minutes'
 import { ThemeSwitch } from '@/components/marketing/theme-switch'
 import {
   ArrowLeft,
@@ -111,6 +112,7 @@ async function saveTestConfig(opts: {
   testLabel: string
   subject: 'full' | 'math' | 'english'
   mathLayout?: 'modules' | 'sequential'
+  moduleMinutes?: ModuleMinutes
 }) {
   try {
     await fetch('/api/admin/test-config', {
@@ -124,8 +126,10 @@ async function saveTestConfig(opts: {
         sections: newMockOptions.sections,
         access: newMockOptions.access,
         pdfDownload: newMockOptions.pdf,
-        englishModuleMinutes: 32,
-        mathModuleMinutes: 35,
+        // The old per-subject pair mirrors the first module of each subject (older code still reads it).
+        englishModuleMinutes: opts.moduleMinutes?.rw1 ?? 32,
+        mathModuleMinutes: opts.moduleMinutes?.m1 ?? (opts.moduleMinutes?.seq ? Math.round(opts.moduleMinutes.seq / 2) : 35),
+        ...(opts.moduleMinutes ? { moduleMinutes: opts.moduleMinutes } : {}),
         mathLayout: opts.mathLayout ?? 'modules',
         // A freshly saved mock starts as a draft: check it in the exam
         // preview ("Check it now"), fix the layout, then Publish.
@@ -265,6 +269,7 @@ function NewMockPlacement() {
 
 function FullMockForm() {
   const [mockName, setMockName] = useState('')
+  const [minutes, setMinutes] = useState<ModuleMinutes>(() => defaultMinutes(['rw1', 'rw2', 'm1', 'm2']))
   const [eng1, setEng1] = useState<Question[] | null>(null)
   const [eng2, setEng2] = useState<Question[] | null>(null)
   const [math1, setMath1] = useState<Question[] | null>(null)
@@ -281,7 +286,7 @@ function FullMockForm() {
     setResult(null)
     setSavedLabel(null)
     const label = mockName.trim()
-    await saveTestConfig({ testLabel: label, subject: 'full' })
+    await saveTestConfig({ testLabel: label, subject: 'full', moduleMinutes: minutes })
     const results = await Promise.all([
       saveModule({ kind: 'reading', questions: eng1, testLabel: label, moduleNumber: 1 }),
       saveModule({ kind: 'reading', questions: eng2, testLabel: label, moduleNumber: 2 }),
@@ -301,6 +306,7 @@ function FullMockForm() {
   return (
     <div>
       <MockNameField value={mockName} onChange={setMockName} />
+      <ModuleMinutesField keys={['rw1', 'rw2', 'm1', 'm2']} value={minutes} onChange={setMinutes} />
       <div className="text-[12.5px] font-bold text-ink-soft mb-2">English savollarini JSON variantini tashlang</div>
       <div className="grid sm:grid-cols-2 gap-3 mb-4">
         <ModuleImportCard title="1-M — SAT English 1-moduldagi 27 ta savol" expectedCount={27} onChange={setEng1} />
@@ -340,6 +346,7 @@ function FullMockForm() {
 function MathMockForm() {
   const [layout, setLayout] = useState<'modules' | 'sequential'>('modules')
   const [mockName, setMockName] = useState('')
+  const [minutes, setMinutes] = useState<ModuleMinutes>(() => defaultMinutes(['m1', 'm2', 'seq']))
   const [math1, setMath1] = useState<Question[] | null>(null)
   const [math2, setMath2] = useState<Question[] | null>(null)
   const [mathAll, setMathAll] = useState<Question[] | null>(null)
@@ -358,7 +365,12 @@ function MathMockForm() {
     setSavedLabel(null)
     setKeysFromBot(false)
     const label = mockName.trim()
-    await saveTestConfig({ testLabel: label, subject: 'math', mathLayout: layout })
+    await saveTestConfig({
+      testLabel: label,
+      subject: 'math',
+      mathLayout: layout,
+      moduleMinutes: layout === 'modules' ? { m1: minutes.m1, m2: minutes.m2 } : { seq: minutes.seq },
+    })
 
     const results =
       layout === 'modules'
@@ -439,6 +451,8 @@ function MathMockForm() {
         </div>
       )}
 
+      <ModuleMinutesField key={layout} keys={layout === 'modules' ? ['m1', 'm2'] : ['seq']} value={minutes} onChange={setMinutes} />
+
       {layout === 'modules' ? (
         <div className="grid sm:grid-cols-2 gap-3 mb-4">
           <ModuleImportCard title="1-M — SAT Math 1-moduldagi 22 ta savol" expectedCount={22} onChange={setMath1} />
@@ -480,6 +494,7 @@ function MathMockForm() {
 
 function EnglishMockForm() {
   const [mockName, setMockName] = useState('')
+  const [minutes, setMinutes] = useState<ModuleMinutes>(() => defaultMinutes(['rw1', 'rw2']))
   const [eng1, setEng1] = useState<Question[] | null>(null)
   const [eng2, setEng2] = useState<Question[] | null>(null)
   const [saving, setSaving] = useState(false)
@@ -494,7 +509,7 @@ function EnglishMockForm() {
     setResult(null)
     setSavedLabel(null)
     const label = mockName.trim()
-    await saveTestConfig({ testLabel: label, subject: 'english' })
+    await saveTestConfig({ testLabel: label, subject: 'english', moduleMinutes: { rw1: minutes.rw1, rw2: minutes.rw2 } })
     const results = await Promise.all([
       saveModule({ kind: 'reading', questions: eng1, testLabel: label, moduleNumber: 1 }),
       saveModule({ kind: 'reading', questions: eng2, testLabel: label, moduleNumber: 2 }),
@@ -510,6 +525,7 @@ function EnglishMockForm() {
   return (
     <div>
       <MockNameField value={mockName} onChange={setMockName} />
+      <ModuleMinutesField keys={['rw1', 'rw2']} value={minutes} onChange={setMinutes} />
       <div className="grid sm:grid-cols-2 gap-3 mb-4">
         <ModuleImportCard title="1-M — SAT English 1-moduldagi 27 ta savol" expectedCount={27} onChange={setEng1} />
         <ModuleImportCard title="2-M — SAT English 2-moduldagi 27 ta savol" expectedCount={27} onChange={setEng2} />

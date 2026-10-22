@@ -886,24 +886,24 @@ async function fetchModuleAware(kind: SectionKind, testLabel: string): Promise<[
 }
 
 /** Builds a 4-module full test (Reading&Writing + Math) from a dedicated test's own, already-split modules. */
-function buildFullModules(r1: Question[], r2: Question[], m1: Question[], m2: Question[], englishMinutes: number, mathMinutes: number): TestModule[] | null {
+function buildFullModules(r1: Question[], r2: Question[], m1: Question[], m2: Question[], mins: [number, number, number, number]): TestModule[] | null {
   if (r1.length + r2.length === 0 || m1.length + m2.length === 0) return null
   return [
-    { id: 'rw-1', kind: 'reading', label: 'Section 1, Module 1: Reading and Writing', shortLabel: 'Reading and Writing — Module 1', durationSec: englishMinutes * 60, total: Math.min(27, r1.length), pool: r1 },
-    { id: 'rw-2', kind: 'reading', label: 'Section 1, Module 2: Reading and Writing', shortLabel: 'Reading and Writing — Module 2', durationSec: englishMinutes * 60, total: Math.min(27, r2.length), pool: r2 },
-    { id: 'math-1', kind: 'math', label: 'Section 2, Module 1: Math', shortLabel: 'Math — Module 1', durationSec: mathMinutes * 60, total: Math.min(22, m1.length), pool: m1 },
-    { id: 'math-2', kind: 'math', label: 'Section 2, Module 2: Math', shortLabel: 'Math — Module 2', durationSec: mathMinutes * 60, total: Math.min(22, m2.length), pool: m2 },
+    { id: 'rw-1', kind: 'reading', label: 'Section 1, Module 1: Reading and Writing', shortLabel: 'Reading and Writing — Module 1', durationSec: mins[0] * 60, total: Math.min(27, r1.length), pool: r1 },
+    { id: 'rw-2', kind: 'reading', label: 'Section 1, Module 2: Reading and Writing', shortLabel: 'Reading and Writing — Module 2', durationSec: mins[1] * 60, total: Math.min(27, r2.length), pool: r2 },
+    { id: 'math-1', kind: 'math', label: 'Section 2, Module 1: Math', shortLabel: 'Math — Module 1', durationSec: mins[2] * 60, total: Math.min(22, m1.length), pool: m1 },
+    { id: 'math-2', kind: 'math', label: 'Section 2, Module 2: Math', shortLabel: 'Math — Module 2', durationSec: mins[3] * 60, total: Math.min(22, m2.length), pool: m2 },
   ]
 }
 
 /** Builds a 2-module single-subject scored test (Math-only or R&W-only, 200-800 scale) from already-split modules. */
-function buildSingleScoredModules(kind: SectionKind, p1: Question[], p2: Question[], minutes: number): TestModule[] | null {
+function buildSingleScoredModules(kind: SectionKind, p1: Question[], p2: Question[], mins: [number, number]): TestModule[] | null {
   if (p1.length + p2.length === 0) return null
   const cap = kind === 'math' ? 22 : 27
   const label = kind === 'math' ? 'Math' : 'Reading and Writing'
   return [
-    { id: `${kind}-1`, kind, label: `Module 1: ${label}`, shortLabel: `${label} — Module 1`, durationSec: minutes * 60, total: Math.min(cap, p1.length), pool: p1 },
-    { id: `${kind}-2`, kind, label: `Module 2: ${label}`, shortLabel: `${label} — Module 2`, durationSec: minutes * 60, total: Math.min(cap, p2.length), pool: p2 },
+    { id: `${kind}-1`, kind, label: `Module 1: ${label}`, shortLabel: `${label} — Module 1`, durationSec: mins[0] * 60, total: Math.min(cap, p1.length), pool: p1 },
+    { id: `${kind}-2`, kind, label: `Module 2: ${label}`, shortLabel: `${label} — Module 2`, durationSec: mins[1] * 60, total: Math.min(cap, p2.length), pool: p2 },
   ]
 }
 
@@ -1016,6 +1016,10 @@ function PageInner() {
           const englishMinutes = config?.englishModuleMinutes ?? 32
           const mathMinutes = config?.mathModuleMinutes ?? 35
           const mathLayout = config?.mathLayout ?? 'modules'
+          // Minutes per module: the admin's own numbers (new-mock form) win over the old per-subject pair.
+          const mm = config?.moduleMinutes ?? null
+          const rwMins: [number, number] = [mm?.rw1 ?? englishMinutes, mm?.rw2 ?? mm?.rw1 ?? englishMinutes]
+          const mathMins: [number, number] = [mm?.m1 ?? mathMinutes, mm?.m2 ?? mm?.m1 ?? mathMinutes]
           const isCourseTask = placement === 'course_task'
 
           let built: TestModule[] | null = null
@@ -1029,7 +1033,7 @@ function PageInner() {
               fetchModuleAware('math', testParam),
             ])
             if (cancelled) return
-            built = buildFullModules(r1, r2, m1, m2, englishMinutes, mathMinutes)
+            built = buildFullModules(r1, r2, m1, m2, [rwMins[0], rwMins[1], mathMins[0], mathMins[1]])
             scoringMode = 'full'
           } else {
             singleSubjectKind = subject === 'math' ? 'math' : 'reading'
@@ -1045,12 +1049,12 @@ function PageInner() {
             } else if (singleSubjectKind === 'math' && mathLayout === 'sequential') {
               const flatRes = await fetch(`/api/questions?kind=math&test=${encodeURIComponent(testParam)}`).then((r) => r.json())
               if (cancelled) return
-              built = buildSequentialScoredModule('math', flatRes.questions ?? [], minutes * 2)
+              built = buildSequentialScoredModule('math', flatRes.questions ?? [], mm?.seq ?? minutes * 2)
               scoringMode = 'single'
             } else {
               const [p1, p2] = await fetchModuleAware(singleSubjectKind, testParam)
               if (cancelled) return
-              built = buildSingleScoredModules(singleSubjectKind, p1, p2, minutes)
+              built = buildSingleScoredModules(singleSubjectKind, p1, p2, singleSubjectKind === 'math' ? mathMins : rwMins)
               scoringMode = 'single'
             }
           }

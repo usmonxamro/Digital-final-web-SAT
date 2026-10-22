@@ -8,6 +8,8 @@ import { groupBySlug, configGroups } from '@/lib/course-groups'
 import { cleanSections, legacySection, rowSections, type MockSection } from '@/lib/mock-sections'
 
 
+export type ModuleMinutes = { rw1?: number; rw2?: number; m1?: number; m2?: number; seq?: number }
+
 export type TestSubject = 'full' | 'math' | 'english'
 export type TestPlacement = 'mock' | 'course_task'
 export type MathLayout = 'modules' | 'sequential'
@@ -24,6 +26,8 @@ export type TestConfig = {
   mathModuleMinutes: number
   /** 'modules' (2 x 22, standard) or 'sequential' (one continuous 44-question block). Only meaningful for subject 'math'. */
   mathLayout: MathLayout
+  /** Minutes of each module separately (rw1, rw2, m1, m2; seq = one continuous Math block). null = use the two numbers above. */
+  moduleMinutes: ModuleMinutes | null
   /** false = draft: hidden from students until the admin presses Publish. */
   published: boolean
   /** Draft goes live automatically at this time (ISO), if scheduled. */
@@ -39,6 +43,17 @@ export type TestConfig = {
   courseGroups: string[]
   /** Suggested time (minutes) shown once on a task's start screen; null = none. */
   recommendedMinutes: number | null
+}
+
+/** Keeps only known keys with a sane number of minutes (1–300). */
+function cleanModuleMinutes(v: unknown): ModuleMinutes | null {
+  if (!v || typeof v !== 'object') return null
+  const out: ModuleMinutes = {}
+  for (const k of ['rw1', 'rw2', 'm1', 'm2', 'seq'] as const) {
+    const n = Number((v as Record<string, unknown>)[k])
+    if (Number.isFinite(n) && n >= 1) out[k] = Math.min(Math.round(n), 300)
+  }
+  return Object.keys(out).length ? out : null
 }
 
 /** Unique, well-formed folder ids (the folders live in mock_folders). */
@@ -71,6 +86,7 @@ export async function POST(req: NextRequest) {
   const englishModuleMinutes = Number(body?.englishModuleMinutes) || 32
   const mathModuleMinutes = Number(body?.mathModuleMinutes) || 35
   const mathLayout: MathLayout = body?.mathLayout === 'sequential' ? 'sequential' : 'modules'
+  const moduleMinutes = cleanModuleMinutes(body?.moduleMinutes)
   // `sections` (array) wins; the older single `section` still works.
   const sections: TestSection[] | null =
     body && Array.isArray(body.sections)
@@ -127,9 +143,18 @@ export async function POST(req: NextRequest) {
     row.course_group = null // the older single column is retired
   }
   if (hasRec) row.recommended_minutes = recommendedMinutes
+  // Per-module minutes: only touched when the caller sends them (a plain settings save keeps what is there).
+  if (body && 'moduleMinutes' in body) row.module_minutes = moduleMinutes
 
   let { error } = await supabase.from('test_configs').upsert(row)
   let draftUnsupported = false
+  let minutesUnsupported = false
+  if (error && 'module_minutes' in row && isMissingColumn(error, 'module_minutes')) {
+    // v99 SQL not run yet — save everything else; the old two numbers (32 / 35) apply.
+    delete row.module_minutes
+    minutesUnsupported = true
+    ;({ error } = await supabase.from('test_configs').upsert(row))
+  }
   if (error && 'published' in row && isMissingColumn(error, 'published')) {
     // v36 SQL not run yet — save the settings anyway; the test is simply public.
     delete row.published
@@ -161,7 +186,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Sozlamani saqlashda xatolik: ${error.message}` }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true, draftUnsupported })
+  return NextResponse.json({ ok: true, draftUnsupported, minutesUnsupported })
 }
 
 export async function GET(req: NextRequest) {
@@ -189,6 +214,7 @@ export async function GET(req: NextRequest) {
       englishModuleMinutes: row.english_module_minutes,
       mathModuleMinutes: row.math_module_minutes,
       mathLayout: row.math_layout === 'sequential' ? 'sequential' : 'modules',
+      moduleMinutes: cleanModuleMinutes(row.module_minutes),
       published: row.published !== false,
       publishAt: row.publish_at ?? null,
       section: rowSections(row)[0] ?? 'exams',
