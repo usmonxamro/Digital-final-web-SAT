@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Eye, EyeOff, ImagePlus, Loader2, X } from 'lucide-react'
-import { validateQuestions, countUnanswered } from '@/lib/admin-schema'
+import { validateQuestions, unansweredNumbers, normalizeAnswers } from '@/lib/admin-schema'
 import { Math as MathTex } from '@/components/math'
 import { ChoiceContent } from '@/components/choice-content'
 import { ChoiceImageRow, uploadQuestionImage } from '@/components/admin/choice-image-slot'
@@ -76,7 +76,7 @@ export function ModuleImportCard({
   const parsed = useMemo(() => {
     if (!raw.trim()) return { data: null as Question[] | null, error: null as string | null }
     try {
-      const data = JSON.parse(raw)
+      const data = normalizeAnswers(JSON.parse(raw))
       return { data: data as Question[], error: null }
     } catch (e) {
       return { data: null, error: e instanceof Error ? e.message : 'JSON xato' }
@@ -100,7 +100,8 @@ export function ModuleImportCard({
     [withChoiceImages],
   )
   const isValid = !parsed.error && parsed.data !== null && errors.length === 0
-  const unanswered = useMemo(() => (isValid && parsed.data ? countUnanswered(parsed.data) : 0), [isValid, parsed.data])
+  const missing = useMemo(() => (isValid && parsed.data ? unansweredNumbers(parsed.data) : []), [isValid, parsed.data])
+  const total = Array.isArray(parsed.data) ? parsed.data.length : 0
   const [showPreview, setShowPreview] = useState(false)
 
   const merged = useMemo(() => {
@@ -183,10 +184,21 @@ export function ModuleImportCard({
               {!!expectedCount && parsed.data.length !== expectedCount && (
                 <span className="text-amber-600 font-normal">(kutilgan: {expectedCount} ta)</span>
               )}
-              <span className="text-amber-600 font-normal">
-                — javoblar JSON&apos;dan olinmaydi, saqlagach &quot;Javob kiritish&quot; orqali qo&apos;lda
-                kiritasiz{unanswered > 0 ? '' : ' (JSON ichidagi javoblar bekor qilinadi)'}
-              </span>
+              {missing.length === 0 ? (
+                <span className="text-green-deep font-normal">
+                  — barcha {total} ta savolning javobi JSON&apos;dan olindi (saqlagach pastda tekshirib chiqasiz)
+                </span>
+              ) : missing.length === total ? (
+                <span className="text-amber-600 font-normal">
+                  — JSON&apos;da javob yo&apos;q: saqlagach pastda barcha javoblarni qo&apos;lda kiritasiz
+                </span>
+              ) : (
+                <span className="text-amber-600 font-normal">
+                  — {total - missing.length} ta javob JSON&apos;dan olindi, ⚠ {missing.length} tasida YO&apos;Q:{' '}
+                  {missing.slice(0, 12).join(', ')}
+                  {missing.length > 12 ? '…' : ''}-savol. Saqlagach pastda qo&apos;lda kiritasiz
+                </span>
+              )}
             </div>
           ) : (
             <div className="space-y-1">

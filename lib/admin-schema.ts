@@ -79,6 +79,49 @@ export function validateQuestions(raw: unknown, opts?: { requireAnswers?: boolea
   return errors
 }
 
+/**
+ * Reads the answer key out of a pasted question however it was written: "correct": "b" / "B)" / "(C)",
+ * "answer" / "correct_answer" / "correctAnswer" / "key", a number for a grid-in ("correctValue": 6),
+ * or an answer written in the wrong field (a letter in correctValue of an mcq, a value in correct of a grid-in).
+ * Returns a copy; questions without an answer are returned unchanged. Never invents an answer.
+ */
+export function normalizeAnswers(raw: unknown): unknown {
+  if (!Array.isArray(raw)) return raw
+  return raw.map((q) => {
+    if (!q || typeof q !== 'object') return q
+    const o = { ...(q as Record<string, unknown>) }
+    const pick = (...keys: string[]) => {
+      for (const k of keys) {
+        const v = o[k]
+        if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim()
+      }
+      return ''
+    }
+    const grid = o.type === 'gridin' || !Array.isArray(o.choices)
+    if (grid) {
+      const v = pick('correctValue', 'correct_value', 'answer', 'correctAnswer', 'correct_answer', 'key', 'correct')
+      if (v) o.correctValue = v
+      delete o.correct
+    } else {
+      const raw = pick('correct', 'answer', 'correctAnswer', 'correct_answer', 'key', 'correctValue')
+      const m = raw.replace(/[()\s.)]/g, '').toUpperCase()
+      if (m) o.correct = m
+      delete o.correctValue
+    }
+    for (const k of ['answer', 'correctAnswer', 'correct_answer', 'correct_value', 'key']) delete o[k]
+    return o
+  })
+}
+
+/** 1-based numbers of the questions that still have no answer key. */
+export function unansweredNumbers(questions: Question[]): number[] {
+  const out: number[] = []
+  questions.forEach((q, i) => {
+    if ((q.type ?? 'mcq') === 'gridin' ? !q.correctValue?.trim() : !q.correct) out.push(i + 1)
+  })
+  return out
+}
+
 /** Number of questions in a valid array that still have no answer key set — used to
  *  show a "N ta savolda javob yo'q, keyin to'ldirasiz" hint after a requireAnswers:false save. */
 export function countUnanswered(questions: Question[]): number {
