@@ -98,13 +98,10 @@ export function BotSyncPanel() {
       {data && view === 'toBot' && (
         <div className="space-y-2">
           <p className="text-[12.5px] text-ink-faint mb-1">
-            Saytdagi mocklar (Math qismi), botda hali yo&apos;q. Tugmani bossangiz mockka bot kodi beriladi, bot uni ~1 daqiqada oladi va adminlarga
-            xabar yuboradi. Javoblar to&apos;liq kiritilgan bo&apos;lishi kerak. Nashr qilingan mocklar botga o&apos;zi qo&apos;shiladi.
+            Saytdagi mocklar (Math qismi), botda hali yo&apos;q. Keraklilarini belgilab (yoki hammasini) botga yuboring: har biriga bot kodi beriladi, bot ~1 daqiqada oladi va adminlarga
+            xabar yuboradi. Javoblar to&apos;liq kiritilgan bo&apos;lishi kerak. Bundan keyin nashr qilinadigan mocklar botga o&apos;zi qo&apos;shiladi.
           </p>
-          {data.siteOnly.length > 0 && <BulkToBot labels={data.siteOnly.filter((m) => m.published).map((m) => m.label)} onDone={load} />}
-          {data.siteOnly.map((m) => (
-            <ToBotRow key={m.label} m={m} onChanged={load} />
-          ))}
+          {data.siteOnly.length > 0 && <PickToBot mocks={data.siteOnly} onDone={load} />}
           {data.siteOnly.length === 0 && <p className="text-ink-faint text-[13px]">Hamma mock botda bor.</p>}
         </div>
       )}
@@ -293,86 +290,113 @@ function TestRow({ t, mocks, onChanged }: { t: BotTestRow; mocks: BotSyncOvervie
   )
 }
 
-function ToBotRow({ m, onChanged }: { m: BotSyncOverview['siteOnly'][number]; onChanged: () => void }) {
+/**
+ * Site mocks the bot does not have yet: tick the ones you want (or all) and send them to the bot in one go.
+ * Each gets a bot code; the bot saves it within a minute and messages the admins.
+ */
+function PickToBot({ mocks, onDone }: { mocks: BotSyncOverview['siteOnly']; onDone: () => void }) {
+  const [sel, setSel] = useState<Set<string>>(new Set())
+  const [q, setQ] = useState('')
   const [busy, setBusy] = useState(false)
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
-  async function push() {
-    setBusy(true)
-    setMsg(null)
-    try {
-      const res = await fetch('/api/admin/bot-sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'to_bot', label: m.label }) })
-      const d = await res.json().catch(() => ({}))
-      const ok = d.status === 'created' || d.status === 'exists'
-      setMsg({ ok, text: d.message ?? d.error ?? 'Xatolik.' })
-      if (ok) onChanged()
-    } catch {
-      setMsg({ ok: false, text: "Server bilan bog'lanib bo'lmadi." })
-    }
-    setBusy(false)
-  }
-  return (
-    <div className="rounded-xl border border-line p-3 flex flex-wrap items-center gap-x-4 gap-y-1">
-      <span className="font-bold text-[14px]">{m.label}</span>
-      <span className="text-[12px] text-ink-faint">{m.published ? 'nashr qilingan' : 'qoralama'}</span>
-      <button className={`${btnPrimary} ml-auto`} disabled={busy} onClick={push}>
-        {busy ? <Loader2 size={13} className="animate-spin inline" /> : null} Botga qo&apos;shish
-      </button>
-      {msg && <div className={`basis-full text-[12.5px] ${msg.ok ? 'text-emerald-700' : 'text-amber-700'}`}>{msg.text}</div>}
-    </div>
-  )
-}
+  const [res, setRes] = useState<Record<string, { ok: boolean; text: string }>>({})
+  const [prog, setProg] = useState<{ done: number; total: number } | null>(null)
 
-/** "Hammasini botga qo'shish": every published site mock the bot lacks, one by one, with a running tally. */
-function BulkToBot({ labels, onDone }: { labels: string[]; onDone: () => void }) {
-  const [busy, setBusy] = useState(false)
-  const [prog, setProg] = useState<{ done: number; created: string[]; skipped: { label: string; why: string }[] } | null>(null)
+  const shown = mocks.filter((m) => !q.trim() || m.label.toLowerCase().includes(q.trim().toLowerCase()))
+  const allOn = shown.length > 0 && shown.every((m) => sel.has(m.label))
+  const toggle = (l: string) =>
+    setSel((s) => {
+      const n = new Set(s)
+      if (n.has(l)) n.delete(l)
+      else n.add(l)
+      return n
+    })
 
   async function run() {
+    const labels = mocks.map((m) => m.label).filter((l) => sel.has(l))
     if (labels.length === 0) return
-    if (!window.confirm(`${labels.length} ta nashr qilingan mock botga qo'shilsinmi? Har biriga bot kodi beriladi va bot adminlarga xabar yuboradi.`)) return
+    if (!window.confirm(`${labels.length} ta mock botga qo'shilsinmi? Har biriga bot kodi beriladi va bot adminlarga xabar yuboradi.`)) return
     setBusy(true)
-    const created: string[] = []
-    const skipped: { label: string; why: string }[] = []
+    setProg({ done: 0, total: labels.length })
     for (let i = 0; i < labels.length; i++) {
       const label = labels[i]
+      let r: { ok: boolean; text: string }
       try {
-        const res = await fetch('/api/admin/bot-sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'to_bot', label }) })
-        const d = await res.json().catch(() => ({}))
-        if (d.status === 'created') created.push(`${label} → ${d.code}`)
-        else if (d.status !== 'exists') skipped.push({ label, why: d.message ?? d.error ?? 'Xatolik.' })
+        const x = await fetch('/api/admin/bot-sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'to_bot', label }) })
+        const d = await x.json().catch(() => ({}))
+        r = { ok: d.status === 'created' || d.status === 'exists', text: d.status === 'created' ? `kod ${d.code}` : (d.message ?? d.error ?? 'Xatolik.') }
       } catch {
-        skipped.push({ label, why: "Server bilan bog'lanib bo'lmadi." })
+        r = { ok: false, text: "Server bilan bog'lanib bo'lmadi." }
       }
-      setProg({ done: i + 1, created: [...created], skipped: [...skipped] })
+      setRes((m) => ({ ...m, [label]: r }))
+      setProg({ done: i + 1, total: labels.length })
     }
     setBusy(false)
+    setSel(new Set())
     onDone()
   }
 
+  const okN = Object.values(res).filter((r) => r.ok).length
+  const badN = Object.values(res).filter((r) => !r.ok).length
+
   return (
-    <div className="rounded-xl border border-dashed border-line p-3 mb-2">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="text-[13px]">
-          <b>Ommaviy qo&apos;shish:</b> nashr qilingan {labels.length} ta mock botda yo&apos;q.
-        </div>
-        <button className={`${btnPrimary} ml-auto`} disabled={busy || labels.length === 0} onClick={run}>
-          {busy ? <Loader2 size={13} className="animate-spin inline" /> : null} Hammasini botga qo&apos;shish
+    <div className="rounded-xl border border-line overflow-hidden">
+      <div className="flex flex-wrap items-center gap-2 p-3 border-b border-line bg-bg-deep/40">
+        <label className="flex items-center gap-2 text-[13px] font-bold cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={allOn}
+            onChange={() =>
+              setSel((s) => {
+                const n = new Set(s)
+                if (allOn) shown.forEach((m) => n.delete(m.label))
+                else shown.forEach((m) => n.add(m.label))
+                return n
+              })
+            }
+          />
+          Hammasini belgilash
+        </label>
+        <button
+          className={btn}
+          disabled={busy}
+          onClick={() => setSel(new Set(mocks.filter((m) => m.published).map((m) => m.label)))}
+          title="Faqat o'quvchilarga ochiq mocklarni belgilash"
+        >
+          Faqat nashr qilinganlar
+        </button>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Qidirish…"
+          className="border border-line rounded-lg px-2.5 py-1.5 text-[13px] bg-white min-w-[160px] flex-1 sm:flex-none"
+        />
+        <button className={`${btnPrimary} ml-auto`} disabled={busy || sel.size === 0} onClick={run}>
+          {busy ? <Loader2 size={13} className="animate-spin inline" /> : null} Tanlanganlarni botga qo&apos;shish ({sel.size})
         </button>
       </div>
       {prog && (
-        <div className="mt-2 text-[12.5px] space-y-1">
-          <div className="text-ink-faint">
-            {prog.done} / {labels.length} tekshirildi · <span className="text-emerald-700 font-bold">{prog.created.length} ta qo&apos;shildi</span>
-            {prog.skipped.length > 0 && <span className="text-amber-700 font-bold"> · {prog.skipped.length} ta o&apos;tkazib yuborildi</span>}
-          </div>
-          {prog.created.length > 0 && <div className="text-emerald-700">{prog.created.join(' · ')}</div>}
-          {prog.skipped.map((x) => (
-            <div key={x.label} className="text-amber-700">
-              {x.label}: {x.why}
-            </div>
-          ))}
+        <div className="px-3 py-2 text-[12.5px] border-b border-line">
+          {prog.done} / {prog.total} bajarildi · <span className="text-emerald-700 font-bold">{okN} ta botda</span>
+          {badN > 0 && <span className="text-amber-700 font-bold"> · {badN} ta qo&apos;shilmadi (sababi qatorda)</span>}
         </div>
       )}
+      <div className="max-h-[520px] overflow-y-auto divide-y divide-line">
+        {shown.map((m) => {
+          const r = res[m.label]
+          return (
+            <label key={m.label} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5 cursor-pointer hover:bg-bg-deep/40">
+              <input type="checkbox" checked={sel.has(m.label)} onChange={() => toggle(m.label)} disabled={busy} />
+              <span className="font-bold text-[13.5px]">{m.label}</span>
+              <span className={`text-[11px] font-bold rounded-full px-2 py-0.5 ${m.published ? 'bg-green-mist text-green-deep' : 'bg-amber-100 text-amber-800'}`}>
+                {m.published ? 'nashr qilingan' : 'qoralama'}
+              </span>
+              <span className="text-[11.5px] text-ink-faint">{m.subject === 'full' ? 'Full (Math qismi)' : 'Math'}</span>
+              {r && <span className={`basis-full sm:basis-auto sm:ml-auto text-[12px] ${r.ok ? 'text-emerald-700' : 'text-amber-700'}`}>{r.ok ? '✓ ' : '⚠ '}{r.text}</span>}
+            </label>
+          )
+        })}
+        {shown.length === 0 && <div className="p-4 text-[13px] text-ink-faint">Hech narsa topilmadi.</div>}
+      </div>
     </div>
   )
 }

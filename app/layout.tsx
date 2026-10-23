@@ -30,11 +30,52 @@ const jakarta = Plus_Jakarta_Sans({
   variable: '--font-jakarta',
 })
 
+const SITE = 'https://satbyusmon.com'
+const DESCRIPTION =
+  "SAT Akademiyasi — O'zbekistonda Digital SAT'ga tayyorlanish platformasi: bepul SAT mock testlar, SAT Math va Reading & Writing mashqlari, o'tgan imtihonlar, savollar banki, video tahlillar va o'zbek tilidagi kurslar."
+
 export const metadata: Metadata = {
-  title: 'Digital SAT Prep — Practice Test',
-  description:
-    'A modern Digital SAT practice test interface inspired by Bluebook and Greenbook, with LaTeX equation rendering, a timer, and a calculator.',
-  generator: 'v0.app',
+  metadataBase: new URL(SITE),
+  title: {
+    default: "SAT Akademiyasi — Digital SAT mock testlar va kurslar | satbyusmon.com",
+    template: '%s | SAT Akademiyasi',
+  },
+  description: DESCRIPTION,
+  applicationName: 'SAT Akademiyasi',
+  authors: [{ name: 'Usmon Xamroyev', url: 'https://t.me/Usmon_Xamroyev' }],
+  creator: 'SAT Akademiyasi',
+  publisher: 'SAT Akademiyasi',
+  // Google mostly ignores this list, other engines (Yandex, Bing) still read it. The common ways people
+  // misspell the site and the brand are here so a typo still finds us.
+  keywords: [
+    'SAT', 'Digital SAT', 'SAT mock test', 'SAT mock', 'bepul SAT mock', 'SAT test online', 'SAT tayyorgarlik',
+    "SAT ga tayyorlanish", 'SAT kurslari', 'SAT Math', 'SAT Reading and Writing', 'SAT practice test', 'SAT past exams',
+    'SAT Uzbekistan', "SAT O'zbekiston", 'SAT Toshkent', 'SAT Termiz', 'SAT Surxondaryo', 'Bluebook SAT', 'SAT Akademiyasi',
+    'SAT Akademiya', 'SAT Academy Uzbekistan', 'SAT by Usmon', 'satbyusmon', 'sat by usmon', 'satbyusmon.com', 'sat byusmon',
+    'satbyusman', 'sat by usman', 'sat bayusmon', 'satbaiusmon', 'Usmon Xamroyev', 'Usmon Xamroev', 'SAT 1600', 'SAT 800 math',
+    'подготовка к SAT', 'SAT Узбекистан', 'пробный тест SAT',
+  ],
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    url: SITE,
+    siteName: 'SAT Akademiyasi',
+    title: "SAT Akademiyasi — Digital SAT'ga o'zbek tilida tayyorgarlik",
+    description: "Haqiqiy imtihondagidek SAT mock testlar, savollar banki, natijalar tahlili va Telegram kurslari. Bepul boshlang.",
+    locale: 'uz_UZ',
+    alternateLocale: ['ru_RU', 'en_US'],
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: "SAT Akademiyasi — Digital SAT mock testlar va kurslar" }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "SAT Akademiyasi — Digital SAT'ga o'zbek tilida tayyorgarlik",
+    description: "Haqiqiy imtihondagidek SAT mock testlar, savollar banki, natijalar tahlili va Telegram kurslari.",
+    images: ['/og.png'],
+  },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 } },
+  category: 'education',
+  // Paste the code from Google Search Console here (Vercel env NEXT_PUBLIC_GOOGLE_VERIFICATION) to verify the site.
+  verification: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION ? { google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION } : undefined,
 }
 
 export const viewport: Viewport = {
