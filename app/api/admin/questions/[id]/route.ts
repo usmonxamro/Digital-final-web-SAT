@@ -74,7 +74,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const body = await req.json().catch(() => null)
   const question: unknown = body?.question
-  const errors = validateQuestions([question])
+  // A question may still be without its answer key (it is filled in on the answer sheet).
+  const errors = validateQuestions([question], { requireAnswers: false })
   if (errors.length > 0) {
     return NextResponse.json({ error: errors[0].message, errors }, { status: 400 })
   }

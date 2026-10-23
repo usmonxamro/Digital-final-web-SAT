@@ -90,7 +90,12 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
     y: number
     start: BlockStyle
     width: number
+    /** Horizontal shift only: the block's box and where the content sits at dx = 0 (for guides / snapping). */
+    boxW?: number
+    baseLeft?: number
   } | null>(null)
+  /** Canva-style guides while shifting a figure / table / equation: gaps to both edges, centre line. */
+  const [guide, setGuide] = useState<{ id: string; left: number; right: number; w: number; centered: boolean } | null>(null)
 
   const styleOf = (id: string): BlockStyle => (live?.id === id ? live.style : styles[id] ?? {})
 
@@ -105,14 +110,20 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
   function startTune(e: React.PointerEvent, id: string, prop: 'mt' | 'mb' | 'dx' | 'scale') {
     e.preventDefault()
     e.stopPropagation()
-    const content = (e.currentTarget as HTMLElement).closest('[data-block]')?.querySelector('[data-content]') as HTMLElement | null
+    const box = (e.currentTarget as HTMLElement).closest('[data-block]') as HTMLElement | null
+    const content = box?.querySelector('[data-content]') as HTMLElement | null
+    const br = box?.getBoundingClientRect()
+    const cr = content?.getBoundingClientRect()
+    const startDx = styles[id]?.dx ?? 0
     tune.current = {
       id,
       prop,
       x: e.clientX,
       y: e.clientY,
       start: { ...(styles[id] ?? {}) },
-      width: Math.max(40, content?.getBoundingClientRect().width ?? 200),
+      width: Math.max(40, cr?.width ?? 200),
+      boxW: br?.width,
+      baseLeft: br && cr ? cr.left - br.left - startDx : undefined,
     }
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     setLive({ id, style: { ...(styles[id] ?? {}) } })
@@ -127,7 +138,24 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
     const clamp = (v: number, [lo, hi]: readonly [number, number]) => Math.min(hi, Math.max(lo, Math.round(v)))
     if (t.prop === 'mt') st.mt = clamp((t.start.mt ?? 0) + dy, STYLE_LIMITS.margin)
     if (t.prop === 'mb') st.mb = clamp((t.start.mb ?? 0) + dy, STYLE_LIMITS.margin)
-    if (t.prop === 'dx') st.dx = clamp((t.start.dx ?? 0) + dx, STYLE_LIMITS.dx)
+    if (t.prop === 'dx') {
+      let v = clamp((t.start.dx ?? 0) + dx, STYLE_LIMITS.dx)
+      if (t.boxW != null && t.baseLeft != null) {
+        const SNAP = 6
+        const w = t.width
+        let left = t.baseLeft + v
+        const centerDiff = left + w / 2 - t.boxW / 2
+        let centered = false
+        if (Math.abs(centerDiff) <= SNAP) {
+          v = Math.round(v - centerDiff)
+          centered = true
+        } else if (Math.abs(left) <= SNAP) v = Math.round(-t.baseLeft)
+        else if (Math.abs(t.boxW - (left + w)) <= SNAP) v = Math.round(t.boxW - w - t.baseLeft)
+        left = t.baseLeft + v
+        setGuide({ id: t.id, left: Math.max(0, left), right: Math.max(0, t.boxW - left - w), w, centered })
+      }
+      st.dx = v
+    }
     if (t.prop === 'scale') {
       const s0 = t.start.scale ?? 1
       const next = (s0 * (t.width + dx)) / t.width
@@ -137,6 +165,7 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
   }
 
   function endTune() {
+    setGuide(null)
     const t = tune.current
     const last = liveRef.current
     tune.current = null
@@ -217,7 +246,7 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
           zoom: scalable && st.scale ? st.scale : undefined,
           width: scalable ? 'fit-content' : undefined,
           maxWidth: '100%',
-          marginInline: b.kind === 'equation' ? 'auto' : undefined,
+          marginInline: b.kind === 'equation' || b.kind === 'table' ? 'auto' : undefined,
         }}
       >
         {renderBlockContent(b)}
@@ -422,12 +451,38 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
           />
         )}
 
+        {/* Canva-style guides while shifting: distance to each edge, a magenta centre line when centred */}
+        {guide?.id === b.id && (
+          <span className="pointer-events-none absolute inset-0 z-20">
+            {guide.centered && <span className="absolute inset-y-[-6px] left-1/2 w-0 border-l-[1.5px] border-dashed border-[#ec4899]" />}
+            <span className="absolute top-1/2 h-0 border-t border-[#ec4899]" style={{ left: 0, width: guide.left }} />
+            <span className="absolute top-1/2 h-0 border-t border-[#ec4899]" style={{ right: 0, width: guide.right }} />
+            <span
+              className="absolute top-1/2 -translate-x-1/2 -translate-y-[130%] rounded bg-[#ec4899] px-1 text-[10px] font-bold leading-4 text-white"
+              style={{ left: Math.max(14, guide.left / 2) }}
+            >
+              {Math.round(guide.left)}
+            </span>
+            <span
+              className="absolute top-1/2 translate-x-1/2 -translate-y-[130%] rounded bg-[#ec4899] px-1 text-[10px] font-bold leading-4 text-white"
+              style={{ right: Math.max(14, guide.right / 2) }}
+            >
+              {Math.round(guide.right)}
+            </span>
+            {guide.centered && (
+              <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full rounded bg-[#ec4899] px-1.5 text-[10px] font-bold leading-4 text-white">
+                markaz
+              </span>
+            )}
+          </span>
+        )}
+
         {/* Live value while dragging */}
         {tuning && (
           <span className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md bg-[#0b4f4a] px-2 py-1 text-[11px] font-bold text-white shadow-lg">
             {tuning === 'mt' && `Tepa: ${st.mt ?? 0}px`}
             {tuning === 'mb' && `Past: ${st.mb ?? 0}px`}
-            {tuning === 'dx' && `Surish: ${st.dx ?? 0}px`}
+            {tuning === 'dx' && (guide?.centered ? 'Markazda' : `Surish: ${st.dx ?? 0}px`)}
             {tuning === 'scale' && `O'lcham: ${Math.round((st.scale ?? 1) * 100)}%`}
           </span>
         )}

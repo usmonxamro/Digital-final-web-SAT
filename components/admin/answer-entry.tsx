@@ -59,6 +59,10 @@ export function AnswerSheet({
   const [error, setError] = useState<string | null>(null)
   const [rescored, setRescored] = useState(0)
   const [notified, setNotified] = useState(0)
+  /** How many answers the last save actually changed (null = nothing saved yet). */
+  const [changedCount, setChangedCount] = useState<number | null>(null)
+  // What the server had when the sheet opened — only real changes are sent, nothing else is touched.
+  const [initial] = useState<Answers>(() => JSON.parse(JSON.stringify(answers)))
   const [toastVisible, setToastVisible] = useState(false)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -95,7 +99,24 @@ export function AnswerSheet({
   async function submitAll() {
     setSaving(true)
     setError(null)
-    const payload = allQuestions.map((q) => {
+    const base = savedSnapshot ?? initial
+    const same = (q: QuestionWithId) => {
+      const a = answers[q.id]
+      const b = base[q.id]
+      return q.type === 'gridin' ? (a?.correctValue?.trim() ?? '') === (b?.correctValue?.trim() ?? '') : (a?.correct ?? '') === (b?.correct ?? '')
+    }
+    const changedQs = allQuestions.filter((q) => !same(q))
+    if (changedQs.length === 0) {
+      // Nothing to write: say so plainly instead of pretending something was saved.
+      setChangedCount(0)
+      setSavedSnapshot(JSON.parse(JSON.stringify(answers)))
+      setRescored(0)
+      setNotified(0)
+      setDone(true)
+      setSaving(false)
+      return
+    }
+    const payload = changedQs.map((q) => {
       const a = answers[q.id]
       return q.type === 'gridin'
         ? { id: q.id, correctValue: a?.correctValue?.trim() || undefined }
@@ -117,6 +138,7 @@ export function AnswerSheet({
         onSaved?.({ ...q, correct: a?.correct, correctValue: a?.correctValue?.trim() || undefined })
       })
       setSavedSnapshot(JSON.parse(JSON.stringify(answers)))
+      setChangedCount(changedQs.length)
       setRescored(data.rescored ?? 0)
       setNotified(data.notified ?? 0)
       setDone(true)
@@ -233,9 +255,11 @@ export function AnswerSheet({
               <CheckCircle2 size={18} />
             </span>
             <div className="min-w-0 flex-1">
-              <div className="text-[13px] font-extrabold text-green-deep">Tayyor — barcha javoblar saqlandi</div>
+              <div className="text-[13px] font-extrabold text-green-deep">
+                {changedCount === 0 ? "O'zgarish yo'q — hech narsa qayta yozilmadi" : `Saqlandi — ${changedCount} ta javob o'zgartirildi`}
+              </div>
               <div className="text-[11.5px] text-ink-soft">
-                {allQuestions.length} ta savol
+                Faqat javob kalitlari saqlanadi — savol matni, rasmlar va Check it now&apos;dagi joylashuvga tegilmaydi · {allQuestions.length} ta savol
                 {rescored > 0 ? ` · ${rescored} ta oldin topshirilgan natija qayta hisoblandi` : ''}
                 {notified > 0 ? ` · ${notified} ta o‘quvchiga qo‘ng‘iroqcha xabari yuborildi` : ''}
               </div>
@@ -293,7 +317,7 @@ export function AnswerSheet({
           >
             <CheckCircle2 size={16} />
           </span>
-          <span className="text-[13px] font-bold">Saqlandi — javoblar tayyor</span>
+          <span className="text-[13px] font-bold">{changedCount === 0 ? "O'zgarish yo'q" : `Saqlandi — ${changedCount ?? 0} ta javob`}</span>
         </div>
       </div>
     </div>

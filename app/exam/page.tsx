@@ -218,6 +218,20 @@ function ExamEngine({
 
   const activeModule = modules[moduleIdx]
   const baseQuestion = useMemo(() => questionAt(activeModule, current), [activeModule, current])
+  // Warm the browser cache with the next questions' figures, so they appear at once when the student moves on.
+  useEffect(() => {
+    for (let i = current + 1; i <= current + 3 && i < activeModule.total; i++) {
+      const q = questionAt(activeModule, i)
+      const srcs = [q.image, ...(q.choices ?? []).map((c) => c.image)].filter((x): x is string => !!x)
+      for (const src of srcs) {
+        if (PREFETCHED.has(src)) continue
+        PREFETCHED.add(src)
+        const img = new Image()
+        img.decoding = 'async'
+        img.src = src
+      }
+    }
+  }, [activeModule, current])
   const question = useMemo(() => {
     const id = baseQuestion.id
     if (!id) return baseQuestion
@@ -927,6 +941,9 @@ function buildSequentialScoredModule(kind: SectionKind, questions: Question[], t
     { id: `${kind}-seq`, kind, label, shortLabel: label, durationSec: totalMinutes * 60, total: Math.min(cap, questions.length), pool: questions },
   ]
 }
+
+/** Figures already requested in this tab (prefetch each once). */
+const PREFETCHED = new Set<string>()
 
 type LoadError = { message: string; href?: string; hrefLabel?: string }
 

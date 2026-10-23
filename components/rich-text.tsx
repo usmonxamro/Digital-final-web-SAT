@@ -20,7 +20,7 @@ export const RichText = memo(function RichText({ text, className }: { text: stri
           </div>
         ) : (
           <div key={i} className="my-3 overflow-x-auto">
-            <table className="border-collapse border border-[#111] text-[15px] text-[#111]">
+            <table className="mx-auto border-collapse border border-[#111] text-[15px] text-[#111]">
               <tbody>
                 {b.rows.map((row, r) => (
                   <tr key={r} className={r === 0 ? 'bg-[#f1f1f1] font-bold' : ''}>

@@ -784,7 +784,26 @@ type LoadedModule = {
   initialRaw: string
   /** Normalised JSON of the questions as loaded — a module is saved only if it differs. */
   baseline: string
+  /** Database ids of those questions, in order — edits are written in place, row by row. */
+  ids: string[]
 }
+
+/** One module of a mock as the editor shows it: questions without id / module number (and their ids aside). */
+async function fetchModuleForEdit(label: string, t: ModuleTarget): Promise<{ list: Question[]; ids: string[] }> {
+  const params = new URLSearchParams({ testLabel: label, kind: t.kind })
+  if (t.moduleNumber) params.set('module', String(t.moduleNumber))
+  const d = await fetch(`/api/admin/questions?${params.toString()}`, { cache: 'no-store' }).then((r) => r.json())
+  const rows = (d.questions ?? []) as (Question & { id: string; moduleNumber?: number })[]
+  return {
+    ids: rows.map((q) => q.id),
+    list: rows.map((q) => {
+      const { id: _id, moduleNumber: _mn, ...rest } = q
+      return rest
+    }),
+  }
+}
+
+const imagesOf = (q: Question | undefined) => JSON.stringify([q?.image ?? null, ...(q?.choices ?? []).map((c) => c.image ?? null)])
 
 /** Full-screen editor: every module of the test on one page (like adding a new test),
  *  one save button for the questions, and the answer sheet underneath. */
@@ -801,14 +820,8 @@ function TestEditorModal({ test, onClose, onChanged }: { test: MockTestSummary; 
     let off = false
     Promise.all(
       targets.map(async (t): Promise<LoadedModule> => {
-        const params = new URLSearchParams({ testLabel: test.label, kind: t.kind })
-        if (t.moduleNumber) params.set('module', String(t.moduleNumber))
-        const d = await fetch(`/api/admin/questions?${params.toString()}`).then((r) => r.json())
-        const list = ((d.questions ?? []) as (Question & { id: string; moduleNumber?: number })[]).map((q) => {
-          const { id: _id, moduleNumber: _mn, ...rest } = q
-          return rest
-        })
-        return { target: t, initialRaw: list.length ? JSON.stringify(list, null, 2) : '', baseline: JSON.stringify(list) }
+        const { list, ids } = await fetchModuleForEdit(test.label, t)
+        return { target: t, initialRaw: list.length ? JSON.stringify(list, null, 2) : '', baseline: JSON.stringify(list), ids }
       }),
     )
       .then((m) => !off && setModules(m))
@@ -838,28 +851,79 @@ function TestEditorModal({ test, onClose, onChanged }: { test: MockTestSummary; 
     if (changed.length === 0) return
     setSaving(true)
     setResult(null)
-    const results = await Promise.all(
-      changed.map((m) =>
-        saveModule({
-          kind: m.target.kind,
-          questions: current[keyOf(m.target)]!,
-          testLabel: test.label,
-          moduleNumber: m.target.moduleNumber,
-        }),
-      ),
-    )
-    const failed = results.find((r) => !r.ok)
-    setResult(failed ?? { ok: true, message: `${changed.length} ta modul yangilandi.` })
-    if (!failed) {
-      // The saved text is the new baseline; reload the answer sheet (ids may have changed).
+    try {
+      // 1) Did someone change these modules after this window was opened (e.g. sizes / layout in "Check it now")?
+      const fresh = await Promise.all(changed.map((m) => fetchModuleForEdit(test.label, m.target)))
+      const stale = changed.filter((m, i) => JSON.stringify(fresh[i].list) !== m.baseline)
+      if (
+        stale.length > 0 &&
+        !window.confirm(
+          `${stale.map((m) => m.target.label).join(', ')} — siz bu oynani ochganingizdan keyin boshqa joyda (masalan «Check it now»da) o'zgartirilgan.\n\n` +
+            `Saqlasangiz, o'sha yangi o'zgarishlar shu oynadagi eski matn bilan almashtiriladi.\n\n` +
+            `«Bekor qilish» → oynani yopib qayta oching (yangi holat yuklanadi). «OK» → baribir saqlash.`,
+        )
+      ) {
+        setSaving(false)
+        return
+      }
+
+      const notes: string[] = []
+      let failed: string | null = null
+      for (let k = 0; k < changed.length && !failed; k++) {
+        const m = changed[k]
+        const cur = current[keyOf(m.target)]!
+        const base = JSON.parse(m.baseline) as Question[]
+        if (cur.length === m.ids.length) {
+          // 2) Same number of questions: update the changed ones in place (ids, results and stats stay linked).
+          const idx = cur.map((q, i) => i).filter((i) => JSON.stringify(cur[i]) !== JSON.stringify(base[i]))
+          let pics = 0
+          for (const i of idx) {
+            const res = await fetch(`/api/admin/questions/${encodeURIComponent(m.ids[i])}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ question: cur[i] }),
+            })
+            const d = await res.json().catch(() => ({}))
+            if (!res.ok) {
+              failed = `${m.target.label}, ${i + 1}-savol: ${d.error ?? 'saqlab bo‘lmadi.'}`
+              break
+            }
+            if (imagesOf(cur[i]) !== imagesOf(base[i])) pics++
+          }
+          if (!failed) {
+            notes.push(
+              `${m.target.label}: ${idx.length} ta savol yangilandi (${idx.map((i) => i + 1).join(', ')}-savollar)${pics ? `, ${pics} tasida rasm o'zgardi` : ''}`,
+            )
+          }
+        } else {
+          // 3) The number of questions changed: the module is rewritten as a whole.
+          if (
+            !window.confirm(
+              `${m.target.label}: savollar soni ${m.ids.length} → ${cur.length} ga o'zgardi. Modul butunlay qayta yoziladi (oldingi natijalar statistikasining shu savollar bilan bog'lanishi uziladi). Davom etilsinmi?`,
+            )
+          ) {
+            failed = 'Bekor qilindi.'
+            break
+          }
+          const r = await saveModule({ kind: m.target.kind, questions: cur, testLabel: test.label, moduleNumber: m.target.moduleNumber })
+          if (!r.ok) failed = `${m.target.label}: ${r.message}`
+          else notes.push(`${m.target.label}: modul qayta yozildi — ${cur.length} ta savol`)
+        }
+      }
+
+      // 4) Whatever was written is the new starting point (fresh ids for rewritten modules).
+      const after = await Promise.all((modules ?? []).map((m) => (changed.includes(m) ? fetchModuleForEdit(test.label, m.target) : null)))
       setModules((prev) =>
-        (prev ?? []).map((m) => {
-          const c = current[keyOf(m.target)]
-          return c && changed.includes(m) ? { ...m, baseline: JSON.stringify(c) } : m
+        (prev ?? []).map((m, i) => {
+          const a = after[i]
+          return a ? { ...m, baseline: JSON.stringify(a.list), ids: a.ids } : m
         }),
       )
+      setResult(failed ? { ok: false, message: [...notes, failed].join(' · ') } : { ok: true, message: notes.join(' · ') })
       setAnswersKey((k) => k + 1)
       onChanged()
+    } catch {
+      setResult({ ok: false, message: "Server bilan bog'lanib bo'lmadi." })
     }
     setSaving(false)
   }
@@ -910,6 +974,10 @@ function TestEditorModal({ test, onClose, onChanged }: { test: MockTestSummary; 
               {saving ? 'Saqlanmoqda...' : changed.length ? `${changed.length} ta o'zgargan modulni saqlash` : "O'zgarish yo'q"}
             </button>
             <ResultBanner result={result} />
+            <p className="mt-2 text-[11.5px] leading-relaxed text-ink-faint">
+              Bu tugma faqat siz shu yerda JSON&apos;da o&apos;zgartirgan savollarni yozadi. «Check it now»da qilingan joylashuv / rasm o&apos;lchami
+              o&apos;zgarishlari o&apos;sha yerning o&apos;zida saqlanadi; ularni bu oyna qayta yozib yubormasligi uchun saqlashdan oldin tekshiriladi.
+            </p>
 
             <div className="mt-6 border-t border-line pt-4 pb-4">
               <div className="mb-1 text-[13px] font-bold text-ink-soft">To&apos;g&apos;ri javoblar</div>

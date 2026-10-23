@@ -150,7 +150,9 @@ export function QuestionImage({
   return (
     <div className="my-5 flex justify-center">
       <div className="group/img flex max-w-full items-start gap-1.5">
-       <div className="relative min-w-0 max-w-full">
+       <div
+         className={`relative min-w-0 max-w-full ${natural ? '' : 'min-h-[140px] min-w-[220px] animate-pulse rounded-lg bg-[#eef2f7]'}`}
+       >
         <div
           ref={scrollerRef}
           onPointerDown={onPanStart}
@@ -167,7 +169,12 @@ export function QuestionImage({
             alt="Savolga tegishli rasm"
             crossOrigin={plain ? 'anonymous' : undefined}
             onLoad={(e) => setNatural({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
+            decoding="async"
+            fetchPriority="high"
             style={{
+              // Hidden until its size is known: no flash at full size followed by a jump to the right size.
+              opacity: natural ? 1 : 0,
+              transition: 'opacity .18s ease-out',
               width: width ? `${width}px` : undefined,
               maxWidth: editable || zoom <= 1 ? '100%' : 'none',
               height: 'auto',
