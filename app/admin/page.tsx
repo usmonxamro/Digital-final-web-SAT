@@ -48,6 +48,7 @@ import { AnswerEntry, AnswerSheet, type AnswerSection } from '@/components/admin
 import { PublishActions } from '@/components/admin/publish-actions'
 import { SectionAccessPicker, newMockOptions, type Placement } from '@/components/admin/section-access'
 import { validateQuestions } from '@/lib/admin-schema'
+import { confirmDiscard, countPictures, useLeaveGuard, useUnsavedChanges } from '@/lib/admin-unsaved'
 import { parseLatexQuestions, type LatexImportWarning } from '@/lib/latex-import'
 import { parseTableQuestions, TABLE_TEMPLATE_CSV, type TableImportWarning } from '@/lib/table-import'
 import type { Question, SectionKind } from '@/lib/test-data'
@@ -80,7 +81,9 @@ async function saveModule(opts: {
     })
     const data = await res.json()
     if (!res.ok) return { ok: false, message: data.error ?? 'Saqlashda xatolik yuz berdi.' }
-    return { ok: true, message: `${data.inserted} ta savol saqlandi.` }
+    const kept = data.keptKeys ? ` · ${data.keptKeys} ta javob kaliti saqlab qolindi` : ''
+    const lost = data.replacedExisting && data.missingKeys ? ` · ⚠ ${data.missingKeys} ta savolda javob kaliti yo'q (pastdagi jadvalda kiriting)` : ''
+    return { ok: true, message: `${data.inserted} ta savol saqlandi${kept}${lost}.` }
   } catch {
     return { ok: false, message: "Server bilan bog'lanib bo'lmadi." }
   }
@@ -139,6 +142,18 @@ async function saveTestConfig(opts: {
   } catch {
     // Non-fatal — the test still works with default settings.
   }
+}
+
+/** Registers "JSON pasted but the mock is not saved yet" with the leave guard (renders nothing). */
+function NewMockGuard({ lists, saved }: { lists: (Question[] | null)[]; saved: boolean }) {
+  const filled = lists.filter((l): l is Question[] => !!l)
+  const pics = filled.reduce((n, l) => n + countPictures(l), 0)
+  useUnsavedChanges(
+    'new-mock-form',
+    saved ? 0 : filled.length,
+    `Yangi mock: ${filled.length} ta modul JSON'i kiritilgan${pics ? `, ${pics} ta savolda rasm` : ''}, hali saqlanmagan`,
+  )
+  return null
 }
 
 function ResultBanner({ result }: { result: { ok: boolean; message: string } | null }) {
@@ -305,6 +320,7 @@ function FullMockForm() {
 
   return (
     <div>
+      <NewMockGuard lists={[eng1, eng2, math1, math2]} saved={!!savedLabel} />
       <MockNameField value={mockName} onChange={setMockName} />
       <ModuleMinutesField keys={['rw1', 'rw2', 'm1', 'm2']} value={minutes} onChange={setMinutes} />
       <div className="text-[12.5px] font-bold text-ink-soft mb-2">English savollarini JSON variantini tashlang</div>
@@ -402,6 +418,7 @@ function MathMockForm() {
 
   return (
     <div>
+      <NewMockGuard lists={[math1, math2, mathAll]} saved={!!savedLabel} />
       <div className="mb-4">
         <div className="text-[12px] font-bold text-ink-soft mb-2">Tuzilishi</div>
         <div className="flex gap-2">
@@ -524,6 +541,7 @@ function EnglishMockForm() {
 
   return (
     <div>
+      <NewMockGuard lists={[eng1, eng2]} saved={!!savedLabel} />
       <MockNameField value={mockName} onChange={setMockName} />
       <ModuleMinutesField keys={['rw1', 'rw2']} value={minutes} onChange={setMinutes} />
       <div className="grid sm:grid-cols-2 gap-3 mb-4">
@@ -635,6 +653,7 @@ function TaskForm() {
 
   return (
     <div>
+      <NewMockGuard lists={[questions]} saved={!!savedLabel} />
       <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-[12.5px] leading-relaxed text-sky-900">
         <b>Vazifa</b> — savollar soni istalgancha (44 bo&apos;lishi shart emas). Ball (800/1600) hisoblanmaydi, faqat to&apos;g&apos;ri/xato ko&apos;rsatiladi.
         Vaqt cheklanmaydi: o&apos;quvchida taymer <b>yuqoriga</b> sanab, nechi daqiqa ketganini ko&apos;rsatib turadi.
@@ -797,7 +816,9 @@ async function fetchModuleForEdit(label: string, t: ModuleTarget): Promise<{ lis
   return {
     ids: rows.map((q) => q.id),
     list: rows.map((q) => {
-      const { id: _id, moduleNumber: _mn, ...rest } = q
+      // The JSON editor never carries answer keys: they are owned by the answer sheet below, so an old
+      // copy of them in this text can never overwrite what was saved there.
+      const { id: _id, moduleNumber: _mn, correct: _c, correctValue: _cv, ...rest } = q
       return rest
     }),
   }
@@ -832,7 +853,7 @@ function TestEditorModal({ test, onClose, onChanged }: { test: MockTestSummary; 
   }, [test.label, targets])
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && requestClose()
     window.addEventListener('keydown', onKey)
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -840,12 +861,34 @@ function TestEditorModal({ test, onClose, onChanged }: { test: MockTestSummary; 
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = prev
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onClose])
 
   const changed = (modules ?? []).filter((m) => {
     const c = current[keyOf(m.target)]
     return c && JSON.stringify(c) !== m.baseline
   })
+  // What exactly is waiting to be saved: questions (and how many of them changed a picture).
+  let pendingQs = 0
+  let pendingPics = 0
+  for (const m of changed) {
+    const cur = current[keyOf(m.target)]!
+    const base = JSON.parse(m.baseline) as Question[]
+    if (cur.length !== m.ids.length) {
+      pendingQs += cur.length
+      continue
+    }
+    cur.forEach((q, i) => {
+      if (JSON.stringify(q) === JSON.stringify(base[i])) return
+      pendingQs++
+      if (imagesOf(q) !== imagesOf(base[i])) pendingPics++
+    })
+  }
+  const pendingLabel = `Savollar: ${pendingQs} ta savol o'zgargan${pendingPics ? ` (${pendingPics} tasida rasm)` : ''}, hali saqlanmagan`
+  useUnsavedChanges('editor-questions', pendingQs, pendingLabel)
+  const requestClose = () => {
+    if (confirmDiscard()) onClose()
+  }
 
   async function saveQuestions() {
     if (changed.length === 0) return
@@ -907,7 +950,7 @@ function TestEditorModal({ test, onClose, onChanged }: { test: MockTestSummary; 
           }
           const r = await saveModule({ kind: m.target.kind, questions: cur, testLabel: test.label, moduleNumber: m.target.moduleNumber })
           if (!r.ok) failed = `${m.target.label}: ${r.message}`
-          else notes.push(`${m.target.label}: modul qayta yozildi — ${cur.length} ta savol`)
+          else notes.push(`${m.target.label}: modul qayta yozildi — ${r.message}`)
         }
       }
 
@@ -919,7 +962,12 @@ function TestEditorModal({ test, onClose, onChanged }: { test: MockTestSummary; 
           return a ? { ...m, baseline: JSON.stringify(a.list), ids: a.ids } : m
         }),
       )
-      setResult(failed ? { ok: false, message: [...notes, failed].join(' · ') } : { ok: true, message: notes.join(' · ') })
+      const total = `Jami saqlandi: ${pendingQs} ta savol${pendingPics ? ` (${pendingPics} tasida rasm o'zgargan)` : ''}`
+      setResult(
+        failed
+          ? { ok: false, message: [...notes, failed].join(' · ') }
+          : { ok: true, message: `${total}. ${notes.join(' · ')}. Javoblar alohida saqlanadi — pastdagi jadvalda.` },
+      )
       setAnswersKey((k) => k + 1)
       onChanged()
     } catch {
@@ -937,7 +985,7 @@ function TestEditorModal({ test, onClose, onChanged }: { test: MockTestSummary; 
             <h2 className="truncate text-[19px] font-extrabold text-ink">{test.label}</h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Yopish"
             className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-line text-ink-soft hover:border-green"
           >
@@ -971,8 +1019,17 @@ function TestEditorModal({ test, onClose, onChanged }: { test: MockTestSummary; 
               className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-[linear-gradient(135deg,var(--green-deep),var(--green)_65%,var(--green-bright))] py-3 text-[14px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
-              {saving ? 'Saqlanmoqda...' : changed.length ? `${changed.length} ta o'zgargan modulni saqlash` : "O'zgarish yo'q"}
+              {saving
+                ? 'Saqlanmoqda...'
+                : changed.length
+                  ? `Saqlash — ${pendingQs} ta savol${pendingPics ? `, ${pendingPics} tasida rasm` : ''} (${changed.length} ta modul)`
+                  : "O'zgarish yo'q"}
             </button>
+            <div className={`mt-1.5 text-[12px] font-bold ${changed.length ? 'text-amber-600' : 'text-ink-faint'}`} aria-live="polite">
+              {changed.length
+                ? `Saqlanmagan: ${pendingQs} ta savol o'zgargan${pendingPics ? `, shundan ${pendingPics} tasida rasm` : ''}`
+                : "Savollarda saqlanmagan o'zgarish yo'q"}
+            </div>
             <ResultBanner result={result} />
             <p className="mt-2 text-[11.5px] leading-relaxed text-ink-faint">
               Bu tugma faqat siz shu yerda JSON&apos;da o&apos;zgartirgan savollarni yozadi. «Check it now»da qilingan joylashuv / rasm o&apos;lchami
@@ -1531,7 +1588,12 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
   }, [openReports])
 
   const current = ADMIN_NAV.flatMap((g) => g.items).find((x) => x.key === tab) ?? ADMIN_NAV[0].items[0]
+  useLeaveGuard()
+  const switchMock = (t: NewMockType) => {
+    if (confirmDiscard()) setNewMockType(t)
+  }
   const go = (k: Tab) => {
+    if (k !== tab && !confirmDiscard()) return
     setTab(k)
     setNavOpen(false)
     try {
@@ -1633,17 +1695,17 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
                 <MockTypeCard
                   title="Full mock"
                   subtitle="English 2 modul (27+27) + Math 2 modul (22+22)"
-                  onClick={() => setNewMockType('full')}
+                  onClick={() => switchMock('full')}
                 />
                 <MockTypeCard
                   title="Faqat Math"
                   subtitle="22+22 standart yoki ketma-ket 44 talik"
-                  onClick={() => setNewMockType('math')}
+                  onClick={() => switchMock('math')}
                 />
                 <MockTypeCard
                   title="Faqat English"
                   subtitle="2 modul, 27+27 ta savol"
-                  onClick={() => setNewMockType('english')}
+                  onClick={() => switchMock('english')}
                 />
               </div>
             )}
@@ -1651,7 +1713,7 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
             {newMockType && (
               <div className="bg-white border border-line rounded-2xl p-5">
                 <button
-                  onClick={() => setNewMockType(null)}
+                  onClick={() => switchMock(null)}
                   className="flex items-center gap-1.5 text-[12.5px] font-bold text-ink-faint hover:text-ink mb-4"
                 >
                   <ArrowLeft size={14} /> Orqaga

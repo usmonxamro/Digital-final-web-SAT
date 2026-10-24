@@ -52,6 +52,24 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // Rewriting a module deletes its rows, and the answer keys live in those rows. Remember the old
+  // keys (matched by the question's text) so a re-import without "correct" does not blank them.
+  const normPrompt = (s: unknown) => String(s ?? '').replace(/\s+/g, ' ').trim()
+  const oldKeys = new Map<string, { correct: string | null; correct_value: string | null }[]>()
+  let replacedExisting = 0
+  if (replace) {
+    let oldQuery = supabase.from('questions').select('prompt, type, correct, correct_value, created_at').eq('kind', kind)
+    oldQuery = testLabel ? oldQuery.eq('test_label', testLabel) : oldQuery.is('test_label', null)
+    oldQuery = moduleNumber ? oldQuery.eq('module_number', moduleNumber) : oldQuery.is('module_number', null)
+    const { data: oldRows } = await oldQuery.order('created_at', { ascending: true })
+    for (const r of oldRows ?? []) {
+      replacedExisting++
+      if (!r.correct && !r.correct_value) continue
+      const k = `${r.type ?? 'mcq'}\u0000${normPrompt(r.prompt)}`
+      oldKeys.set(k, [...(oldKeys.get(k) ?? []), { correct: r.correct, correct_value: r.correct_value }])
+    }
+  }
+
   if (replace) {
     let delQuery = supabase.from('questions').delete().eq('kind', kind)
     delQuery = testLabel ? delQuery.eq('test_label', testLabel) : delQuery.is('test_label', null)
@@ -73,24 +91,38 @@ export async function POST(req: NextRequest) {
   // them) appeared under different numbers than in the pasted JSON. Stamp each
   // row with its own increasing timestamp so the JSON order is the order.
   const baseTime = Date.now()
-  const rows = (questions as Question[]).map((q, i) => ({
-    created_at: new Date(baseTime + i).toISOString(),
-    kind,
-    type: q.type ?? 'mcq',
-    difficulty: q.difficulty ?? null,
-    domain: q.domain ?? null,
-    passage: q.passage ?? null,
-    underline: q.underline ?? null,
-    prompt: q.prompt,
-    equations: q.equations ?? null,
-    image: q.image ?? null,
-    choices: q.choices ?? null,
-    correct: q.correct ?? null,
-    correct_value: q.correctValue ?? null,
-    explanation: q.explanation ?? null,
-    test_label: testLabel,
-    module_number: moduleNumber,
-  }))
+  let keptKeys = 0
+  const rows = (questions as Question[]).map((q, i) => {
+    let correct: string | null = q.correct ?? null
+    let correctValue: string | null = q.correctValue ?? null
+    if (!correct && !correctValue) {
+      const old = oldKeys.get(`${q.type ?? 'mcq'}\u0000${normPrompt(q.prompt)}`)?.shift()
+      if (old) {
+        correct = old.correct
+        correctValue = old.correct_value
+        keptKeys++
+      }
+    }
+    return {
+      created_at: new Date(baseTime + i).toISOString(),
+      kind,
+      type: q.type ?? 'mcq',
+      difficulty: q.difficulty ?? null,
+      domain: q.domain ?? null,
+      passage: q.passage ?? null,
+      underline: q.underline ?? null,
+      prompt: q.prompt,
+      equations: q.equations ?? null,
+      image: q.image ?? null,
+      choices: q.choices ?? null,
+      correct,
+      correct_value: correctValue,
+      explanation: q.explanation ?? null,
+      test_label: testLabel,
+      module_number: moduleNumber,
+    }
+  })
+  const missingKeys = rows.filter((r) => !r.correct && !r.correct_value).length
 
   // Keep a question's saved block arrangement across JSON edits / re-imports.
   // Only sent when some question has one, so a database without the v36
@@ -109,7 +141,7 @@ export async function POST(req: NextRequest) {
   }
 
   await invalidateMockPdf(supabase, [testLabel])
-  return NextResponse.json({ ok: true, inserted: data?.length ?? 0 })
+  return NextResponse.json({ ok: true, inserted: data?.length ?? 0, keptKeys, missingKeys, replacedExisting })
 }
 
 export async function GET(req: NextRequest) {

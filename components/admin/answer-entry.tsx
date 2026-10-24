@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Loader2, Pencil, UploadCloud, Undo2 } from 'lucide-react'
 import type { ChoiceId, Question } from '@/lib/test-data'
+import { useUnsavedChanges } from '@/lib/admin-unsaved'
 
 type QuestionWithId = Question & { id: string }
 type LocalAnswer = { correct?: ChoiceId; correctValue?: string }
@@ -86,6 +87,20 @@ export function AnswerSheet({
       return (a?.correct ?? '') !== (s?.correct ?? '') || (a?.correctValue?.trim() ?? '') !== (s?.correctValue?.trim() ?? '')
     })
   }, [allQuestions, answers, savedSnapshot])
+
+  // Answers changed on screen but not written to the server yet (against what the server has now).
+  const pending = useMemo(() => {
+    const base = savedSnapshot ?? initial
+    return allQuestions.filter((q) => {
+      const a = answers[q.id]
+      const b = base[q.id]
+      return q.type === 'gridin'
+        ? (a?.correctValue?.trim() ?? '') !== (b?.correctValue?.trim() ?? '')
+        : (a?.correct ?? '') !== (b?.correct ?? '')
+    }).length
+  }, [allQuestions, answers, savedSnapshot, initial])
+  const sheetId = useId()
+  useUnsavedChanges(`answers-${sheetId}`, pending, `Javoblar: ${pending} ta javob o'zgargan, hali saqlanmagan`)
 
   function setChoice(id: string, choice: ChoiceId) {
     if (done) return
@@ -203,8 +218,10 @@ export function AnswerSheet({
         <div className="text-[12.5px] font-bold text-ink-soft">
           Javob belgilangan: {answeredCount}/{allQuestions.length}
         </div>
-        {!done && unanswered > 0 && (
-          <div className="text-[11.5px] font-semibold text-amber-600">{unanswered} ta savolda javob yo&apos;q</div>
+        {unanswered > 0 && (
+          <div className="text-[11.5px] font-semibold text-amber-600">
+            {unanswered} ta savolda javob yo&apos;q{done ? " — o'quvchilar bu savollarni noto'g'ri deb hisoblanadi!" : ''}
+          </div>
         )}
       </div>
 
@@ -273,7 +290,14 @@ export function AnswerSheet({
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2 rounded-[12px] bg-white/90 p-1 backdrop-blur">
+          <div className="flex flex-col gap-1.5 rounded-[12px] bg-white/90 p-1 backdrop-blur">
+            <div
+              className={`px-1 text-[12px] font-bold ${pending > 0 ? 'text-amber-600' : 'text-ink-faint'}`}
+              aria-live="polite"
+            >
+              {pending > 0 ? `${pending} ta javob o'zgardi — hali saqlanmagan` : "Hozircha o'zgarish yo'q"}
+            </div>
+            <div className="flex items-center gap-2">
             {savedSnapshot && (
               <button
                 type="button"
@@ -295,8 +319,11 @@ export function AnswerSheet({
                 ? 'Saqlanmoqda...'
                 : savedSnapshot
                   ? 'Qayta saqlash'
-                  : 'Barchasini saqlash va tugatish'}
+                  : pending > 0
+                    ? `Barchasini saqlash va tugatish (${pending} ta javob)`
+                    : 'Barchasini saqlash va tugatish'}
             </button>
+            </div>
           </div>
         )}
       </div>

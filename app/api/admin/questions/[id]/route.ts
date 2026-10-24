@@ -107,9 +107,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     equations: q.equations ?? null,
     image: q.image ?? null,
     choices: q.choices ?? null,
-    correct: q.correct ?? null,
-    correct_value: q.correctValue ?? null,
     explanation: q.explanation ?? null,
+  }
+  // The answer key is only touched when the request actually carries one. A question sent
+  // without "correct"/"correctValue" (e.g. a JSON editor that does not show answers) must NOT
+  // wipe the key that is saved in the database — that used to blank whole modules.
+  const hasKey = q.correct !== undefined || q.correctValue !== undefined
+  if (hasKey) {
+    update.correct = q.correct ?? null
+    update.correct_value = q.correctValue ?? null
   }
   if ('layout' in q) update.layout = q.layout ?? null
   const { error } = await supabase.from('questions').update(update).eq('id', id)
@@ -128,7 +134,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   let rescored = 0
   let notified = 0
   const answerChanged =
-    before && (before.correct !== (q.correct ?? null) || before.correct_value !== (q.correctValue ?? null))
+    hasKey && before && (before.correct !== (q.correct ?? null) || before.correct_value !== (q.correctValue ?? null))
   if (answerChanged) {
     const result = await rescoreAttemptsForQuestion(supabase, id, before!.test_label ?? null, q)
     rescored = result.rescored
