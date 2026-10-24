@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { releaseDueMocks } from '@/lib/schedule'
+import { checkAnswerKeys, keyGapMessage } from '@/lib/answer-keys'
 import { isMissingColumn } from '@/lib/db-columns'
 import { groupBySlug, configGroups } from '@/lib/course-groups'
 import { cleanSections, legacySection, rowSections, type MockSection } from '@/lib/mock-sections'
@@ -130,6 +131,17 @@ export async function POST(req: NextRequest) {
   // Only touched when the caller says so (new mocks are saved as drafts);
   // a plain settings save never flips a published test back to draft.
   if (typeof body?.published === 'boolean') row.published = body.published
+  // Going live needs a complete answer key (same rule as /api/admin/publish).
+  if (row.published === true) {
+    try {
+      const keys = await checkAnswerKeys(supabase, testLabel)
+      if (!keys.ok) {
+        return NextResponse.json({ error: keyGapMessage(keys), missingKeys: keys.missing, gaps: keys.gaps }, { status: 409 })
+      }
+    } catch {
+      return NextResponse.json({ error: "Javob kalitini tekshirib bo'lmadi. Qayta urinib ko'ring." }, { status: 500 })
+    }
+  }
   if (!placementLocked) {
     if (sections) {
       row.sections = sections

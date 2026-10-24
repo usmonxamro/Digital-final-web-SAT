@@ -240,6 +240,15 @@ function ExamEngine({
   }, [baseQuestion, edits, savedEdits])
   const qKey = keyFor(activeModule.id, current)
 
+  // Admin preview: the correct answer of the question on screen, and how many questions of the whole mock have none.
+  const hasKey = (q: Question) => (q.type === 'gridin' ? !!q.correctValue?.trim() : !!q.correct)
+  const previewAnswer = preview
+    ? hasKey(baseQuestion)
+      ? { text: baseQuestion.type === 'gridin' ? baseQuestion.correctValue!.trim() : baseQuestion.correct!, missing: false }
+      : { text: 'kiritilmagan', missing: true }
+    : undefined
+  const missingKeys = preview ? modules.reduce((n, m) => n + m.pool.filter((q) => !hasKey(q)).length, 0) : 0
+
   // Computed once per change of answers/flags (not on every timer tick) so the footer can stay memoised.
   const { answeredMap, flaggedMap } = useMemo(() => {
     const a: Record<number, boolean> = {}
@@ -740,6 +749,8 @@ function ExamEngine({
           onSave={saveLayouts}
           publishing={publishing}
           onTogglePublish={togglePublish}
+          answer={previewAnswer}
+          missingKeys={missingKeys}
           onBack={exitExam}
           message={previewMsg}
         />
@@ -887,10 +898,11 @@ function splitHalves<T>(arr: T[]): [T[], T[]] {
  * in that case this falls back to the old behavior (fetch everything,
  * split the insertion-ordered list in half on the client).
  */
-async function fetchModuleAware(kind: SectionKind, testLabel: string): Promise<[Question[], Question[]]> {
+async function fetchModuleAware(kind: SectionKind, testLabel: string, withKeys = false): Promise<[Question[], Question[]]> {
   // ONE request per section (it used to be one per module + a fallback): the server sends every
   // row of the test with its `moduleNumber`, we split here. Fewer requests = a much faster start.
-  const res = await fetch(`/api/questions?kind=${kind}&test=${encodeURIComponent(testLabel)}`).then((r) => r.json())
+  // withKeys: only the admin's "Check it now" asks for the answer keys (the server ignores it for anyone else).
+  const res = await fetch(`/api/questions?kind=${kind}&test=${encodeURIComponent(testLabel)}${withKeys ? '&keys=1' : ''}`).then((r) => r.json())
   const all: Question[] = res.questions ?? []
   const m1 = all.filter((q) => q.moduleNumber === 1)
   const m2 = all.filter((q) => q.moduleNumber === 2)
@@ -1046,8 +1058,8 @@ function PageInner() {
 
           if (subject === 'full') {
             const [[r1, r2], [m1, m2]] = await Promise.all([
-              fetchModuleAware('reading', testParam),
-              fetchModuleAware('math', testParam),
+              fetchModuleAware('reading', testParam, !!preview),
+              fetchModuleAware('math', testParam, !!preview),
             ])
             if (cancelled) return
             built = buildFullModules(r1, r2, m1, m2, [rwMins[0], rwMins[1], mathMins[0], mathMins[1]])
@@ -1058,18 +1070,18 @@ function PageInner() {
 
             if (isCourseTask || !scored) {
               const flatRes = await fetch(
-                `/api/questions?kind=${singleSubjectKind}&test=${encodeURIComponent(testParam)}`,
+                `/api/questions?kind=${singleSubjectKind}&test=${encodeURIComponent(testParam)}${preview ? '&keys=1' : ''}`,
               ).then((r) => r.json())
               if (cancelled) return
               built = buildPracticeModule(singleSubjectKind, flatRes.questions ?? [], minutes)
               scoringMode = 'practice'
             } else if (singleSubjectKind === 'math' && mathLayout === 'sequential') {
-              const flatRes = await fetch(`/api/questions?kind=math&test=${encodeURIComponent(testParam)}`).then((r) => r.json())
+              const flatRes = await fetch(`/api/questions?kind=math&test=${encodeURIComponent(testParam)}${preview ? '&keys=1' : ''}`).then((r) => r.json())
               if (cancelled) return
               built = buildSequentialScoredModule('math', flatRes.questions ?? [], mm?.seq ?? minutes * 2)
               scoringMode = 'single'
             } else {
-              const [p1, p2] = await fetchModuleAware(singleSubjectKind, testParam)
+              const [p1, p2] = await fetchModuleAware(singleSubjectKind, testParam, !!preview)
               if (cancelled) return
               built = buildSingleScoredModules(singleSubjectKind, p1, p2, singleSubjectKind === 'math' ? mathMins : rwMins)
               scoringMode = 'single'

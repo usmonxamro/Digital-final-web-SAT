@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
       adminIdentity().catch(() => null),
     ])
     const isAdmin = gateAdmin || !!ident
+    const withKeys = gateAdmin && req.nextUrl.searchParams.get('keys') === '1'
 
     // Access rules — questions are never public:
     //  - admins (with the access code entered) always get them (preview);
@@ -101,6 +102,8 @@ export async function GET(req: NextRequest) {
       choices: row.choices ?? undefined,
       // NO answer key / explanation here — anyone can read this response in
       // the browser. Keys come back only from /api/exam/grade after submitting.
+      // The one exception: the admin (access code entered) asking with ?keys=1 from "Check it now".
+      ...(withKeys ? { correct: row.correct ?? undefined, correctValue: row.correct_value ?? undefined } : {}),
       layout: row.layout ?? undefined,
       moduleNumber: row.module_number === 1 || row.module_number === 2 ? row.module_number : undefined,
     }))

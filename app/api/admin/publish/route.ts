@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { isMissingColumn, MIGRATION_HINT } from '@/lib/db-columns'
 import { pushMockToBot } from '@/lib/bot-publish'
+import { checkAnswerKeys, keyGapMessage } from '@/lib/answer-keys'
 
 /**
  * Publish / unpublish a mock: { testLabel, published: boolean }.
@@ -37,6 +38,21 @@ export async function POST(req: NextRequest) {
     supabase = supabaseAdmin()
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'Server sozlanmagan.' }, { status: 503 })
+  }
+
+  // A mock goes live (now or on a schedule) only with a COMPLETE answer key.
+  if (published || publishAt) {
+    try {
+      const keys = await checkAnswerKeys(supabase, testLabel)
+      if (!keys.ok) {
+        return NextResponse.json({ error: keyGapMessage(keys), missingKeys: keys.missing, gaps: keys.gaps }, { status: 409 })
+      }
+    } catch (e) {
+      return NextResponse.json(
+        { error: `Javob kalitini tekshirib bo'lmadi: ${e instanceof Error ? e.message : 'xatolik'}. Qayta urinib ko'ring.` },
+        { status: 500 },
+      )
+    }
   }
 
   const { data: existing, error: readError } = await supabase

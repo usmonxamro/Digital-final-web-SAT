@@ -21,6 +21,10 @@ type Props = {
   onTogglePublish: () => void
   onBack: () => void
   message: { ok: boolean; text: string } | null
+  /** Correct answer of the question on screen (letter, or the grid-in value); `missing` = not entered yet. */
+  answer?: { text: string; missing: boolean }
+  /** Questions of the whole mock that have no answer key — Publish stays locked while this is > 0. */
+  missingKeys?: number
 }
 
 /**
@@ -62,6 +66,22 @@ export function PreviewBar(p: Props) {
               </option>
             ))}
           </select>
+        )}
+
+        {p.answer && (
+          <span
+            className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-extrabold ${
+              p.answer.missing ? 'bg-[#dc2626] text-white' : 'bg-white text-[#0b4f4a]'
+            }`}
+            title="To'g'ri javob (faqat admin ko'radi)"
+          >
+            To&apos;g&apos;ri javob: <span className="text-[13px]">{p.answer.text}</span>
+          </span>
+        )}
+        {!!p.missingKeys && (
+          <span className="rounded-full bg-[#fbbf24] px-2 py-0.5 text-[10.5px] font-extrabold text-[#3b2a00]">
+            {p.missingKeys} ta savolda javob yo&apos;q
+          </span>
         )}
 
         <button
@@ -118,7 +138,8 @@ export function PreviewBar(p: Props) {
           <button
             type="button"
             onClick={p.onTogglePublish}
-            disabled={p.publishing}
+            disabled={p.publishing || (!p.published && !!p.missingKeys)}
+            title={!p.published && p.missingKeys ? `${p.missingKeys} ta savolda javob yo'q — avval javoblarni kiriting` : ''}
             className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-[12px] font-extrabold disabled:opacity-50 ${
               p.published ? 'bg-white/15 text-white hover:bg-white/25' : 'bg-[#22c55e] text-white hover:bg-[#16a34a]'
             }`}
