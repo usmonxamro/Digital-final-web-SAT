@@ -719,6 +719,13 @@ export function MocksPanel({ visible = true }: { visible?: boolean }) {
                     <PublishActions testLabel={t.label} onChange={load} />
                     <VideoField testLabel={t.label} onSaved={load} />
                     <AttemptsTable label={t.label} />
+                    <RenameMock
+                      testLabel={t.label}
+                      onRenamed={(to) => {
+                        setOpen(to)
+                        load(true)
+                      }}
+                    />
                     <DeleteMock
                       testLabel={t.label}
                       attempts={s?.attempts ?? 0}
@@ -841,6 +848,81 @@ function PlaceBtn({
     >
       {children}
     </button>
+  )
+}
+
+/** "Nomini o'zgartirish": renames the mock everywhere in one go (results, questions, groups, bot link stay attached). */
+function RenameMock({ testLabel, onRenamed }: { testLabel: string; onRenamed: (to: string) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(testLabel)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function save() {
+    const to = name.replace(/\s+/g, ' ').trim()
+    if (!to || to === testLabel) return
+    setBusy(true)
+    setError(null)
+    const res = await fetch('/api/admin/test-config/rename', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: testLabel, to }),
+    }).catch(() => null)
+    const d = res ? await res.json().catch(() => ({})) : {}
+    setBusy(false)
+    if (!res?.ok) {
+      setError(d.error ?? "Server bilan bog'lanib bo'lmadi.")
+      return
+    }
+    setEditing(false)
+    onRenamed(to)
+  }
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setName(testLabel)
+          setEditing(true)
+        }}
+        className="flex items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-2 text-[12.5px] font-bold text-ink-soft hover:border-green hover:text-ink"
+      >
+        <Pencil size={14} /> Nomini o&apos;zgartirish
+      </button>
+    )
+  }
+  const changed = name.replace(/\s+/g, ' ').trim() !== testLabel && !!name.trim()
+  return (
+    <div className="rounded-lg border border-line bg-white p-3 text-[12.5px]">
+      <p className="font-bold text-ink">Mockning yangi nomi</p>
+      <p className="mt-0.5 text-ink-soft">
+        Natijalar, savollar, guruhlar va bot bilan bog&apos;lanish saqlanib qoladi. Tayyor PDF yangi nom bilan qayta yasaladi. Hozir shu mockni
+        yechayotgan o&apos;quvchi bo&apos;lsa, uning tugallanmagan urinishi davom ettirilmasligi mumkin.
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && changed && !busy && save()}
+          maxLength={160}
+          autoFocus
+          className="min-w-[220px] flex-1 rounded-lg border border-line bg-white px-3 py-2 focus:border-green focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={save}
+          disabled={!changed || busy}
+          className="flex items-center gap-1.5 rounded-lg bg-ink px-3.5 py-2 font-bold text-white disabled:opacity-40"
+        >
+          {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Saqlash
+        </button>
+        <button type="button" onClick={() => setEditing(false)} className="rounded-lg border border-line bg-white px-3 py-2 font-semibold text-ink-soft">
+          Bekor
+        </button>
+      </div>
+      {error && <div className="mt-1.5 font-semibold text-red-600">{error}</div>}
+    </div>
   )
 }
 

@@ -7,6 +7,7 @@ import { NotifyPanel } from '@/components/admin/notify-panel'
 import { ReportsPanel } from '@/components/admin/reports-panel'
 import { GroupsPanel } from '@/components/admin/groups-panel'
 import { BotSyncPanel } from '@/components/admin/bot-sync-panel'
+import { StudentsPanel } from '@/components/admin/students-panel'
 import { BotTestPicker, type PickedBotTest } from '@/components/admin/bot-test-picker'
 import { ModuleMinutesField, defaultMinutes, type ModuleMinutes } from '@/components/admin/module-minutes'
 import { ThemeSwitch } from '@/components/marketing/theme-switch'
@@ -34,6 +35,7 @@ import {
   X,
   ClipboardList,
   Link2,
+  TrendingUp,
 } from 'lucide-react'
 import { AdminGate } from '@/components/admin/admin-gate'
 import { MocksPanel } from '@/components/admin/mocks-panel'
@@ -1515,7 +1517,7 @@ function SkillBankImport() {
 
 /* ------------------------------------ page ---------------------------------- */
 
-type Tab = 'mocks' | 'new' | 'task' | 'groups' | 'botsync' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support' | 'notify' | 'reports'
+type Tab = 'mocks' | 'new' | 'task' | 'groups' | 'pupils' | 'botsync' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support' | 'notify' | 'reports'
 type NewMockType = 'full' | 'math' | 'english' | null
 
 /** Left menu of the admin panel, grouped like other admin dashboards: content · people · analytics · settings. */
@@ -1543,6 +1545,7 @@ const ADMIN_NAV: { title: string; items: { key: Tab; label: string; desc: string
   {
     title: 'Tahlil',
     items: [
+      { key: 'pupils', label: "O'quvchilar tahlili", desc: "Telegram bot natijalari: guruhlar, mocklar, har bir o'quvchi va ko'p xato qilinadigan savollar", icon: TrendingUp },
       { key: 'stats', label: 'Statistika', desc: "Tashriflar, urinishlar va mocklar bo'yicha natijalar", icon: BarChart3 },
       { key: 'botsync', label: 'Bot ↔ Sayt', desc: "Telegram bot testlari, shubhali kalitlar va guruh holati", icon: Link2 },
     ],
@@ -1734,6 +1737,10 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
 
         <KeepAlive active={tab === 'groups'}>
           <GroupsPanel />
+        </KeepAlive>
+
+        <KeepAlive active={tab === 'pupils'}>
+          <StudentsPanel />
         </KeepAlive>
 
         {tab === 'botsync' && (
