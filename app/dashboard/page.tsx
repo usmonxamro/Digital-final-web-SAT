@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { TrendingUp, ArrowRight, BookOpen, Crown, FileText, Medal, Play, Target, Trophy, Eye, Crosshair, Info } from 'lucide-react'
+import { TrendingUp, ArrowRight, BookMarked, BookOpen, Crown, FileText, Medal, Play, Target, Trophy, Eye, Crosshair, Info } from 'lucide-react'
 import { useUser } from '@/components/marketing/dashboard/user-context'
 import { studyStreak, useDashboardData, type Attempt } from '@/components/marketing/dashboard/dashboard-data'
 import { groupExams } from '@/lib/exam-groups'
@@ -139,6 +139,19 @@ export default function DashboardPage() {
       </div>
 
       <UnfinishedExamBanner />
+
+      <Link href="/dashboard/books" className="sd-promo">
+        <span className="sd-promo-icon">
+          <BookMarked />
+        </span>
+        <span className="sd-promo-text">
+          <strong>{t('Yangi: SAT SQB Savollari kitobi')}</strong>
+          <small>{t('19 ta mavzu bo‘yicha saralangan SAT Math savollari — PDF holatida bepul yuklab oling.')}</small>
+        </span>
+        <span className="sd-promo-btn">
+          {t('Kitoblarga o‘tish')} <ArrowRight />
+        </span>
+      </Link>
 
       <section className="sd-hero">
         <img className="sd-hero-art sd-hero-art-day" src="/assets/student-banner.webp" alt="" width={1600} height={243} decoding="async" fetchPriority="high" />

@@ -47,6 +47,23 @@ function SignIn() {
     if (params.get('mode') === 'signup') setMode('signup')
   }, [params])
 
+  // Already signed in and sent here with a destination (e.g. the landing's "download the book" button):
+  // skip the form and go straight there.
+  useEffect(() => {
+    const dest = safeNext(params.get('next'))
+    if (!dest || params.get('error')) return
+    let off = false
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((d) => {
+        if (!off && d?.user?.id) router.replace(dest)
+      })
+      .catch(() => {})
+    return () => {
+      off = true
+    }
+  }, [params, router])
+
   function switchMode(m: Mode) {
     setError(null)
     setNotice(null)

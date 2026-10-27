@@ -19,9 +19,12 @@ export function startLpEffects(root: HTMLElement, lang: Lang): () => void {
   root.addEventListener('click', onClick)
   cleanups.push(() => root.removeEventListener('click', onClick))
 
+  /* ---------------- book preview lightbox ---------------- */
+  cleanups.push(startBookPreview(root))
+
   /* ---------------- scroll reveal + count-up ---------------- */
   if ('IntersectionObserver' in window && !reduce) {
-    const sel = '.f-card,.c-card,.p-card,.r-card,.exam,.dm,.stats,.cta,.q,.sec-head,.hero-checks,.avatars'
+    const sel = '.f-card,.c-card,.p-card,.r-card,.exam,.dm,.stats,.cta,.q,.sec-head,.hero-checks,.avatars,.bk-main,.bk-soon,.bk-peek'
     const countUp = (el: Element) => {
       el.querySelectorAll('.stat b').forEach((b) => {
         const m = (b.textContent ?? '').trim().match(/^([\d,]+)\+$/)
@@ -445,5 +448,89 @@ function startDemo(root: HTMLElement, lang: Lang, isStopped: () => boolean, redu
     ro?.disconnect()
     io?.disconnect()
     window.removeEventListener('resize', fit)
+  }
+}
+
+
+/** Landing's book section: opens the first pages of the book in a full-screen viewer (buttons, arrows, swipe, Esc). */
+function startBookPreview(root: HTMLElement): () => void {
+  const lb = root.querySelector<HTMLElement>('.bk-lb')
+  if (!lb) return () => {}
+  let pages: string[] = []
+  try {
+    pages = JSON.parse(lb.getAttribute('data-pages') || '[]')
+  } catch {
+    pages = []
+  }
+  if (!pages.length) return () => {}
+
+  const img = lb.querySelector<HTMLImageElement>('.bk-lb-img')!
+  const count = lb.querySelector<HTMLElement>('.bk-lb-count')!
+  const prev = lb.querySelector<HTMLButtonElement>('[data-bk-step="-1"]')!
+  const next = lb.querySelector<HTMLButtonElement>('[data-bk-step="1"]')!
+  let idx = 0
+  let isOpen = false
+  let startX = 0
+
+  const show = (i: number) => {
+    idx = Math.max(0, Math.min(pages.length - 1, i))
+    img.src = pages[idx]
+    count.textContent = idx + 1 + ' / ' + pages.length
+    prev.disabled = idx === 0
+    next.disabled = idx === pages.length - 1
+    // Warm the neighbours so flipping pages feels instant.
+    for (const j of [idx - 1, idx + 1]) if (pages[j]) new Image().src = pages[j]
+  }
+  const open = (i: number) => {
+    show(i)
+    isOpen = true
+    lb.classList.add('open')
+    lb.setAttribute('aria-hidden', 'false')
+    document.body.style.overflow = 'hidden'
+  }
+  const close = () => {
+    if (!isOpen) return
+    isOpen = false
+    lb.classList.remove('open')
+    lb.setAttribute('aria-hidden', 'true')
+    document.body.style.overflow = ''
+  }
+
+  const onClick = (e: Event) => {
+    const t = e.target as Element
+    const o = t.closest('[data-bk-open]')
+    if (o) {
+      open(Number(o.getAttribute('data-bk-open')) || 0)
+      return
+    }
+    if (!isOpen) return
+    const st = t.closest('[data-bk-step]')
+    if (st) show(idx + Number(st.getAttribute('data-bk-step')))
+    else if (t.closest('[data-bk-close]') || t === lb || t.classList.contains('bk-lb-stage')) close()
+  }
+  const onKey = (e: KeyboardEvent) => {
+    if (!isOpen) return
+    if (e.key === 'Escape') close()
+    else if (e.key === 'ArrowRight') show(idx + 1)
+    else if (e.key === 'ArrowLeft') show(idx - 1)
+  }
+  const onTouchStart = (e: TouchEvent) => {
+    startX = e.touches[0].clientX
+  }
+  const onTouchEnd = (e: TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - startX
+    if (Math.abs(dx) > 50) show(idx + (dx < 0 ? 1 : -1))
+  }
+
+  root.addEventListener('click', onClick)
+  document.addEventListener('keydown', onKey)
+  lb.addEventListener('touchstart', onTouchStart, { passive: true })
+  lb.addEventListener('touchend', onTouchEnd, { passive: true })
+  return () => {
+    root.removeEventListener('click', onClick)
+    document.removeEventListener('keydown', onKey)
+    lb.removeEventListener('touchstart', onTouchStart)
+    lb.removeEventListener('touchend', onTouchEnd)
+    if (isOpen) document.body.style.overflow = ''
   }
 }

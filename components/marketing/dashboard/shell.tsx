@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ArrowUpRight, ChartColumn, FileText, GraduationCap, House, Layers, BookOpen, LayoutGrid, Menu, Settings, Sparkles } from 'lucide-react'
+import { ArrowUpRight, ChartColumn, FileText, GraduationCap, House, Layers, BookOpen, BookMarked, LayoutGrid, Menu, Settings, Sparkles } from 'lucide-react'
 import { useUser } from '@/components/marketing/dashboard/user-context'
 import { DashboardDataProvider } from '@/components/marketing/dashboard/dashboard-data'
 import { SdUiProvider, useSd } from '@/components/marketing/dashboard/sd-ui'
@@ -20,6 +20,7 @@ const NAV = [
   { href: '/dashboard/free-mocks', hash: '', label: 'Bepul mocklar', Icon: Sparkles, badge: 'FREE' },
   { href: '/dashboard/course-tasks', hash: '', label: 'Mening kurslarim', Icon: BookOpen },
   { href: '/dashboard/question-bank', hash: '', label: 'Savollar banki', Icon: Layers },
+  { href: '/dashboard/books', hash: '', label: 'Kitoblar', Icon: BookMarked, badge: 'NEW' },
   { href: '/dashboard/results', hash: '', label: 'Natijalarim', Icon: ChartColumn },
   { href: '/dashboard/profile', hash: '', label: 'Sozlamalar', Icon: Settings },
 ]

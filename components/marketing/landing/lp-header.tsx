@@ -9,19 +9,20 @@ import { lpT } from '@/components/marketing/landing/lp-i18n'
 const LINKS = [
   { id: 'home', label: 'Home' },
   { id: 'mock', label: 'Mock Tests' },
+  { id: 'books', label: 'Kitoblar' },
   { id: 'courses', label: 'Courses' },
   { id: 'qbank', label: 'Question Bank' },
   { id: 'pricing', label: 'Pricing' },
 ]
 
-/** Sticky landing header: logo, section links (desktop), language, theme and a single "Kirish" button. */
+/** Sticky landing header: logo, section links (desktop), language, theme and "Kirish" + "Ro‘yxatdan o‘tish" buttons. */
 export function LpHeader() {
   const { lang } = useI18n()
   const [active, setActive] = useState('home')
 
   // Highlights the link of the section currently in view.
   useEffect(() => {
-    const ids = ['home', 'mock', 'courses', 'pricing']
+    const ids = ['home', 'mock', 'books', 'courses', 'pricing']
     const els = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[]
     if (!els.length || !('IntersectionObserver' in window)) return
     const io = new IntersectionObserver(
@@ -55,8 +56,11 @@ export function LpHeader() {
         <div className="nav-r">
           <LangSwitch />
           <ThemeSwitch defaultTheme="light" />
-          <a href="/login" className="btn btn-orange">
+          <a href="/login" className="btn btn-line">
             {lpT('Kirish', lang)}
+          </a>
+          <a href="/login?mode=signup" className="btn btn-orange nav-signup">
+            {lpT('Ro‘yxatdan o‘tish', lang)}
           </a>
         </div>
       </div>

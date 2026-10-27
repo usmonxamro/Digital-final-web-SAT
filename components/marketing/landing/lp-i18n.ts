@@ -1,4 +1,5 @@
 import { translate, type Lang } from '@/lib/i18n'
+import { BOOKS_I18N } from '@/components/marketing/landing/lp-books'
 
 /** Landing-page texts. The Uzbek/English source text is the key (see LP_BODY). */
 const RU: Record<string, string> = {
@@ -259,6 +260,10 @@ const EN: Record<string, string> = {
   "D) −12 belgilandi ✓": "D) −12 selected ✓",
   "Keyingi savol": "Next question",
 }
+
+// Texts of the books section: added without ever overriding an existing translation.
+for (const [k, v] of Object.entries(BOOKS_I18N.ru)) if (!(k in RU)) RU[k] = v
+for (const [k, v] of Object.entries(BOOKS_I18N.en)) if (!(k in EN)) EN[k] = v
 
 /** Translates one text string of the landing page (Uzbek = the original). */
 export function lpT(text: string, lang: Lang): string {

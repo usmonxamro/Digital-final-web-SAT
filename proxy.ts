@@ -40,8 +40,9 @@ export function proxy(req: NextRequest) {
     const url = req.nextUrl.clone()
     url.pathname = '/login'
     url.search = ''
-    // A shared mock link (/exam?test=…) comes back to that mock after signing in.
-    if (pathname === '/exam') url.searchParams.set('next', target)
+    // A shared mock link (/exam?test=…) or the books page (from the landing's "download" buttons)
+    // comes back to that page after signing in.
+    if (pathname === '/exam' || pathname === '/dashboard/books') url.searchParams.set('next', target)
     return NextResponse.redirect(url)
   }
 
