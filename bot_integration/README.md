@@ -33,3 +33,19 @@ Saytda: **Kurslar → Kod bilan qo'shilish**.
 ## v67 yangilanishi
 - `bot_updated.py` — yangi (joriy) bot versiyasi ustiga qayta yig'ilgan: sayt kodi (`course_codes.py`) + admin statistikasi (`group_stats.py`) kiritilgan.
 - Admin menyusida **📈 O'quvchilar statistikasi**: guruhni tanlang → har bir o'quvchi nechta vazifa bajargan/bajarmagan va har bir mockni nechta o'quvchi ishlagan/ishlamagan ro'yxati.
+
+## v107 — 📚 Bepul kitob (referal tizimi)
+Saytdagi kitob hozircha faqat shu bot orqali beriladi: o'quvchi botdan **shaxsiy havola** oladi → 5 ta do'sti havola orqali botga kirib, majburiy kanallarga (`REQUIRED_CHANNELS`) obuna bo'lsa → bot kitobni **avtomatik** yuboradi.
+
+**Sozlash (bir marta):**
+1. Yangi `bot_updated.py` ni Wispbyte'ga qo'ying (jadvallar o'zi yaratiladi: `book_referrals`, `book_delivered`).
+2. Kitob PDF'ini **botga yuboring** (admin akkauntingizdan) va fayl **sarlavhasiga** `/setbook` deb yozing. Bot "✅ Kitob fayli o'rnatildi" deydi. Fayl serverda saqlanmaydi — faqat Telegram `file_id` eslab qolinadi.
+3. Tekshirish: botda **📚 Bepul kitob** tugmasi (yoki `/kitob`), admin uchun `/kitob_stat`.
+
+**Qoidalar:**
+- Faqat botga **yangi** kirgan va kanallarga obuna bo'lgan do'st hisoblanadi (botda avvaldan bor odam yoki o'zini o'zi taklif qilish sanalmaydi).
+- Kitob berilishidan oldin 5 ta do'stning obunasi qayta tekshiriladi (chiqib ketgan sanalmaydi).
+- Har bir kishiga avtomatik faqat bir marta yuboriladi; keyin "📥 Kitobni qayta olish" tugmasi bor.
+- Fayl hali o'rnatilmagan bo'lsa-yu kimdir 5 ta do'st to'plasa — adminlarga eslatma ketadi, `/setbook` qilingach kutib turganlarga avtomatik yuboriladi.
+
+**Tuzatish:** filtr klasslari (`IsAdmin`, `IsPrivateChat`…) ishlatilishidan oldin e'lon qilinishi uchun yuqoriga ko'chirildi — avval fayl import paytida `NameError` bergan.

@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { verifySession, SESSION_COOKIE } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { rateLimit } from '@/lib/rate-limit'
-import { BOOKS_BUCKET, getAvailableBook } from '@/lib/books'
+import { BOOKS_BUCKET, SITE_DOWNLOAD_ENABLED, getAvailableBook } from '@/lib/books'
 
 /**
  * Kitobni yuklab olish — faqat tizimga kirgan (va akkaunti hali mavjud) foydalanuvchiga.
@@ -11,6 +11,14 @@ import { BOOKS_BUCKET, getAvailableBook } from '@/lib/books'
  * Mehmonlar uchun hech qanday ochiq havola yo'q.
  */
 export async function GET(req: NextRequest) {
+  // Hozircha kitob faqat Telegram bot (referal) orqali beriladi — sayt orqali yuklab olish o'chirilgan.
+  if (!SITE_DOWNLOAD_ENABLED) {
+    return NextResponse.json(
+      { error: 'Kitob hozircha Telegram bot orqali beriladi: botda 5 ta do‘stingizni taklif qiling.', code: 'BOT_ONLY' },
+      { status: 403 },
+    )
+  }
+
   const session = verifySession((await cookies()).get(SESSION_COOKIE)?.value)
   if (!session) {
     return NextResponse.json({ error: 'Kitobni yuklab olish uchun avval tizimga kiring.', code: 'AUTH' }, { status: 401 })

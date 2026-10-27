@@ -155,6 +155,31 @@ def all_admin_ids() -> set:
     return set(ADMIN_IDS) | dynamic_admin_ids
 
 
+# =====================================================================
+# FILTERLAR
+# =====================================================================
+class IsAdmin(BaseFilter):
+    async def __call__(self, event) -> bool:
+        user = getattr(event, "from_user", None)
+        return bool(user and user.id in all_admin_ids())
+
+
+class IsSuperAdmin(BaseFilter):
+    async def __call__(self, event) -> bool:
+        user = getattr(event, "from_user", None)
+        return bool(user and user.id in ADMIN_IDS)
+
+
+class IsPrivateChat(BaseFilter):
+    async def __call__(self, message: types.Message) -> bool:
+        return message.chat.type == "private"
+
+
+class IsGroupChat(BaseFilter):
+    async def __call__(self, message: types.Message) -> bool:
+        return message.chat.type in ("group", "supergroup")
+
+
 db_conn: aiosqlite.Connection = None
 
 
@@ -1214,31 +1239,6 @@ class AdminSearchState(StatesGroup):
 
 
 # =====================================================================
-# FILTERLAR
-# =====================================================================
-class IsAdmin(BaseFilter):
-    async def __call__(self, event) -> bool:
-        user = getattr(event, "from_user", None)
-        return bool(user and user.id in all_admin_ids())
-
-
-class IsSuperAdmin(BaseFilter):
-    async def __call__(self, event) -> bool:
-        user = getattr(event, "from_user", None)
-        return bool(user and user.id in ADMIN_IDS)
-
-
-class IsPrivateChat(BaseFilter):
-    async def __call__(self, message: types.Message) -> bool:
-        return message.chat.type == "private"
-
-
-class IsGroupChat(BaseFilter):
-    async def __call__(self, message: types.Message) -> bool:
-        return message.chat.type in ("group", "supergroup")
-
-
-# =====================================================================
 # SAT JAVOBLARINI TEKSHIRISH TIZIMI
 # =====================================================================
 getcontext().prec = 50
@@ -1588,7 +1588,7 @@ def get_main_menu(user_id):
             [KeyboardButton(text="📉 Xatolar statistikasi")],
             [KeyboardButton(text="👥 Guruhlar"), KeyboardButton(text="📤 Guruhga yuborish")],
             [KeyboardButton(text="🗂 Vazifalar"), KeyboardButton(text="📈 O'quvchilar statistikasi")],
-            [KeyboardButton(text="🔍 ID orqali qidirish")],
+            [KeyboardButton(text="🔍 ID orqali qidirish"), KeyboardButton(text="📚 Bepul kitob")],
             [KeyboardButton(text="🧹 Javoblarni o'chirish")],
             [KeyboardButton(text="👤 Ismni o'zgartirish")],
             [KeyboardButton(text="📢 Reklama yuborish")],
@@ -1600,6 +1600,7 @@ def get_main_menu(user_id):
         return ReplyKeyboardMarkup(keyboard=[
             [KeyboardButton(text="📱 Web app orqali test topshirish")],
             [KeyboardButton(text="📋 Vazifalarim"), KeyboardButton(text="🌐 Sayt orqali vazifalar")],
+            [KeyboardButton(text="📚 Bepul kitob")],
             [KeyboardButton(text="📊 Natija"), KeyboardButton(text="🏆 Reyting")],
             [KeyboardButton(text="👤 Ismni o'zgartirish")]
         ], resize_keyboard=True, is_persistent=True)
@@ -2050,6 +2051,300 @@ async def receive_full_name(message: types.Message, state: FSMContext):
 
 
 # =====================================================================
+# 📚 BEPUL KITOB — REFERAL TIZIMI
+# O'quvchi botdan shaxsiy havola oladi → 5 ta do'sti shu havola orqali botga kirib,
+# majburiy kanallarga obuna bo'lsa → bot kitobni AVTOMATIK yuboradi.
+#
+# Kitob fayli: admin PDF'ni botga yuboradi, sarlavhasiga  /setbook  deb yozadi (bir marta).
+# Bot faylning Telegram file_id'sini bot_meta jadvalida eslab qoladi (fayl serverda saqlanmaydi).
+# Jadvallar o'zi yaratiladi: book_referrals, book_delivered.
+# =====================================================================
+BOOK_REF_REQUIRED = 5
+BOOK_META_KEY = "book_file_id"
+_book_tables_ready = False
+_book_locks: dict = {}
+
+
+async def _ensure_book_tables():
+    global _book_tables_ready
+    if _book_tables_ready:
+        return
+    await _execute(
+        "CREATE TABLE IF NOT EXISTS book_referrals ("
+        "invited_id INTEGER PRIMARY KEY, inviter_id INTEGER NOT NULL, "
+        "created_at TEXT NOT NULL, counted_at TEXT)"
+    )
+    await _execute(
+        "CREATE TABLE IF NOT EXISTS book_delivered (user_id INTEGER PRIMARY KEY, delivered_at TEXT NOT NULL)"
+    )
+    _book_tables_ready = True
+
+
+def _book_ref_link(user_id: int) -> str:
+    return f"https://t.me/{BOT_USERNAME}?start=ref{user_id}"
+
+
+def _parse_ref(arg):
+    m = re.fullmatch(r"ref(\d{3,15})", (arg or "").strip())
+    return int(m.group(1)) if m else None
+
+
+async def _book_file_id():
+    row = await _fetchone("SELECT value FROM bot_meta WHERE key = ?", (BOOK_META_KEY,))
+    return row[0] if row and row[0] else None
+
+
+async def _book_is_delivered(user_id: int) -> bool:
+    await _ensure_book_tables()
+    return bool(await _fetchone("SELECT 1 FROM book_delivered WHERE user_id = ?", (user_id,)))
+
+
+async def _book_counted(inviter_id: int) -> int:
+    await _ensure_book_tables()
+    row = await _fetchone(
+        "SELECT COUNT(*) FROM book_referrals WHERE inviter_id = ? AND counted_at IS NOT NULL", (inviter_id,)
+    )
+    return int(row[0]) if row else 0
+
+
+async def _book_live_count(inviter_id: int) -> int:
+    """Hisoblangan do'stlardan hozir ham kanallarda turganlari soni (obunadan chiqib ketganlar sanalmaydi)."""
+    rows = await _fetchall(
+        "SELECT invited_id FROM book_referrals WHERE inviter_id = ? AND counted_at IS NOT NULL LIMIT 50",
+        (inviter_id,),
+    )
+    live = 0
+    for (invited_id,) in rows:
+        _sub_cache.pop(invited_id, None)  # keshdan emas, Telegramdan jonli tekshiramiz
+        if await is_subscribed(invited_id):
+            live += 1
+    return live
+
+
+async def book_register_referral(invited_id: int, inviter_id: int, was_existing_user: bool):
+    """/start ref<id> bilan kelgan YANGI foydalanuvchini taklif qiluvchiga bog'laydi.
+    Botda allaqachon bor odam, o'zini o'zi taklif qilish va taklif qiluvchi botni bilmasa — hisoblanmaydi."""
+    if was_existing_user or inviter_id == invited_id:
+        return
+    await _ensure_book_tables()
+    if not await _fetchone("SELECT 1 FROM users WHERE user_id = ?", (inviter_id,)):
+        return
+    await _execute(
+        "INSERT OR IGNORE INTO book_referrals (invited_id, inviter_id, created_at) VALUES (?, ?, ?)",
+        (invited_id, inviter_id, datetime.datetime.now().isoformat()),
+    )
+
+
+async def book_send_file(user_id: int, caption: str) -> bool:
+    file_id = await _book_file_id()
+    if not file_id:
+        return False
+    try:
+        await bot.send_document(user_id, file_id, caption=caption, parse_mode="HTML")
+        return True
+    except (TelegramForbiddenError, TelegramBadRequest) as e:
+        print(f"⚠️ Kitobni yuborib bo'lmadi ({user_id}): {e}")
+        return False
+
+
+async def book_deliver(user_id: int) -> bool:
+    """Kitobni yuboradi (agar 5 ta do'st hozir ham obunada bo'lsa). Bir kishiga faqat bir marta avtomatik yuboriladi."""
+    await _ensure_book_tables()
+    lock = _book_locks.setdefault(user_id, asyncio.Lock())
+    async with lock:
+        if await _book_is_delivered(user_id):
+            return True
+        live = await _book_live_count(user_id)
+        if live < BOOK_REF_REQUIRED:
+            try:
+                await bot.send_message(
+                    user_id,
+                    f"ℹ️ Do'stlaringizdan ba'zilari kanallardan chiqib ketgan. Hozir faol: <b>{live}/{BOOK_REF_REQUIRED}</b>.\n"
+                    f"Yana do'stlaringizni taklif qiling 👇\n<code>{_book_ref_link(user_id)}</code>",
+                    parse_mode="HTML",
+                )
+            except Exception:
+                pass
+            return False
+        ok = await book_send_file(
+            user_id,
+            f"🎉 <b>Tabriklaymiz!</b> {BOOK_REF_REQUIRED} ta do'stingiz obuna bo'ldi.\n"
+            f"📚 <b>SAT Math by Usmon</b> kitobi — sizga sovg'a. Omad! 🚀",
+        )
+        if ok:
+            await _execute(
+                "INSERT OR IGNORE INTO book_delivered (user_id, delivered_at) VALUES (?, ?)",
+                (user_id, datetime.datetime.now().isoformat()),
+            )
+            return True
+        # Fayl hali o'rnatilmagan: o'quvchiga tushuntiramiz, adminlarga eslatamiz. Fayl o'rnatilgach avtomatik yuboriladi.
+        try:
+            await bot.send_message(
+                user_id,
+                "✅ 5 ta do'stingiz obuna bo'ldi! Kitob tayyorlanmoqda — tez orada shu yerga yuboriladi.",
+            )
+        except Exception:
+            pass
+        for aid in set(ADMIN_IDS):
+            try:
+                await bot.send_message(
+                    aid,
+                    "⚠️ Kitob fayli o'rnatilmagan, lekin kimdir 5 ta do'st taklif qildi.\n"
+                    "PDF'ni shu botga yuboring va sarlavhasiga <code>/setbook</code> deb yozing.",
+                    parse_mode="HTML",
+                )
+            except Exception:
+                pass
+        return False
+
+
+async def book_count_referral(invited_id: int):
+    """Taklif qilingan do'st kanallarga obuna bo'lgan bo'lsa — hisobga oladi, taklif qiluvchiga xabar beradi."""
+    try:
+        await _ensure_book_tables()
+        row = await _fetchone("SELECT inviter_id, counted_at FROM book_referrals WHERE invited_id = ?", (invited_id,))
+        if not row or row[1]:
+            return
+        if not await is_subscribed(invited_id):
+            return
+        inviter_id = row[0]
+        await _execute(
+            "UPDATE book_referrals SET counted_at = ? WHERE invited_id = ? AND counted_at IS NULL",
+            (datetime.datetime.now().isoformat(), invited_id),
+        )
+        total = await _book_counted(inviter_id)
+        if await _book_is_delivered(inviter_id):
+            return
+        if total < BOOK_REF_REQUIRED:
+            try:
+                await bot.send_message(
+                    inviter_id,
+                    f"✅ Do'stingiz obuna bo'ldi! Hisob: <b>{total}/{BOOK_REF_REQUIRED}</b>",
+                    parse_mode="HTML",
+                )
+            except Exception:
+                pass
+        else:
+            await book_deliver(inviter_id)
+    except Exception as e:  # referal xatosi botning asosiy ishiga xalaqit bermasin
+        print(f"⚠️ book_count_referral xatosi: {e}")
+
+
+async def book_deliver_pending() -> int:
+    """Fayl yangi o'rnatilganda: 5 ta do'st to'plagan, lekin hali kitob olmaganlarga yuboradi."""
+    await _ensure_book_tables()
+    rows = await _fetchall(
+        "SELECT inviter_id FROM book_referrals WHERE counted_at IS NOT NULL "
+        "GROUP BY inviter_id HAVING COUNT(*) >= ?",
+        (BOOK_REF_REQUIRED,),
+    )
+    sent = 0
+    for (uid,) in rows:
+        if not await _book_is_delivered(uid) and await book_deliver(uid):
+            sent += 1
+            await asyncio.sleep(0.2)
+    return sent
+
+
+def _book_menu_kb(user_id: int, counted: int, delivered: bool) -> InlineKeyboardMarkup:
+    link = _book_ref_link(user_id)
+    share_text = "📚 SAT Math kitobi BEPUL! Botga kiring va kanallarga obuna bo'ling:"
+    share_url = f"https://t.me/share/url?url={quote(link)}&text={quote(share_text)}"
+    if delivered:
+        return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="📥 Kitobni qayta olish", callback_data="book_resend")]])
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="📤 Do'stlarga yuborish", url=share_url)],
+        [InlineKeyboardButton(text="🔄 Natijani tekshirish", callback_data="book_check")],
+    ])
+
+
+@dp.message(IsPrivateChat(), F.text == "📚 Bepul kitob")
+@dp.message(IsPrivateChat(), Command("kitob"))
+async def book_menu(message: types.Message):
+    uid = message.from_user.id
+    delivered = await _book_is_delivered(uid)
+    counted = await _book_counted(uid)
+    if delivered:
+        text = "✅ Siz kitobni allaqachon olgansiz. Kerak bo'lsa, pastdagi tugma bilan qayta oling."
+    else:
+        text = (
+            "📚 <b>SAT Math by Usmon — BEPUL kitob!</b>\n\n"
+            "Kitobni olish uchun:\n"
+            "1️⃣ Pastdagi <b>shaxsiy havolangizni</b> 5 ta do'stingizga yuboring\n"
+            "2️⃣ Do'stlaringiz havola orqali botga kirib, kanallarga <b>obuna bo'lsin</b>\n"
+            "3️⃣ Bot kitobni sizga <b>avtomatik</b> yuboradi ✅\n\n"
+            f"🔗 Havolangiz (bosib nusxalang):\n<code>{_book_ref_link(uid)}</code>\n\n"
+            f"👥 Hozircha: <b>{min(counted, BOOK_REF_REQUIRED)}/{BOOK_REF_REQUIRED}</b>\n"
+            "<i>Eslatma: faqat botga YANGI kirgan va kanallarga obuna bo'lgan do'stlar hisoblanadi.</i>"
+        )
+    await message.answer(text, parse_mode="HTML", reply_markup=_book_menu_kb(uid, counted, delivered),
+                         disable_web_page_preview=True)
+
+
+@dp.callback_query(F.data == "book_check")
+async def book_check_cb(callback: types.CallbackQuery):
+    uid = callback.from_user.id
+    if await _book_is_delivered(uid):
+        await callback.answer("Kitobni allaqachon olgansiz ✅", show_alert=True)
+        return
+    counted = await _book_counted(uid)
+    if counted >= BOOK_REF_REQUIRED:
+        await callback.answer("Tekshirilmoqda...")
+        await book_deliver(uid)
+    else:
+        await callback.answer(f"Hozircha {counted}/{BOOK_REF_REQUIRED} do'st obuna bo'ldi.", show_alert=True)
+
+
+@dp.callback_query(F.data == "book_resend")
+async def book_resend_cb(callback: types.CallbackQuery):
+    uid = callback.from_user.id
+    if not await _book_is_delivered(uid):
+        await callback.answer("Avval 5 ta do'stingizni taklif qiling.", show_alert=True)
+        return
+    ok = await book_send_file(uid, "📚 <b>SAT Math by Usmon</b>")
+    await callback.answer("Yuborildi ✅" if ok else "Hozir yuborib bo'lmadi, keyinroq urinib ko'ring.", show_alert=not ok)
+
+
+# ---- ADMIN: kitob faylini o'rnatish va statistika ----
+@dp.message(IsPrivateChat(), IsAdmin(), F.document, F.caption.startswith("/setbook"))
+async def book_set_file(message: types.Message):
+    doc = message.document
+    if not (doc.mime_type == "application/pdf" or (doc.file_name or "").lower().endswith(".pdf")):
+        await message.answer("❌ Faqat PDF fayl yuboring (sarlavhasi /setbook bo'lsin).")
+        return
+    await _execute("INSERT OR REPLACE INTO bot_meta (key, value) VALUES (?, ?)", (BOOK_META_KEY, doc.file_id))
+    await message.answer(f"✅ Kitob fayli o'rnatildi: <b>{esc(doc.file_name or 'kitob.pdf')}</b>", parse_mode="HTML")
+    sent = await book_deliver_pending()
+    if sent:
+        await message.answer(f"📤 Kutib turgan {sent} ta o'quvchiga kitob yuborildi.")
+
+
+@dp.message(IsPrivateChat(), IsAdmin(), Command("kitob_stat"))
+async def book_stats_cmd(message: types.Message):
+    await _ensure_book_tables()
+    inv = (await _fetchone("SELECT COUNT(*) FROM book_referrals"))[0]
+    cnt = (await _fetchone("SELECT COUNT(*) FROM book_referrals WHERE counted_at IS NOT NULL"))[0]
+    dlv = (await _fetchone("SELECT COUNT(*) FROM book_delivered"))[0]
+    top = await _fetchall(
+        "SELECT r.inviter_id, COUNT(*) c, u.username, u.fullname FROM book_referrals r "
+        "LEFT JOIN users u ON u.user_id = r.inviter_id WHERE r.counted_at IS NOT NULL "
+        "GROUP BY r.inviter_id ORDER BY c DESC LIMIT 10"
+    )
+    lines = [
+        "📚 <b>Kitob referal statistikasi</b>",
+        f"Fayl o'rnatilgan: {'ha ✅' if await _book_file_id() else 'YO‘Q ❌ (PDF + /setbook)'}",
+        f"Havola orqali kirganlar: <b>{inv}</b>",
+        f"Obuna bo'lib hisoblanganlar: <b>{cnt}</b>",
+        f"Kitob olganlar: <b>{dlv}</b>",
+    ]
+    if top:
+        lines.append("\n🏆 Eng faol takliflovchilar:")
+        for uid, c, uname, fname in top:
+            lines.append(f"• {esc(fname or str(uid))} {esc(uname or '')} — {c}")
+    await message.answer("\n".join(lines), parse_mode="HTML")
+
+
+# =====================================================================
 # START BUYRUG'I VA DEEP LINKING
 # =====================================================================
 @dp.message(IsPrivateChat(), CommandStart())
@@ -2058,7 +2353,12 @@ async def start_cmd(message: types.Message, command: CommandObject, state: FSMCo
     username = f"@{message.from_user.username}" if message.from_user.username else "Foydalanuvchi"
     fullname = message.from_user.full_name
 
-    await db_upsert_user_on_start(user_id, username, fullname)
+    existed = await db_upsert_user_on_start(user_id, username, fullname)
+
+    # 📚 Bepul kitob: /start ref<id> — do'stning havolasi orqali kelgan YANGI foydalanuvchini yozib qo'yamiz
+    ref_id = _parse_ref(command.args)
+    if ref_id:
+        await book_register_referral(user_id, ref_id, existed)
 
     if not await is_subscribed(user_id):
         buttons = [[InlineKeyboardButton(text="Kanalga a'zo bo'lish", url=f"https://t.me/{ch.replace('@','')}")]
@@ -2067,6 +2367,8 @@ async def start_cmd(message: types.Message, command: CommandObject, state: FSMCo
         await message.answer(f"Assalomu alaykum {esc(fullname)}! Botdan foydalanish uchun kanallarga a'zo bo'ling.",
                               reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons))
         return
+
+    await book_count_referral(user_id)
 
     if not await db_has_name_set(user_id):
         await _ask_full_name(message, state)
@@ -2087,6 +2389,7 @@ async def start_cmd(message: types.Message, command: CommandObject, state: FSMCo
 async def confirm_subs(callback: types.CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
     if await is_subscribed(user_id):
+        await book_count_referral(user_id)
         await callback.message.delete()
         if not await db_has_name_set(user_id):
             await _ask_full_name(callback.message, state)

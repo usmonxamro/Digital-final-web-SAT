@@ -1,4 +1,4 @@
-import { SAT_SQB, BOOKS_SIGNUP_URL, BOOKS_SIGNIN_URL } from '@/lib/books'
+import { SAT_SQB, BOOK_BOT_URL } from '@/lib/books'
 
 /**
  * Landing's "Mualliflik kitobi" section (static markup, like LP_BODY) + its RU/EN texts.
@@ -16,11 +16,8 @@ function T(uz: string, r: string, e: string): string {
 }
 
 const B = SAT_SQB
-const SIGNUP = BOOKS_SIGNUP_URL
-const SIGNIN = BOOKS_SIGNIN_URL
+const BOT = BOOK_BOT_URL
 
-const ARROW =
-  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>'
 const EYE =
   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'
 const LOCK =
@@ -55,9 +52,9 @@ export const LP_BOOKS = `
       <span class="pill"><span class="dot"></span>${T('Mualliflik kitobi', 'Авторская книга', 'Author’s book')}</span>
       <h2>${T('Usmon Xamroyevning SAT Math kitobi', 'Книга по SAT Math от Усмона Хамроева', 'The SAT Math book by Usmon Xamroyev')}</h2>
       <p>${T(
-        'Saralangan SAT Math savollari 4 ta domen va 19 ta mavzu bo‘yicha. Bepul hisob yarating — kitobni o‘zingizga yuklab oling.',
-        'Отобранные вопросы SAT Math по 4 доменам и 19 темам. Создайте бесплатный аккаунт — и скачайте книгу себе.',
-        'Curated SAT Math questions across 4 domains and 19 topics. Create a free account and download the book.',
+        'Saralangan SAT Math savollari 4 ta domen va 19 ta mavzu bo‘yicha. Kitob bepul: uni Telegram bot orqali 5 ta do‘stingizni taklif qilib olasiz.',
+        'Отобранные вопросы SAT Math по 4 доменам и 19 темам. Книга бесплатная: вы получите её в Telegram-боте, пригласив 5 друзей.',
+        'Curated SAT Math questions across 4 domains and 19 topics. The book is free: get it in our Telegram bot by inviting 5 friends.',
       )}</p>
     </div>
 
@@ -84,10 +81,10 @@ export const LP_BOOKS = `
             ${items.map((x) => `<li>${TICK}${x}</li>`).join('\n            ')}
           </ul>
           <div class="bk-cta">
-            <a href="${SIGNUP}" class="btn btn-orange">${ARROW}${T('Bepul yuklab olish', 'Скачать бесплатно', 'Download for free')}</a>
+            <a href="${BOT}" target="_blank" rel="noopener noreferrer" class="btn btn-orange">${TG}${T('Botda bepul olish', 'Получить бесплатно в боте', 'Get it free in the bot')}</a>
             <button type="button" class="btn btn-white" data-bk-open="0">${EYE}${T('Dastlabki sahifalar', 'Первые страницы', 'First pages')}</button>
           </div>
-          <p class="bk-note"><span>${T('Yuklab olish uchun bepul hisob kerak.', 'Для скачивания нужен бесплатный аккаунт.', 'A free account is needed to download.')}</span> <span>${T('Hisobingiz bormi?', 'Уже есть аккаунт?', 'Already have an account?')}</span> <a href="${SIGNIN}">${T('Kirish', 'Войти', 'Log in')}</a></p>
+          <p class="bk-note"><span>${T('Ro‘yxatdan o‘tish shart emas — hammasi Telegramda.', 'Регистрация на сайте не нужна — всё в Telegram.', 'No sign-up on the website needed — it all happens in Telegram.')}</span></p>
         </div>
       </article>
 
@@ -104,14 +101,25 @@ export const LP_BOOKS = `
       </aside>
     </div>
 
+    <div class="bk-steps">
+      <h3>${T('Kitobni qanday olaman?', 'Как получить книгу?', 'How do I get the book?')}</h3>
+      <ol>
+        <li><b>1</b><span>${T('Telegramda botni oching', 'Откройте бота в Telegram', 'Open the bot in Telegram')}</span></li>
+        <li><b>2</b><span>${T('Botdagi «📚 Bepul kitob» tugmasini bosib, shaxsiy havolangizni oling', 'Нажмите в боте «📚 Bepul kitob» и получите личную ссылку', 'Tap “📚 Bepul kitob” in the bot to get your personal link')}</span></li>
+        <li><b>3</b><span>${T('Havolani 5 ta do‘stingizga yuboring', 'Отправьте ссылку 5 друзьям', 'Send the link to 5 friends')}</span></li>
+        <li><b>4</b><span>${T('Do‘stlaringiz bot orqali kanallarga obuna bo‘lishi bilan, bot kitobni sizga avtomatik yuboradi', 'Как только друзья подпишутся на каналы через бота, бот автоматически пришлёт вам книгу', 'As soon as your friends subscribe to the channels through the bot, the bot sends you the book automatically')}</span></li>
+      </ol>
+      <a href="${BOT}" target="_blank" rel="noopener noreferrer" class="btn btn-orange">${TG}${T('Botni ochish', 'Открыть бота', 'Open the bot')}</a>
+    </div>
+
     <div class="bk-peek">
       <div class="bk-peek-head">
         <h3>${T('Kitob ichidan ko‘ring', 'Загляните внутрь книги', 'Take a look inside')}</h3>
-        <span>${T('Dastlabki 6 sahifa. To‘liq kitob ro‘yxatdan o‘tgach ochiladi.', 'Первые 6 страниц. Полная книга откроется после регистрации.', 'The first 6 pages. The full book unlocks after sign-up.')}</span>
+        <span>${T('Dastlabki 6 sahifa. To‘liq kitob Telegram bot orqali beriladi.', 'Первые 6 страниц. Полная книга выдаётся через Telegram-бота.', 'The first 6 pages. The full book is delivered through our Telegram bot.')}</span>
       </div>
       <div class="bk-strip">
         ${peek}
-        <a class="bk-lock" href="${SIGNUP}">${LOCK}<b>${T('To‘liq kitob', 'Полная книга', 'Full book')}</b><span>${T('Ro‘yxatdan o‘tgach ochiladi', 'Откроется после регистрации', 'Unlocks after sign-up')}</span></a>
+        <a class="bk-lock" href="${BOT}" target="_blank" rel="noopener noreferrer">${LOCK}<b>${T('To‘liq kitob', 'Полная книга', 'Full book')}</b><span>${T('Botda 5 do‘st taklif qilib oching', 'Откроется в боте за 5 приглашённых друзей', 'Unlock it in the bot by inviting 5 friends')}</span></a>
       </div>
     </div>
 
@@ -127,8 +135,8 @@ export const LP_BOOKS = `
         <button type="button" class="bk-lb-nav next" data-bk-step="1" aria-label="Next"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <div class="bk-lb-foot">
-        <span>${T('Bu faqat dastlabki sahifalar. To‘liq kitob bepul — ro‘yxatdan o‘tgach.', 'Это только первые страницы. Полная книга бесплатна — после регистрации.', 'These are just the first pages. The full book is free after sign-up.')}</span>
-        <a href="${SIGNUP}" class="btn btn-orange">${ARROW}${T('Bepul yuklab olish', 'Скачать бесплатно', 'Download for free')}</a>
+        <span>${T('Bu faqat dastlabki sahifalar. To‘liq kitob bepul — Telegram bot orqali.', 'Это только первые страницы. Полная книга бесплатна — через Telegram-бота.', 'These are just the first pages. The full book is free — through our Telegram bot.')}</span>
+        <a href="${BOT}" target="_blank" rel="noopener noreferrer" class="btn btn-orange">${TG}${T('Botda bepul olish', 'Получить бесплатно в боте', 'Get it free in the bot')}</a>
       </div>
     </div>
   </div>

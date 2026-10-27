@@ -465,4 +465,11 @@ export const en: Record<string, string> = {
  "Aloqa xatosi. Internetni tekshirib, qayta urinib ko‘ring.": "Connection error. Check your internet and try again.",
  "Akkaunt topilmadi. Qayta kiring.": "Account not found. Please sign in again.",
  "Kitob topilmadi.": "Book not found.",
+ "Telegramda botni oching": "Open the bot in Telegram",
+ "Botdagi «📚 Bepul kitob» tugmasini bosib, shaxsiy havolangizni oling": "Tap “📚 Bepul kitob” in the bot to get your personal link",
+ "Havolani 5 ta do‘stingizga yuboring": "Send the link to 5 friends",
+ "Do‘stlaringiz bot orqali kanallarga obuna bo‘lishi bilan, bot kitobni sizga avtomatik yuboradi": "As soon as your friends subscribe to the channels through the bot, the bot sends you the book automatically",
+ "Botda bepul olish": "Get it free in the bot",
+ "19 ta mavzu bo‘yicha saralangan SAT Math savollari — Telegram botda 5 ta do‘st taklif qilib, bepul oling.": "Curated SAT Math questions across 19 topics — get it free in the Telegram bot by inviting 5 friends.",
+ "Kitob hozircha Telegram bot orqali beriladi: botda 5 ta do‘stingizni taklif qiling.": "For now the book is delivered through the Telegram bot: invite 5 friends there.",
 }

@@ -146,7 +146,7 @@ export default function DashboardPage() {
         </span>
         <span className="sd-promo-text">
           <strong>{t('Yangi: SAT SQB Savollari kitobi')}</strong>
-          <small>{t('19 ta mavzu bo‘yicha saralangan SAT Math savollari — PDF holatida bepul yuklab oling.')}</small>
+          <small>{t('19 ta mavzu bo‘yicha saralangan SAT Math savollari — Telegram botda 5 ta do‘st taklif qilib, bepul oling.')}</small>
         </span>
         <span className="sd-promo-btn">
           {t('Kitoblarga o‘tish')} <ArrowRight />

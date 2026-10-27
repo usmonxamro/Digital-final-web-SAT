@@ -112,6 +112,15 @@ export function getAvailableBook(slug: string | null | undefined): AvailableBook
   return b && b.status === 'available' ? b : null
 }
 
+/**
+ * Kitob hozircha Telegram bot orqali beriladi (referal): botdan shaxsiy havola olinadi, 5 ta do'st shu havola
+ * orqali botga kirib kanallarga obuna bo'lsa, bot kitobni avtomatik yuboradi (bot_integration/bot_updated.py).
+ * Saytning o'zidan to'g'ridan-to'g'ri yuklab olish hozircha o'chirilgan: qayta yoqish uchun SITE_DOWNLOAD_ENABLED = true.
+ */
+export const BOOK_BOT_URL = process.env.NEXT_PUBLIC_BOOK_BOT_URL || 'https://t.me/sat_vazifa_bot'
+export const BOOK_REFERRALS_REQUIRED = 5
+export const SITE_DOWNLOAD_ENABLED = false
+
 /** Landing / sahifalardan ro'yxatdan o'tib, keyin kitoblar bo'limiga qaytish manzili. */
 export const BOOKS_SIGNUP_URL = '/login?mode=signup&next=%2Fdashboard%2Fbooks'
 export const BOOKS_SIGNIN_URL = '/login?next=%2Fdashboard%2Fbooks'

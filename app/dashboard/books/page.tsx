@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { BookOpen, ChevronDown, Download, Loader2, Send } from 'lucide-react'
-import { BOOKS, type AvailableBook } from '@/lib/books'
+import { BookOpen, ChevronDown, Send } from 'lucide-react'
+import { BOOKS, BOOK_BOT_URL, type AvailableBook } from '@/lib/books'
 import { useT } from '@/components/i18n-provider'
 
-/** Mualliflik kitoblari: faqat tizimga kirgan foydalanuvchi shu yerdan yuklab oladi (to'liq PDF yopiq bucket'da turadi). */
+/** Mualliflik kitoblari. Hozircha kitob Telegram bot orqali beriladi (5 ta do'st taklif qilish); sayt orqali yuklab olish o'chirilgan. */
 export default function BooksPage() {
   const t = useT()
 
@@ -28,39 +28,7 @@ export default function BooksPage() {
 
 function BookCard({ book }: { book: AvailableBook }) {
   const t = useT()
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [tocOpen, setTocOpen] = useState(false)
-
-  async function download() {
-    if (busy) return
-    setBusy(true)
-    setError(null)
-    try {
-      const r = await fetch(`/api/books/download?slug=${encodeURIComponent(book.slug)}`)
-      const d = (await r.json().catch(() => ({}))) as { url?: string; name?: string; error?: string; code?: string }
-      if (r.status === 401) {
-        window.location.href = '/login?next=%2Fdashboard%2Fbooks'
-        return
-      }
-      if (!r.ok || !d.url) {
-        setError(t(d.error ?? 'Kitob fayli hozircha tayyor emas. Iltimos, keyinroq urinib ko‘ring.'))
-        return
-      }
-      // The signed link answers with "attachment", so the browser just saves the file and the page stays put.
-      const a = document.createElement('a')
-      a.href = d.url
-      a.download = d.name ?? ''
-      a.rel = 'noopener'
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-    } catch {
-      setError(t('Aloqa xatosi. Internetni tekshirib, qayta urinib ko‘ring.'))
-    } finally {
-      setBusy(false)
-    }
-  }
 
   return (
     <section className="sd-bk-card">
@@ -91,21 +59,34 @@ function BookCard({ book }: { book: AvailableBook }) {
           </span>
         </div>
 
+        <ol className="sd-bk-steps">
+          <li>
+            <b>1</b>
+            <span>{t('Telegramda botni oching')}</span>
+          </li>
+          <li>
+            <b>2</b>
+            <span>{t('Botdagi «📚 Bepul kitob» tugmasini bosib, shaxsiy havolangizni oling')}</span>
+          </li>
+          <li>
+            <b>3</b>
+            <span>{t('Havolani 5 ta do‘stingizga yuboring')}</span>
+          </li>
+          <li>
+            <b>4</b>
+            <span>{t('Do‘stlaringiz bot orqali kanallarga obuna bo‘lishi bilan, bot kitobni sizga avtomatik yuboradi')}</span>
+          </li>
+        </ol>
+
         <div className="sd-bk-actions">
-          <button type="button" className="sd-primary" onClick={download} disabled={busy}>
-            {busy ? <Loader2 className="sd-bk-spin" /> : <Download />} {busy ? t('Tayyorlanmoqda…') : t('PDF yuklab olish')}
-          </button>
+          <a className="sd-primary" href={BOOK_BOT_URL} target="_blank" rel="noopener noreferrer">
+            <Send /> {t('Botda bepul olish')}
+          </a>
           <button type="button" className="sd-soft" onClick={() => setTocOpen((v) => !v)} aria-expanded={tocOpen}>
             {t('Mundarija')} <ChevronDown className={tocOpen ? 'sd-bk-up' : ''} />
           </button>
           <span className="sd-bk-size">{book.sizeLabel}</span>
         </div>
-
-        {error && (
-          <div className="sd-bk-error" role="alert">
-            {error}
-          </div>
-        )}
 
         {tocOpen && (
           <div className="sd-bk-toc">
