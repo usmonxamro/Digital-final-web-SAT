@@ -5,7 +5,7 @@
 --    Yuklab olish /api/books/download orqali, faqat tizimga kirgan foydalanuvchiga,
 --    60 soniya amal qiladigan imzolangan havola bilan beriladi.
 -- 2) Kitob faylini yuklash: Supabase -> Storage -> books -> Upload file
---    Fayl nomi AYNAN shunday bo'lsin:  sat-sqb.pdf
+--    Fayl nomi AYNAN shunday bo'lsin:  SAT Math by Usmon.pdf
 -- 3) book_downloads — kim qaysi kitobni qachon yuklab olgani (statistika uchun).
 
 insert into storage.buckets (id, name, public)

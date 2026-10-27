@@ -55,8 +55,8 @@ export const SAT_SQB: AvailableBook = {
   coverSm: '/books/sat-sqb/cover-sm.webp',
   back: '/books/sat-sqb/back.webp',
   previews: [1, 2, 3, 4, 5, 6].map((i) => `/books/sat-sqb/preview-${i}.webp`),
-  file: 'sat-sqb.pdf',
-  downloadName: 'SAT SQB Savollari - Usmon Xamroyev - satbyusmon.com.pdf',
+  file: 'SAT Math by Usmon.pdf',
+  downloadName: 'SAT Math by Usmon.pdf',
   toc: [
     {
       name: 'Algebra',
