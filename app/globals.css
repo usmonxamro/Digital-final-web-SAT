@@ -331,16 +331,22 @@ html[data-sp-theme='dark'] .admin-root .bg-ink{background-color:#2c3d35}
 html[data-sp-theme='dark'] .admin-root input,
 html[data-sp-theme='dark'] .admin-root textarea,
 html[data-sp-theme='dark'] .admin-root select{background-color:#0f1512;color:var(--ink)}
+/* question previews in the admin (reports, question bank, import preview): no black-on-dark text, no washed-out picks */
+html[data-sp-theme='dark'] .admin-root .text-\[\#111\]{color:var(--ink)}
+html[data-sp-theme='dark'] .admin-root .border-\[\#111\]{border-color:var(--ink-soft)}
+html[data-sp-theme='dark'] .admin-root .border-\[\#777\]{border-color:#4a5a52}
+html[data-sp-theme='dark'] .admin-root .bg-green-50{background-color:rgba(22,163,74,.12)}
+html[data-sp-theme='dark'] .admin-root .q-ink .katex{color:var(--ink)}
 
 @keyframes sp-caret-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
 .sp-caret{animation:sp-caret-blink 1s steps(1) infinite}
 
 /* ---------- language switch: one compact button, click opens UZ / RU / EN ---------- */
 .sp-lang{position:relative;display:inline-block}
-.sp-lang-btn{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 11px 0 10px;border:1px solid var(--sp-border);border-radius:30px;background:var(--sp-input);color:var(--sp-text);font:inherit;font-size:12.5px;font-weight:800;letter-spacing:.3px;cursor:pointer;transition:border-color .2s}
+.sp-lang-btn{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 12px 0 11px;line-height:1;border:1px solid var(--sp-border);border-radius:30px;background:var(--sp-input);color:var(--sp-text);font:inherit;font-size:12px;font-weight:700;letter-spacing:.4px;cursor:pointer;transition:border-color .2s}
 .sp-lang-btn:hover,.sp-lang-btn[aria-expanded='true']{border-color:color-mix(in srgb,var(--sp-orange) 55%,transparent)}
-.sp-lang-btn svg{width:15px;height:15px;color:var(--sp-text-muted)}
-.sp-lang-btn .sp-chev{width:13px;height:13px;transition:transform .25s}
+.sp-lang-btn svg{width:13px;height:13px;stroke-width:2.1;color:var(--sp-text-muted);flex:none}
+.sp-lang-btn .sp-chev{width:11px;height:11px;margin-left:1px;transition:transform .25s}
 .sp-lang-btn[aria-expanded='true'] .sp-chev{transform:rotate(180deg)}
 .sp-lang-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:80;min-width:158px;padding:5px;border:1px solid var(--sp-border);border-radius:14px;background:var(--sp-bg-elev,var(--sp-input));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 18px 40px -12px rgba(0,0,0,.45);animation:sp-lang-in .18s ease-out both;transform-origin:top right}
 .sp-lang-menu button{display:flex;align-items:center;gap:9px;width:100%;border:0;background:transparent;color:var(--sp-text);font:inherit;font-size:13.5px;font-weight:600;padding:9px 10px;border-radius:10px;cursor:pointer;text-align:left}

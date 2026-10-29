@@ -5,7 +5,7 @@ import { BookOpen, ChevronDown, Send } from 'lucide-react'
 import { BOOKS, BOOK_BOT_URL, type AvailableBook } from '@/lib/books'
 import { useT } from '@/components/i18n-provider'
 
-/** Mualliflik kitoblari. Hozircha kitob Telegram bot orqali beriladi (5 ta do'st taklif qilish); sayt orqali yuklab olish o'chirilgan. */
+/** Bepul kitoblar. Hozircha kitob Telegram bot orqali beriladi (5 ta do'st taklif qilish); sayt orqali yuklab olish o'chirilgan. */
 export default function BooksPage() {
   const t = useT()
 
@@ -16,7 +16,7 @@ export default function BooksPage() {
           <div className="sd-eyebrow">{t('SAT Akademiyasi / Kitoblar')}</div>
           <h1>{t('Kitoblar')}</h1>
         </div>
-        <span className="sd-pill">{t('Mualliflik kitoblari')}</span>
+        <span className="sd-pill">{t('Bepul kitoblar')}</span>
       </div>
 
       <div className="sd-bk-list">
@@ -39,7 +39,7 @@ function BookCard({ book }: { book: AvailableBook }) {
 
       <div className="sd-bk-body">
         <span className="sd-fm-kicker">
-          <BookOpen /> {t('Mualliflik kitobi')}
+          <BookOpen /> {t('Bepul kitob')}
         </span>
         <h2>{book.title}</h2>
         <div className="sd-bk-by">{book.author}</div>
@@ -122,7 +122,7 @@ function SoonCard() {
       <div className="sd-bk-body">
         <span className="sd-fm-kicker">{t('Tez orada')}</span>
         <h2>{t('Ikkinchi kitob')}</h2>
-        <p className="sd-bk-desc">{t('Yangi mualliflik kitobimiz tayyorlanmoqda. Chiqishi bilan shu yerda paydo bo‘ladi.')}</p>
+        <p className="sd-bk-desc">{t('Navbatdagi kitobimiz tayyorlanmoqda. Chiqishi bilan shu yerda paydo bo‘ladi.')}</p>
         <div className="sd-bk-actions">
           <a className="sd-soft" href="https://t.me/SATbyUsmon" target="_blank" rel="noopener noreferrer">
             <Send /> {t('Telegramda kuzatib boring')}

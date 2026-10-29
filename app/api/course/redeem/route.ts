@@ -57,7 +57,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Kod tizimi hali sozlanmagan (COURSE_CODE_SECRET).' }, { status: 503 })
   }
   const parsed = verifyCourseCode(raw)
-  if (!parsed) return NextResponse.json({ error: "Kod noto'g'ri yoki o'chirilgan. Guruhda berilgan kodni aynan shunday kiriting." }, { status: 400 })
+  if (!parsed) {
+    return NextResponse.json(
+      {
+        error:
+          "Kod mos kelmadi. Botdagi kodni qo'lda yozmang — kod ustiga bosing (u avtomatik nusxalanadi) va shu yerga joylang. Bo'lmasa, guruhdagi umumiy kodni (NOYABR-… yoki DEKABR-…) kiriting.",
+      },
+      { status: 400 },
+    )
+  }
 
   const { data: taken, error } = await supabase
     .from('course_memberships')

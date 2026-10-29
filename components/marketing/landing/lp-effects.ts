@@ -22,6 +22,9 @@ export function startLpEffects(root: HTMLElement, lang: Lang): () => void {
   /* ---------------- book preview lightbox ---------------- */
   cleanups.push(startBookPreview(root))
 
+  /* ---------------- video lessons: rotating thumbnails + in-site player ---------------- */
+  cleanups.push(startVideoLessons(root, lang, reduce))
+
   /* ---------------- scroll reveal + count-up ---------------- */
   if ('IntersectionObserver' in window && !reduce) {
     const sel = '.f-card,.c-card,.p-card,.r-card,.exam,.dm,.stats,.cta,.q,.sec-head,.hero-checks,.avatars,.bk-main,.bk-soon,.bk-peek'
@@ -532,5 +535,79 @@ function startBookPreview(root: HTMLElement): () => void {
     lb.removeEventListener('touchstart', onTouchStart)
     lb.removeEventListener('touchend', onTouchEnd)
     if (isOpen) document.body.style.overflow = ''
+  }
+}
+
+/** The lesson videos shown on the landing (rotating thumbnails on the "Video Lessons" card). */
+export const LP_VIDEOS = ['Uk7CSYP1Bc8', '43jMZd4mHRY', 'qtGuDP16NYg']
+
+/**
+ * "Video Lessons" card: the three thumbnails cross-fade every few seconds; a tap opens an in-site
+ * YouTube player (phone and desktop alike) with the other lessons underneath to switch between.
+ */
+function startVideoLessons(root: HTMLElement, lang: Lang, reduce: boolean): () => void {
+  const card = root.querySelector<HTMLElement>('.vid-rot')
+  let timer: number | undefined
+  let idx = 0
+  const show = (n: number) => {
+    if (!card) return
+    idx = (n + LP_VIDEOS.length) % LP_VIDEOS.length
+    card.querySelectorAll('.vr-imgs img').forEach((im, i) => im.classList.toggle('on', i === idx))
+    card.querySelectorAll('.vr-dots i').forEach((d, i) => d.classList.toggle('on', i === idx))
+    card.dataset.lpVideo = String(idx)
+  }
+  if (card && !reduce) timer = window.setInterval(() => show(idx + 1), 3200)
+
+  let modal: HTMLElement | null = null
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') close()
+  }
+  const close = () => {
+    if (!modal) return
+    modal.remove()
+    modal = null
+    document.documentElement.style.overflow = ''
+    document.removeEventListener('keydown', onKey)
+  }
+  const play = (n: number) => {
+    if (!modal) return
+    const id = LP_VIDEOS[n]
+    const frame = modal.querySelector<HTMLElement>('.vm-frame')!
+    frame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1" title="${lpT('Video dars', lang)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe>`
+    modal.querySelectorAll('.vm-list button').forEach((b, i) => b.classList.toggle('on', i === n))
+  }
+  const open = (n: number) => {
+    close()
+    modal = document.createElement('div')
+    modal.className = 'vm'
+    modal.setAttribute('role', 'dialog')
+    modal.setAttribute('aria-modal', 'true')
+    modal.innerHTML = `<div class="vm-box">
+      <div class="vm-head"><b>${lpT('Video darslar', lang)}</b><button type="button" class="vm-x" aria-label="${lpT('Videoni yopish', lang)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="vm-frame"></div>
+      <div class="vm-list">${LP_VIDEOS.map((id, i) => `<button type="button" data-vm="${i}" aria-label="${i + 1}"><img src="https://i.ytimg.com/vi/${id}/mqdefault.jpg" alt="" loading="lazy" draggable="false"><span>${i + 1}</span></button>`).join('')}</div>
+    </div>`
+    modal.addEventListener('click', (e) => {
+      const t = e.target as Element
+      const b = t.closest<HTMLElement>('[data-vm]')
+      if (b) return play(Number(b.dataset.vm))
+      if (t.closest('.vm-x') || t === modal) close()
+    })
+    root.appendChild(modal)
+    document.documentElement.style.overflow = 'hidden'
+    document.addEventListener('keydown', onKey)
+    play(n)
+  }
+  const onClick = (e: Event) => {
+    const t = (e.target as Element).closest<HTMLElement>('[data-lp-video]')
+    if (!t) return
+    e.preventDefault()
+    open(Number(card?.dataset.lpVideo ?? t.dataset.lpVideo ?? 0) || 0)
+  }
+  root.addEventListener('click', onClick)
+  return () => {
+    window.clearInterval(timer)
+    root.removeEventListener('click', onClick)
+    close()
   }
 }

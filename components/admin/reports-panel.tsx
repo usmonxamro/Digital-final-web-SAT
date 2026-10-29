@@ -39,7 +39,7 @@ function QuestionPreview({ questionId, fallbackPrompt, defaultOpen }: { question
   }, [open, q, questionId])
 
   const reading = q ? q.kind === 'reading' || (!q.kind && !!q.passage) : false
-  const textCls = reading ? 'text-[15.5px] font-semibold leading-[1.5] text-[#111]' : 'text-[15.5px] leading-[1.6] text-[#111]'
+  const textCls = reading ? 'q-ink text-[15.5px] font-semibold leading-[1.5] text-ink' : 'q-ink text-[15.5px] leading-[1.6] text-ink'
 
   return (
     <div className="mt-2.5">
@@ -63,15 +63,15 @@ function QuestionPreview({ questionId, fallbackPrompt, defaultOpen }: { question
           {!q && state !== 'loading' && (
             <div>
               {state === 'error' && <p className="mb-2 text-[11.5px] font-semibold text-amber-700">Savolni bazadan olib bo‘lmadi (o‘chirilgan yoki ID yo‘q) — xabardagi matn:</p>}
-              <div className="text-[15px] leading-relaxed text-[#111]">
+              <div className="q-ink text-[15px] leading-relaxed text-ink">
                 <RichText text={fallbackPrompt} />
               </div>
             </div>
           )}
 
           {q && (
-            <div className="mx-auto max-w-[760px]">
-              <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-bold text-ink-faint">
+            <div className={`mx-auto ${reading ? 'max-w-[1100px]' : 'max-w-[760px]'}`}>
+              <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px] font-bold text-ink-faint">
                 {q.domain && <span>{q.domain}</span>}
                 {q.difficulty && <span className="uppercase">{q.difficulty}</span>}
                 <span className="rounded-full bg-green-mist px-2 py-px text-green-deep">
@@ -79,47 +79,56 @@ function QuestionPreview({ questionId, fallbackPrompt, defaultOpen }: { question
                 </span>
               </div>
 
-              {reading && q.passage && (
-                <div className="mb-3 whitespace-pre-line border-l-4 border-[#0e7c75] pl-4 font-serif text-[15.5px] leading-[1.6] text-[#111]">{q.passage}</div>
-              )}
-              {reading && q.image && <QuestionImage src={q.image} scale={q.layout?.img?.scale} plain />}
+              {/* Reading & Writing: passage on the left, question + options on the right (as in Bluebook) */}
+              <div className={reading ? 'grid gap-5 md:grid-cols-2 md:gap-0' : ''}>
+                {reading && (q.passage || q.image) && (
+                  <div className="min-w-0 md:border-r md:border-line md:pr-6">
+                    {q.passage && <div className="whitespace-pre-line font-serif text-[15.5px] leading-[1.65] text-ink">{q.passage}</div>}
+                    {q.image && <QuestionImage src={q.image} scale={q.layout?.img?.scale} plain />}
+                  </div>
+                )}
 
-              <div className="mb-3">
-                <QuestionStimulus question={q} withFigure={!reading} textClassName={textCls} plain />
-              </div>
+                <div className={reading ? 'min-w-0 md:pl-6' : ''}>
+                  <div className="mb-3">
+                    <QuestionStimulus question={q} withFigure={!reading} textClassName={textCls} plain />
+                  </div>
 
-              {q.type === 'gridin' ? (
-                <div className="mt-2 h-12 w-44 rounded-lg border-[1.5px] border-[#777] bg-white" />
-              ) : (
-                <div className="flex flex-col gap-2.5">
-                  {(q.choices ?? []).map((c) => {
-                    const right = q.correct === c.id
-                    return (
-                      <div
-                        key={c.id}
-                        className={`flex min-h-[44px] items-center gap-3.5 rounded-lg border-[1.5px] px-3.5 py-2 ${reading ? 'font-serif' : 'font-sans'} ${
-                          right ? 'border-[#16a34a] bg-green-50' : 'border-[#777] bg-white'
-                        }`}
-                      >
-                        <span
-                          className={`flex size-6 shrink-0 items-center justify-center rounded-full border-[1.5px] font-sans text-sm font-bold ${
-                            right ? 'border-[#16a34a] bg-[#16a34a] text-white' : 'border-[#777] text-[#111]'
-                          }`}
-                        >
-                          {c.id}
-                        </span>
-                        <span className="text-[15px] text-[#111]">
-                          <ChoiceContent choice={c} scale={q.layout?.choiceImg?.[c.id]?.scale} plain />
-                        </span>
-                      </div>
-                    )
-                  })}
+                  {q.type === 'gridin' ? (
+                    <div className="mt-2 h-12 w-44 rounded-lg border-[1.5px] border-line" />
+                  ) : (
+                    <div className="flex flex-col gap-2.5">
+                      {(q.choices ?? []).map((c) => {
+                        const right = q.correct === c.id
+                        return (
+                          <div
+                            key={c.id}
+                            className={`flex min-h-[44px] items-center gap-3.5 rounded-xl px-3.5 py-2 ${reading ? 'font-serif' : 'font-sans'} ${
+                              right
+                                ? 'border-2 border-[#16a34a] bg-[#16a34a]/10 shadow-[0_0_0_3px_rgba(22,163,74,.14)]'
+                                : 'border-[1.5px] border-ink-faint/60'
+                            }`}
+                          >
+                            <span
+                              className={`flex size-6 shrink-0 items-center justify-center rounded-full border-[1.5px] font-sans text-sm font-bold ${
+                                right ? 'border-[#16a34a] bg-[#16a34a] text-white' : 'border-ink-faint text-ink'
+                              }`}
+                            >
+                              {c.id}
+                            </span>
+                            <span className="q-ink text-[15px] text-ink">
+                              <ChoiceContent choice={c} scale={q.layout?.choiceImg?.[c.id]?.scale} plain />
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
               {q.explanation && (
                 <details className="mt-3 text-[12.5px] text-ink-soft">
                   <summary className="cursor-pointer font-bold text-ink">Yechim (explanation)</summary>
-                  <div className="mt-1.5 text-[13px] leading-relaxed text-[#111]">
+                  <div className="q-ink mt-1.5 text-[13px] leading-relaxed text-ink">
                     <RichText text={q.explanation} />
                   </div>
                 </details>

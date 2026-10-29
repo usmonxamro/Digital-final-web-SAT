@@ -729,3 +729,122 @@ html[data-sp-theme="dark"] .lp .stats{background:#241b18}
 .lp .bk-steps .btn{padding:15px 28px;font-size:16px}
 @media(max-width:1020px){.lp .bk-steps ol{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.lp .bk-steps{padding:22px 16px;border-radius:22px}.lp .bk-steps ol{grid-template-columns:1fr}.lp .bk-steps .btn{width:100%}}
+
+/* ================= v-oct30: glow button, domain icons, video card, mini dashboard, Telegram, mobile hero ================= */
+/* "Bepul boshlash": a faint light runs along the inner edge of the button */
+@property --lpa{syntax:'<angle>';inherits:false;initial-value:0deg}
+.lp .btn-glow{isolation:isolate}
+.lp .btn-glow::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.6px;pointer-events:none;z-index:1;
+  background:conic-gradient(from var(--lpa),transparent 0 62%,rgba(255,255,255,.15) 70%,rgba(255,255,255,.95) 80%,rgba(255,240,220,.35) 88%,transparent 94%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+  animation:lp-glow-spin 3.6s linear infinite;filter:drop-shadow(0 0 3px rgba(255,255,255,.7))}
+@keyframes lp-glow-spin{to{--lpa:360deg}}
+
+/* Question bank: premium round domain icons */
+.lp .qb div{gap:10px;padding:5px 0}
+.lp .qb i.dom{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;position:relative;flex:none;
+  box-shadow:0 3px 8px -2px var(--dsh),inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 4px rgba(0,0,0,.18)}
+.lp .qb i.dom::after{content:"";position:absolute;left:4px;top:2px;width:14px;height:7px;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0))}
+.lp .qb i.dom svg{width:15px;height:15px;position:relative;z-index:1}
+.lp .qb .d-alg{background:radial-gradient(circle at 30% 25%,#7fb0ff,#2563eb 60%,#1e40af);--dsh:rgba(37,99,235,.55)}
+.lp .qb .d-adv{background:radial-gradient(circle at 30% 25%,#ffd27a,#f59e0b 60%,#c2710c);--dsh:rgba(245,158,11,.55)}
+.lp .qb .d-ps{background:radial-gradient(circle at 30% 25%,#6ee7c1,#10b981 60%,#047857);--dsh:rgba(16,185,129,.55)}
+.lp .qb .d-da{background:radial-gradient(circle at 30% 25%,#c4b0ff,#7c5cdb 60%,#5b3fb8);--dsh:rgba(124,92,219,.55)}
+html[data-sp-theme="dark"] .lp .qb{background:#18233f;color:#e8edff}
+html[data-sp-theme="dark"] .lp .qb div{border-color:#24304f}
+html[data-sp-theme="dark"] .lp .qb em{color:#9aa6c6}
+
+/* Video Lessons card: cross-fading thumbnails of the real lessons */
+.lp .vid-rot{display:block;width:100%;height:100%;border:0;padding:0;cursor:pointer;background:#0f1525;border-radius:14px;font:inherit;color:#fff}
+.lp .vr-imgs,.lp .vr-imgs img,.lp .vr-shade{position:absolute;inset:0;width:100%;height:100%}
+.lp .vr-imgs img{object-fit:cover;opacity:0;transform:scale(1.08);transition:opacity .9s ease,transform 3.6s ease-out;user-select:none}
+.lp .vr-imgs img.on{opacity:1;transform:scale(1)}
+.lp .vr-shade{background:linear-gradient(180deg,rgba(8,12,24,.05) 30%,rgba(8,12,24,.62))}
+.lp .vr-play{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(255,255,255,.18);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 0 0 1.5px rgba(255,255,255,.7),0 10px 26px rgba(0,0,0,.35);transition:transform .25s}
+.lp .vr-play svg{margin-left:3px}
+.lp .vr-play::before{content:"";position:absolute;inset:-2px;border-radius:50%;box-shadow:0 0 0 0 rgba(255,255,255,.5);animation:lp-vpulse 2.4s ease-out infinite}
+@keyframes lp-vpulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.45)}100%{box-shadow:0 0 0 16px rgba(255,255,255,0)}}
+.lp .vid-rot:hover .vr-play{transform:scale(1.08)}
+.lp .vr-dots{position:absolute;right:12px;bottom:12px;display:flex;gap:5px}
+.lp .vr-dots i{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.5);transition:width .3s,background .3s}
+.lp .vr-dots i.on{width:16px;background:#fff}
+.lp .vr-live{position:absolute;left:12px;bottom:10px;display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.02em;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.lp .vr-live b{width:7px;height:7px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.3);animation:lp-blink 1.6s ease-in-out infinite}
+@keyframes lp-blink{50%{opacity:.35}}
+.lp .vid-rot~.f-badge,.lp .f-prev:has(.vid-rot) .f-badge{opacity:0;pointer-events:none}
+
+/* in-site video player */
+.lp .vm{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(6,9,20,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:lp-vm-in .22s ease-out}
+@keyframes lp-vm-in{from{opacity:0}to{opacity:1}}
+.lp .vm-box{width:min(960px,100%);background:#0f1525;border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.08);animation:lp-vm-pop .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes lp-vm-pop{from{transform:translateY(14px) scale(.97);opacity:0}}
+.lp .vm-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 12px 18px;color:#fff;font-size:15px}
+.lp .vm-x{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;display:grid;place-items:center;cursor:pointer}
+.lp .vm-x:hover{background:rgba(255,255,255,.2)}
+.lp .vm-frame{aspect-ratio:16/9;background:#000}
+.lp .vm-frame iframe{width:100%;height:100%;border:0;display:block}
+.lp .vm-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px}
+.lp .vm-list button{position:relative;border:0;padding:0;border-radius:10px;overflow:hidden;cursor:pointer;aspect-ratio:16/9;background:#000;opacity:.6;transition:opacity .2s,box-shadow .2s;box-shadow:0 0 0 2px transparent}
+.lp .vm-list button.on,.lp .vm-list button:hover{opacity:1}
+.lp .vm-list button.on{box-shadow:0 0 0 2px var(--orange)}
+.lp .vm-list img{width:100%;height:100%;object-fit:cover;display:block}
+.lp .vm-list span{position:absolute;left:6px;top:6px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center}
+@media(max-width:639px){.lp .vm{padding:0;align-items:center}.lp .vm-box{border-radius:0;border:0}.lp .vm-list{gap:8px;padding:10px}}
+
+/* Detailed Analytics: a small, light dashboard */
+.lp .ad{position:absolute;inset:10px 10px 10px 70px;display:flex;flex-direction:column;gap:6px;background:var(--card);border-radius:12px;padding:10px 12px;box-shadow:0 4px 14px rgba(30,58,138,.07);color:var(--navy)}
+.lp .ad-top{display:flex;align-items:baseline;gap:7px}
+.lp .ad-k{font-size:10px;font-weight:600;color:var(--muted)}
+.lp .ad-v{font-size:19px;font-weight:800;letter-spacing:-.02em;margin-left:auto}
+.lp .ad-up{font-size:10px;font-weight:800;color:#059669;background:rgba(16,185,129,.14);padding:2px 7px;border-radius:999px}
+.lp .ad-ch{width:100%;flex:1;min-height:0;color:var(--navy);overflow:visible}
+.lp .ad-line{stroke-dasharray:1;stroke-dashoffset:0}
+.lp .f-card.in .ad-line{animation:lp-ad-draw 1.6s .25s cubic-bezier(.4,.1,.2,1) backwards}
+.lp .f-card.in .ad-area{animation:lp-ad-fade 1s .9s ease backwards}
+.lp .f-card.in .ad-dot{animation:lp-ad-pop .45s 1.7s cubic-bezier(.3,1.6,.5,1) backwards}
+@keyframes lp-ad-draw{from{stroke-dashoffset:1}}
+@keyframes lp-ad-fade{from{opacity:0}}
+@keyframes lp-ad-pop{from{transform:scale(0);transform-origin:198px 8px}}
+.lp .ad-kpi{display:flex;gap:6px;flex-wrap:nowrap}
+.lp .ad-kpi span{flex:1;display:flex;align-items:center;gap:4px;font-size:9.5px;font-weight:600;color:var(--muted);white-space:nowrap;background:var(--bg);border-radius:7px;padding:4px 6px}
+.lp .ad-kpi i{width:6px;height:6px;border-radius:50%;flex:none}
+.lp .ad-kpi b{color:var(--navy);margin-left:auto;font-weight:800}
+html[data-sp-theme="dark"] .lp .ad{background:#18233f;box-shadow:none}
+html[data-sp-theme="dark"] .lp .ad-kpi span{background:#10182f}
+@media(max-width:639px){.lp .ad{left:60px}}
+
+/* Telegram: glossy iOS-like icon with soft pulse rings, opens @satbyusmon */
+.lp .c-deco .tg-big{pointer-events:auto;width:60px;height:60px;background:none;box-shadow:none;display:block;cursor:pointer;text-decoration:none}
+.lp .tg-ball{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;z-index:2;
+  background:radial-gradient(circle at 32% 26%,#8fdcff 0%,#3fb6ec 34%,#1f93d6 70%,#1676b5 100%);
+  box-shadow:0 14px 28px -8px rgba(31,147,214,.6),0 3px 8px rgba(22,118,181,.35),inset 0 2px 1px rgba(255,255,255,.6),inset 0 -6px 12px rgba(10,70,120,.35);transition:transform .3s cubic-bezier(.3,1.5,.5,1)}
+.lp .tg-ball::before{content:"";position:absolute;left:14%;top:7%;width:72%;height:42%;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.65),rgba(255,255,255,0));pointer-events:none}
+.lp .tg-ball svg{position:relative;width:30px;height:30px;margin-left:-3px;filter:drop-shadow(0 2px 2px rgba(10,60,110,.35))}
+.lp .tg-ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(63,182,236,.55);animation:lp-tg-ring 2.8s ease-out infinite;z-index:1}
+.lp .tg-ring.r2{animation-delay:1.4s}
+@keyframes lp-tg-ring{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.75);opacity:0}}
+.lp .tg-big:hover .tg-ball{transform:scale(1.1) rotate(-6deg)}
+@media(max-width:1100px){
+  .lp .c-deco{display:block;width:auto;left:auto;right:16px;top:16px}
+  .lp .c-deco>svg{display:none}
+  .lp .c-deco .tg-big{position:relative;width:46px;height:46px;top:0}
+  .lp .tg-ball svg{width:23px;height:23px}
+}
+@media(prefers-reduced-motion:reduce){.lp .tg-ring,.lp .btn-glow::before,.lp .vr-play::before,.lp .vr-live b{animation:none}.lp .tg-ring{display:none}}
+
+/* PHONE: the first screen is only the headline, buttons and the demo; the feature ticks come after a scroll */
+@media(max-width:639px){
+  .lp .hero>.hero-grid{min-height:calc(100svh - 56px - 30px);align-content:center}
+  .lp .hero-checks{margin-top:30px}
+  /* header: only "Kirish" */
+  .lp .nav-r .nav-signup{display:none}
+}
+.lp .nav-r .sp-theme{width:34px;height:34px}.lp .nav-r .sp-theme svg{width:16px;height:16px}
+.lp .qb div{white-space:nowrap;gap:8px;padding:4px 0}
+.lp .qb i.dom{width:21px;height:21px}.lp .qb i.dom svg{width:13px;height:13px}
+.lp .ad-k{white-space:nowrap}
+.lp .vm-box{width:min(960px,100%,calc((100svh - 190px) * 16 / 9))}
+.lp .vm-list{grid-template-columns:repeat(3,minmax(0,150px));justify-content:start}
+@media(max-width:639px){.lp .vm-box{width:100%}.lp .vm-list{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:639px){.lp .hero>.hero-grid{align-content:start;padding-top:8px}}

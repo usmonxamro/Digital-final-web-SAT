@@ -115,8 +115,10 @@ export default function SkillDrillPage({ params }: { params: Promise<{ domain: s
     )
   }
 
+  const reading = !!question.passage
+
   return (
-    <div className="max-w-[640px]">
+    <div className={reading ? 'max-w-[1120px]' : 'max-w-[680px]'}>
       <Link href="/dashboard/question-bank" className="inline-flex items-center gap-1.5 text-sp-text-muted text-[13px] font-semibold mb-5">
         <ArrowLeft size={14} /> Savol bankiga qaytish
       </Link>
@@ -133,63 +135,69 @@ export default function SkillDrillPage({ params }: { params: Promise<{ domain: s
         />
       </div>
 
-      <div className="sp-glass rounded-2xl p-6">
+      <div className="sp-glass rounded-2xl p-5 sm:p-6">
         {question.difficulty && (
           <span className="inline-block text-[10.5px] font-bold text-sp-text-muted bg-sp-input px-2 py-0.5 rounded-md mb-3">
             {question.difficulty.toUpperCase()}
           </span>
         )}
 
-        {question.passage && (
-          <p className="text-[13.5px] leading-relaxed text-sp-text-muted mb-4 pb-4 border-b border-sp-border">
-            {question.passage}
-          </p>
-        )}
+        {/* Reading & Writing: passage on the left, question + answers on the right (stacked on phones) */}
+        <div className={reading ? 'grid gap-5 md:grid-cols-2 md:gap-0' : ''}>
+          {reading && (
+            <div className="min-w-0 border-b border-sp-border pb-4 md:max-h-[64vh] md:overflow-y-auto md:border-b-0 md:border-r md:pb-0 md:pr-6">
+              <p className="whitespace-pre-line font-serif text-[15.5px] leading-[1.7] text-sp-text">{question.passage}</p>
+            </div>
+          )}
 
-        {question.equations?.map((eq, i) => (
-          <div key={i} className="my-2 text-sp-text">
-            <MathTex tex={eq} display />
-          </div>
-        ))}
-        <p className="whitespace-pre-line text-[15px] font-semibold text-sp-text mb-1"><MixedText text={question.prompt} /></p>
+          <div className={reading ? 'min-w-0 md:pl-6' : ''}>
+            {question.equations?.map((eq, i) => (
+              <div key={i} className="my-2 text-sp-text">
+                <MathTex tex={eq} display />
+              </div>
+            ))}
+            <p className="whitespace-pre-line text-[15.5px] font-semibold leading-[1.55] text-sp-text mb-1"><MixedText text={question.prompt} /></p>
 
-        {question.type === 'gridin' ? (
-          <input
-            value={gridValue}
-            onChange={(e) => setGridValue(e.target.value)}
-            placeholder="Javobingizni kiriting"
-            className="w-full mt-4 px-3.5 py-3 rounded-[10px] border border-sp-border bg-sp-input text-sp-text text-[14.5px] focus:outline-none focus:border-sp-orange"
-          />
-        ) : (
-          <div className="mt-4 space-y-2.5">
-            {question.choices?.map((c) => {
-              const selected = answers[index] === c.id
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => selectMcq(c.id)}
-                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border text-left text-[13.5px] font-medium transition-all duration-200 ${
-                    selected
-                      ? 'border-sp-orange bg-sp-orange/[0.15] text-sp-text shadow-[0_0_15px_rgba(255,102,0,0.2)]'
-                      : 'border-sp-border text-sp-text-muted hover:border-sp-orange/50 hover:bg-sp-orange/[0.05]'
-                  }`}
-                >
-                  <span
-                    className={`w-8 h-8 rounded-full border flex items-center justify-center text-[13px] font-bold shrink-0 ${
-                      selected ? 'bg-sp-orange text-[#1A1200] border-sp-orange' : 'border-sp-border bg-sp-input text-sp-text'
-                    }`}
-                  >
-                    {c.id}
-                  </span>
-                  <span className="flex min-w-0 flex-col items-start gap-1.5">
-                    {c.image && <ChoiceImage src={c.image} scale={question.layout?.choiceImg?.[c.id]?.scale} />}
-                    {c.tex ? <MathTex tex={c.tex} /> : c.text}
-                  </span>
-                </button>
-              )
-            })}
+            {question.type === 'gridin' ? (
+              <input
+                value={gridValue}
+                onChange={(e) => setGridValue(e.target.value)}
+                placeholder="Javobingizni kiriting"
+                className="w-full mt-4 px-3.5 py-3 rounded-[10px] border border-sp-border bg-sp-input text-sp-text text-[14.5px] focus:outline-none focus:border-[#16a34a]"
+              />
+            ) : (
+              <div className="mt-4 space-y-2.5">
+                {question.choices?.map((c) => {
+                  const selected = answers[index] === c.id
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => selectMcq(c.id)}
+                      aria-pressed={selected}
+                      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left text-[14.5px] font-medium text-sp-text transition-all duration-200 ${reading ? 'font-serif' : ''} ${
+                        selected
+                          ? 'border-2 border-[#16a34a] bg-[#16a34a]/[0.10] shadow-[0_0_0_4px_rgba(22,163,74,0.14)]'
+                          : 'border border-sp-border hover:border-[#16a34a]/60 hover:bg-[#16a34a]/[0.05]'
+                      }`}
+                    >
+                      <span
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-sans text-[13px] font-bold shrink-0 transition-colors ${
+                          selected ? 'bg-[#16a34a] text-white border-2 border-[#16a34a]' : 'border border-sp-border bg-sp-input text-sp-text'
+                        }`}
+                      >
+                        {c.id}
+                      </span>
+                      <span className="flex min-w-0 flex-col items-start gap-1.5 text-sp-text">
+                        {c.image && <ChoiceImage src={c.image} scale={question.layout?.choiceImg?.[c.id]?.scale} />}
+                        {c.tex ? <MathTex tex={c.tex} /> : c.text}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       <button

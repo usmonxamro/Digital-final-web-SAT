@@ -1,7 +1,7 @@
 import { SAT_SQB, BOOK_BOT_URL } from '@/lib/books'
 
 /**
- * Landing's "Mualliflik kitobi" section (static markup, like LP_BODY) + its RU/EN texts.
+ * Landing's free book section (static markup, like LP_BODY) + its RU/EN texts.
  * Every visible text goes through T(uz, ru, en): the Uzbek text is both the markup and the translation key,
  * so the markup and the dictionaries can never drift apart. Behaviour (preview lightbox) lives in lp-effects.ts.
  */
@@ -49,8 +49,8 @@ export const LP_BOOKS = `
 <section class="books" id="books">
   <div class="container">
     <div class="sec-head">
-      <span class="pill"><span class="dot"></span>${T('Mualliflik kitobi', 'Авторская книга', 'Author’s book')}</span>
-      <h2>${T('Usmon Xamroyevning SAT Math kitobi', 'Книга по SAT Math от Усмона Хамроева', 'The SAT Math book by Usmon Xamroyev')}</h2>
+      <span class="pill"><span class="dot"></span>${T('Bepul kitob', 'Бесплатная книга', 'Free book')}</span>
+      <h2>${T('Usmon Xamroyev tomonidan tuzilgan SAT Math kitobi', 'Книга по SAT Math, составленная Усмоном Хамроевым', 'An SAT Math book compiled by Usmon Xamroyev')}</h2>
       <p>${T(
         'Saralangan SAT Math savollari 4 ta domen va 19 ta mavzu bo‘yicha. Kitob bepul: uni Telegram bot orqali 5 ta do‘stingizni taklif qilib olasiz.',
         'Отобранные вопросы SAT Math по 4 доменам и 19 темам. Книга бесплатная: вы получите её в Telegram-боте, пригласив 5 друзей.',
@@ -93,7 +93,7 @@ export const LP_BOOKS = `
         <span class="bk-soon-tag">${T('Tez orada', 'Скоро', 'Coming soon')}</span>
         <h3>${T('Ikkinchi kitob', 'Вторая книга', 'Second book')}</h3>
         <p>${T(
-          'Yangi mualliflik kitobimiz ustida ishlayapmiz. Chiqishi bilan shu yerda e‘lon qilamiz.',
+          'Navbatdagi kitobimiz ustida ishlayapmiz. Chiqishi bilan shu yerda e‘lon qilamiz.',
           'Мы работаем над новой авторской книгой. Как только она выйдет — объявим здесь.',
           'We’re working on our next book. We’ll announce it here as soon as it’s out.',
         )}</p>

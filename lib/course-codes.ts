@@ -17,18 +17,46 @@ export function signCourseCode(slug: string, tgId: number, secret: string): stri
   return createHmac('sha256', secret).update(`${slug}:${tgId}`).digest('hex').slice(0, 10).toUpperCase()
 }
 
+/**
+ * Students often retype the code by hand and mix up look-alike characters:
+ * 0 ↔ O, 1 ↔ I ↔ L, and dashes from phone keyboards (– —). The slug and the
+ * signature have only one valid reading, the base36 Telegram-id part can have
+ * several, so every reading of the ambiguous characters is tried (capped).
+ */
+const AMBIG: Record<string, string[]> = { '0': ['0', 'O'], O: ['O', '0'], '1': ['1', 'I', 'L'], I: ['I', '1', 'L'], L: ['L', '1', 'I'] }
+
+function idReadings(part: string, cap = 512): string[] {
+  let out = ['']
+  for (const ch of part) {
+    const opts = AMBIG[ch] ?? [ch]
+    const next: string[] = []
+    for (const p of out) for (const o of opts) next.push(p + o)
+    out = next.slice(0, cap)
+  }
+  return out
+}
+
 export function verifyCourseCode(raw: string): { slug: string; tgId: number } | null {
-  const secret = process.env.COURSE_CODE_SECRET
+  const secret = process.env.COURSE_CODE_SECRET?.trim()
   if (!secret) return null
-  const m = raw.trim().toUpperCase().replace(/\s+/g, '').match(/^([A-Z0-9]{2,8})-([0-9A-Z]{1,12})-([0-9A-F]{10})$/)
+  const clean = raw
+    .trim()
+    .toUpperCase()
+    .replace(/[‐-―−_]/g, '-')
+    .replace(/\s+/g, '')
+  const m = clean.match(/^([A-Z0-9]{2,8})-([0-9A-Z]{1,12})-([0-9A-Z]{10})$/)
   if (!m) return null
-  const slug = m[1].toLowerCase()
+  // Slug: letters only ("N0V" → "NOV"). Signature: hex only ("O" → "0", "I"/"L" → "1").
+  const slug = m[1].replace(/0/g, 'O').replace(/1/g, 'I').toLowerCase()
   if (!groupBySlug(slug)) return null
-  const tgId = parseInt(m[2], 36)
-  if (!Number.isSafeInteger(tgId) || tgId <= 0) return null
-  const expected = signCourseCode(slug, tgId, secret)
-  const a = Buffer.from(expected)
-  const b = Buffer.from(m[3])
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return null
-  return { slug, tgId }
+  const sig = m[3].replace(/O/g, '0').replace(/[IL]/g, '1')
+  if (!/^[0-9A-F]{10}$/.test(sig)) return null
+  const b = Buffer.from(sig)
+  for (const idPart of idReadings(m[2])) {
+    const tgId = parseInt(idPart, 36)
+    if (!Number.isSafeInteger(tgId) || tgId <= 0) continue
+    const a = Buffer.from(signCourseCode(slug, tgId, secret))
+    if (a.length === b.length && timingSafeEqual(a, b)) return { slug, tgId }
+  }
+  return null
 }
