@@ -848,3 +848,34 @@ html[data-sp-theme="dark"] .lp .ad-kpi span{background:#10182f}
 .lp .vm-list{grid-template-columns:repeat(3,minmax(0,150px));justify-content:start}
 @media(max-width:639px){.lp .vm-box{width:100%}.lp .vm-list{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:639px){.lp .hero>.hero-grid{align-content:start;padding-top:8px}}
+
+/* ================= v-oct30b: "Real exam" mock — passage left, question right; readable in dark mode ================= */
+.lp .exam{color:var(--navy)}
+.lp .exam-cols{grid-template-columns:1.05fr 1fr}
+.lp .pane-p{padding:16px}
+.lp .pane-p .passage{font-size:14.5px;line-height:1.75;color:var(--navy);opacity:.88}
+.lp .pane .qt{font:600 14.5px/1.5 var(--font-sans),'Inter',system-ui,sans-serif;color:var(--navy);margin:6px 0 14px}
+.lp .ans{align-items:center;gap:12px;color:var(--navy);background:var(--card);transition:border-color .2s,background .2s}
+.lp .ans b{width:24px;height:24px;flex:none;border-radius:50%;border:1.5px solid var(--muted);display:grid;place-items:center;font-size:12px}
+.lp .ans.sel{background:rgba(22,163,74,.10);border:2px solid #16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.14);padding:9px 11px}
+.lp .ans.sel b{background:#16a34a;border-color:#16a34a;color:#fff}
+html[data-sp-theme="dark"] .lp .exam{background:#121a33;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+html[data-sp-theme="dark"] .lp .pane,html[data-sp-theme="dark"] .lp .ans{border-color:#2a3558}
+html[data-sp-theme="dark"] .lp .ans{background:#16203d}
+html[data-sp-theme="dark"] .lp .ans.sel{background:rgba(22,163,74,.16);border-color:#22c55e}
+html[data-sp-theme="dark"] .lp .ans.sel b{background:#22c55e;border-color:#22c55e;color:#06210f}
+html[data-sp-theme="dark"] .lp .exam-foot .nb span{background:#1c2748;color:#e8edff}
+html[data-sp-theme="dark"] .lp .exam-foot .nb .nx{background:#1d5ff2;color:#fff}
+@media(max-width:639px){.lp .exam-cols{grid-template-columns:1fr}.lp .pane .qt{font-size:13px}.lp .ans.sel{padding:7px 9px}}
+
+/* hero Desmos demo: real Inter (the loaded webfont), slightly heavier so it stays crisp when scaled down */
+.lp .dm-stage{font-family:var(--font-sans),'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.lp .dm .qt{font:500 14.5px/1.6 var(--font-sans),'Inter',system-ui,sans-serif;color:#1e2540;letter-spacing:-.005em}
+.lp .dm .opt{font-family:var(--font-sans),'Inter',system-ui,sans-serif;font-weight:500;color:#1e2540}
+.lp .dm .ol{font-family:var(--font-sans),'Inter',sans-serif}
+.lp .dm .tb-l small,.lp .dm .bb-l{font-weight:600}
+
+/* language button: the landing's `.lp *{padding:0}` reset was squeezing it — give the content room again */
+.lp .sp-lang-btn{padding:0 13px 0 12px;gap:6px}
+.lp .sp-lang-menu{padding:5px}
+.lp .sp-lang-menu button{padding:9px 10px}
