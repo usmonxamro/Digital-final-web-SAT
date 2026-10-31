@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ExamHeader } from '@/components/exam-header'
 import { ExamFooter } from '@/components/exam-footer'
 import { QuestionView } from '@/components/question-view'
+import { ExamWatermark } from '@/components/exam-watermark'
 import { CalculatorPanel, CONTENT_SHIFT, MOBILE_SHEET_HEIGHT, PANEL_LEFT_GAP } from '@/components/calculator-panel'
 import { useIsMobile } from '@/lib/use-is-mobile'
 import { useStableCallback } from '@/lib/use-stable-callback'
@@ -809,6 +810,8 @@ function ExamEngine({
             registerHighlightTrigger={registerHighlight}
           />
         </main>
+        {/* faint "satbyusmon.com" over the question area — screenshots keep pointing to the site */}
+        <ExamWatermark {...(isMobile ? { fontSize: 18, gapX: 90, gapY: 80 } : {})} />
       </div>
 
       {/* Floating, draggable, always-mounted calculator — never re-inits Desmos */}

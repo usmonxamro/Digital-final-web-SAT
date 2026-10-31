@@ -10,6 +10,7 @@ import { QuestionImage } from '@/components/question-image'
 import { QuestionStimulus } from '@/components/question-stimulus'
 import { SITE_DOMAIN, SITE_URL, TG_PERSONAL } from '@/lib/contact'
 import type { Question } from '@/lib/test-data'
+import { ExamWatermark, WATERMARK_FONT_CSS } from '@/components/exam-watermark'
 
 /**
  * "Testni yuklab olish (PDF)": the finished mock's questions, ONE QUESTION PER PAGE, with the site's name on
@@ -252,6 +253,9 @@ function Frame({
           {children}
         </div>
       </div>
+
+      {/* faint "satbyusmon.com" over the question area (between header and footer) */}
+      <ExamWatermark fontSize={30} gapX={170} gapY={150} style={{ top: HEAD_H, bottom: FOOT_H }} />
 
       {/* ------------------------------ footer (like ExamFooter) ------------------------------ */}
       <div
@@ -541,7 +545,7 @@ function PageBody({ items }: { items: PdfItem[] }) {
 const PRINT_ROOT_ID = 'sat-print-root'
 const PRINT_STYLE_ID = 'sat-print-style'
 
-const PRINT_CSS = `
+const PRINT_CSS = WATERMARK_FONT_CSS + `
 ${FONT_CSS}
 .sat-pdf .font-serif { font-family: ${PDF_SERIF} !important; }
 .sat-pdf .font-sans { font-family: ${PDF_FONT} !important; }
@@ -576,7 +580,7 @@ export async function printTestPdf({ testTitle, items, onProgress, pack = true, 
   style.textContent = PRINT_CSS
   document.head.appendChild(style)
   try {
-    await Promise.all([400, 600, 700, 800].map((w) => document.fonts.load(`${w} 16px SATPrint`)))
+    await Promise.all([...[400, 600, 700, 800].map((w) => document.fonts.load(`${w} 16px SATPrint`)), document.fonts.load('700 26px SATWatermark')])
   } catch {
     /* falls back to Arial */
   }
