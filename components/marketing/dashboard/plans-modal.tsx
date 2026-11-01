@@ -3,9 +3,10 @@
 import { Gift } from 'lucide-react'
 import { useT } from '@/components/i18n-provider'
 import { useUser } from '@/components/marketing/dashboard/user-context'
+import { PRO_PLANS, formatSom } from '@/lib/pro-plans'
 
 /** Balansim → tariffs: Free (3 mocks/day) vs Pro (4 mocks/day + extras). */
-export function PlansModal({ onHelp }: { onHelp: () => void }) {
+export function PlansModal({ onUpgrade }: { onUpgrade: () => void }) {
   const t = useT()
   const user = useUser()
   const isPro = user.plan === 'premium'
@@ -35,7 +36,7 @@ export function PlansModal({ onHelp }: { onHelp: () => void }) {
         <div className={`sd-plan-card pro ${isPro ? 'cur' : ''}`}>
           {isPro && <span className="sd-plan-tag">{t('Joriy reja')}</span>}
           <h3>PRO</h3>
-          <div className="price">{t('Maxsus imkoniyatlar')}</div>
+          <div className="price">{formatSom(PRO_PLANS[0].price)} {t("so'm")} <small>/ {t('oy')}</small></div>
           <ul>
             <li>{t('Kuniga 4 ta mock')}</li>
             <li>{t('Barcha bepul imkoniyatlar')}</li>
@@ -50,9 +51,9 @@ export function PlansModal({ onHelp }: { onHelp: () => void }) {
         </h3>
         <p>{t('Kunlik limit guruh o‘quvchilari uchun 7 ta mock. Kurs guruhiga qo‘shilgan o‘quvchilar avtomatik ELITE rejimga o‘tadi.')}</p>
       </div>
-      {!isPro && (
-        <button className="sd-primary" onClick={onHelp}>
-          {t("PRO ga o'tish")}
+      {(!isPro || trial) && (
+        <button className="sd-primary" onClick={onUpgrade}>
+          {t(isPro ? 'PRO ni uzaytirish' : "PRO ga o'tish")}
         </button>
       )}
       <p style={{ marginTop: 14, marginBottom: 0, fontSize: 11.5 }}>{t("Kurs guruhlari vazifalari PRO ga kirmaydi — ular faqat Telegram bot kodi orqali ochiladi.")}</p>

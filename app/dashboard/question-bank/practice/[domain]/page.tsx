@@ -105,7 +105,7 @@ export default function SkillDrillPage({ params }: { params: Promise<{ domain: s
             </button>
             <Link
               href="/dashboard/question-bank"
-              className="px-4 py-2.5 rounded-lg text-[#1A1200] text-[13.5px] font-bold bg-sp-orange shadow-[0_4px_15px_rgba(255,102,0,0.25)] hover:shadow-[0_0_25px_rgba(255,102,0,0.5)] transition-all duration-300"
+              className="px-4 py-2.5 rounded-lg text-[#1A1200] text-[13.5px] font-bold bg-sp-orange shadow-[0_4px_15px_rgba(34,214,110,0.25)] hover:shadow-[0_0_25px_rgba(34,214,110,0.5)] transition-all duration-300"
             >
               Boshqa ko&apos;nikma
             </Link>
@@ -203,7 +203,7 @@ export default function SkillDrillPage({ params }: { params: Promise<{ domain: s
       <button
         onClick={next}
         disabled={submitting}
-        className="w-full mt-5 py-3 rounded-[11px] font-bold text-[14.5px] text-[#1A1200] flex items-center justify-center gap-2 disabled:opacity-60 bg-sp-orange shadow-[0_4px_15px_rgba(255,102,0,0.25)] hover:shadow-[0_0_25px_rgba(255,102,0,0.5)] hover:scale-[1.02] transition-all duration-300"
+        className="w-full mt-5 py-3 rounded-[11px] font-bold text-[14.5px] text-[#1A1200] flex items-center justify-center gap-2 disabled:opacity-60 bg-sp-orange shadow-[0_4px_15px_rgba(34,214,110,0.25)] hover:shadow-[0_0_25px_rgba(34,214,110,0.5)] hover:scale-[1.02] transition-all duration-300"
       >
         {index === questions.length - 1 ? "Yakunlash" : 'Keyingi savol'} <ArrowRight size={15} />
       </button>

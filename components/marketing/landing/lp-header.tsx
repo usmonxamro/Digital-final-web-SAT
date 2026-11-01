@@ -1,5 +1,7 @@
 'use client'
 
+import { BrandMark } from '@/components/brand-mark'
+
 import { useEffect, useState } from 'react'
 import { useI18n } from '@/components/i18n-provider'
 import { LangSwitch } from '@/components/lang-switch'
@@ -39,12 +41,8 @@ export function LpHeader() {
     <header>
       <div className="container nav">
         <a href="#home" className="logo">
-          <svg className="logo-mark" viewBox="0 0 48 48" aria-hidden="true">
-            <path d="M24 2l18 10.5v23L24 46 6 35.5v-23z" fill="#f97316" />
-            <path d="M24 14l11 5-11 5-11-5z" fill="#fff" />
-            <path d="M17 22.5v6c0 2 3.5 4 7 4s7-2 7-4v-6l-7 3z" fill="#fff" opacity=".9" />
-          </svg>
-          <span>SAT Akademiyasi</span>
+          <BrandMark size={44} className="logo-mark" />
+          <span>SAT <em className="logo-by">by</em> <b className="logo-u">Usmon</b></span>
         </a>
         <nav className="menu">
           {LINKS.map((l) => (

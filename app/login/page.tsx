@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowRight, Check, Eye, EyeOff, GraduationCap, Lock, Mail, Phone, ShieldCheck, User } from 'lucide-react'
+import { BrandMark } from '@/components/brand-mark'
 import Link from 'next/link'
 import { safeNext } from '@/lib/safe-next'
 import { useT } from '@/components/i18n-provider'
@@ -104,14 +105,14 @@ function SignIn() {
   }
 
   const tabOn =
-    'py-2.5 text-xs font-medium rounded-lg transition-all duration-200 bg-orange-600 text-white shadow-sm flex items-center justify-center gap-2'
+    'py-2.5 text-xs font-medium rounded-lg transition-all duration-200 bg-green-600 text-white shadow-sm flex items-center justify-center gap-2'
   const tabOff =
     'py-2.5 text-xs font-medium rounded-lg transition-all duration-200 text-slate-400 hover:text-white flex items-center justify-center gap-2'
   const inputCls =
     'w-full pl-10 pr-4 py-2.5 sm:py-3 bg-slate-900/90 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none sat-input-glow transition-all'
 
   return (
-    <div className="min-h-screen font-sans relative overflow-x-hidden flex items-center justify-center p-4 bg-[#070709] text-[#f8fafc]">
+    <div className="min-h-screen font-sans relative overflow-x-hidden flex items-center justify-center p-4 bg-[#040b07] text-[#f8fafc]">
       <div className="absolute top-0 inset-x-0 z-20 flex items-center justify-between gap-2 px-4 py-4 sm:px-8">
         <Link href="/" className="text-xs font-medium text-slate-400 hover:text-white transition-colors">{t('← Bosh sahifa')}</Link>
         <LangSwitch dark />
@@ -121,28 +122,28 @@ function SignIn() {
 
       <div className="w-full max-w-[480px] relative z-10 my-12 sm:my-16">
         <div className="text-center mb-4 sm:mb-5">
-          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 shadow-lg shadow-orange-600/30 mb-4 transform hover:scale-105 transition-transform duration-300">
-            <GraduationCap className="w-7 h-7 text-white" />
+          <div className="inline-flex mb-4 transform hover:scale-105 transition-transform duration-300">
+            <BrandMark size={56} />
           </div>
-          <h1 className="text-[1.35rem] font-bold tracking-tight text-white sm:text-3xl">SAT AKADEMIYASI</h1>
+          <h1 className="text-[1.35rem] font-bold tracking-tight text-white sm:text-3xl">SAT <span className="font-semibold text-white/70">by</span> <span className="text-[#4cf08f]">Usmon</span></h1>
           <p className="text-sm text-slate-400 mt-1">{t('Digital SAT tayyorgarlik platformasi')}</p>
         </div>
 
         <div className="sat-glass-card rounded-3xl p-5 sm:p-8 shadow-2xl relative overflow-hidden transition-all duration-500">
           {success && (
             <div
-              className={`absolute inset-0 bg-[#0f0f14]/95 backdrop-blur-xl z-20 flex flex-col items-center justify-center p-8 text-center transition-opacity duration-500 ${
+              className={`absolute inset-0 bg-[#07140d]/95 backdrop-blur-xl z-20 flex flex-col items-center justify-center p-8 text-center transition-opacity duration-500 ${
                 progress ? 'opacity-100' : 'opacity-0'
               }`}
             >
-              <div className="w-16 h-16 bg-gradient-to-tr from-orange-600 to-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-600/40 mb-4 animate-bounce">
+              <div className="w-16 h-16 bg-gradient-to-tr from-green-600 to-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-green-600/40 mb-4 animate-bounce">
                 <Check className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">{t('Xush kelibsiz!')}</h3>
               <p className="text-sm text-slate-400 mb-6">{t('Dashboardga o‘tilmoqda...')}</p>
               <div className="w-48 h-1.5 bg-slate-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-orange-600 to-amber-500 transition-all duration-1000 ease-out"
+                  className="h-full bg-gradient-to-r from-green-600 to-emerald-500 transition-all duration-1000 ease-out"
                   style={{ width: progress ? '100%' : '0%' }}
                 />
               </div>
@@ -221,7 +222,7 @@ function SignIn() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="scholar@satakademiyasi.uz"
+                    placeholder="ism@gmail.com"
                     autoComplete="email"
                     className={inputCls}
                   />
@@ -259,7 +260,7 @@ function SignIn() {
                       setNotice(null)
                       setForgot(true)
                     }}
-                    className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
+                    className="text-xs text-green-400 hover:text-green-300 transition-colors"
                   >
                     {t('Parolni unutdingizmi?')}
                   </a>
@@ -294,7 +295,7 @@ function SignIn() {
                 <input
                   type="checkbox"
                   defaultChecked
-                  className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-orange-600 focus:ring-orange-500 focus:ring-offset-slate-900 cursor-pointer accent-orange-600"
+                  className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-green-600 focus:ring-green-500 focus:ring-offset-slate-900 cursor-pointer accent-green-600"
                 />
                 <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">{t('Bu qurilmani eslab qolish')}</span>
               </label>
@@ -304,13 +305,13 @@ function SignIn() {
               <p className="text-xs text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
             )}
             {notice && (
-              <p className="text-xs text-orange-200 bg-orange-500/10 border border-orange-500/20 rounded-lg px-3 py-2">{notice}</p>
+              <p className="text-xs text-green-200 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">{notice}</p>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 sm:py-3.5 px-4 bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white font-medium rounded-xl shadow-lg shadow-orange-600/30 hover:shadow-orange-600/50 transform active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-70"
+              className="w-full py-3 sm:py-3.5 px-4 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white font-medium rounded-xl shadow-lg shadow-green-600/30 hover:shadow-green-600/50 transform active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-70"
             >
               {loading ? (
                 <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -364,7 +365,7 @@ function SignIn() {
                   setNotice(null)
                   setMode(mode === 'signin' ? 'signup' : 'signin')
                 }}
-                className="font-medium text-orange-400 hover:text-orange-300 transition-colors ml-1"
+                className="font-medium text-green-400 hover:text-green-300 transition-colors ml-1"
               >
                 {mode === 'signin' ? t('Ro‘yxatdan o‘tish') : t('Kirish')}
               </a>
@@ -376,7 +377,7 @@ function SignIn() {
 
         <div className="mt-6 flex items-center justify-center gap-4 text-xs text-slate-500">
           <span className="flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-orange-500" /> {t('Ma’lumotlar himoyalangan')}
+            <ShieldCheck className="w-3.5 h-3.5 text-green-500" /> {t('Ma’lumotlar himoyalangan')}
           </span>
           <span>•</span>
           <span>{t('Bluebook uslubida')}</span>
@@ -442,13 +443,13 @@ function ForgotPanel({ email: initial, onBack, onDone }: { email: string; onBack
         </>
       )}
       {err && <p className="text-xs text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{err}</p>}
-      <button type="submit" disabled={busy} className="w-full py-3.5 bg-gradient-to-r from-orange-600 to-amber-500 text-white font-medium rounded-xl shadow-lg shadow-orange-600/30 disabled:opacity-70">
+      <button type="submit" disabled={busy} className="w-full py-3.5 bg-gradient-to-r from-green-600 to-emerald-500 text-white font-medium rounded-xl shadow-lg shadow-green-600/30 disabled:opacity-70">
         {busy ? t('Kuting…') : step === 1 ? t('Kod yuborish') : t('Parolni yangilash')}
       </button>
       <p className="text-center text-[11px] text-slate-500">
         {t('Telefon bilan ro‘yxatdan o‘tgan bo‘lsangiz yoki email kelmasa, Telegramda @Usmon_Xamroyev ga yozing.')}
       </p>
-      <button type="button" onClick={onBack} className="block mx-auto text-xs text-orange-400 hover:text-orange-300">
+      <button type="button" onClick={onBack} className="block mx-auto text-xs text-green-400 hover:text-green-300">
         {t('← Kirishga qaytish')}
       </button>
     </form>

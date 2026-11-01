@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { useT } from '@/components/i18n-provider'
 import { HelpModal } from '@/components/marketing/dashboard/help-modal'
 import { PlansModal } from '@/components/marketing/dashboard/plans-modal'
+import { Checkout } from '@/components/marketing/dashboard/checkout'
 import { X, Lock, LifeBuoy, Bell, KeyRound, CheckCircle2 } from 'lucide-react'
 
 /** Telegram channel / bot / contact for "Yordam" and "Kursga qo'shilish" (set NEXT_PUBLIC_HELP_URL). */
@@ -50,6 +51,7 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
   const t = useT()
   const [msg, setMsg] = useState<string | null>(null)
   const [modal, setModal] = useState<ModalKind | null>(null)
+  const [checkout, setCheckout] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const toast = useCallback((m: string) => {
@@ -109,6 +111,7 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
   return (
     <SdContext.Provider value={{ toast, openModal: setModal }}>
       {children}
+      {checkout && <Checkout onClose={() => setCheckout(false)} onHelp={() => { setCheckout(false); setModal('help') }} />}
       {m && (
         <div className="sd-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && setModal(null)}>
           <div className={`sd-modal ${modal === 'help' ? 'sd-modal-wide' : ''} ${modal === 'plans' ? 'sd-modal-plans' : ''}`} role="dialog" aria-modal="true" aria-label={t(m.title)}>
@@ -118,7 +121,7 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
             {modal === 'help' ? (
               <HelpModal onClose={() => setModal(null)} />
             ) : modal === 'plans' ? (
-              <PlansModal onHelp={() => setModal('help')} />
+              <PlansModal onUpgrade={() => { setModal(null); setCheckout(true) }} />
             ) : modal === 'code' ? (
               joined ? (
                 <>

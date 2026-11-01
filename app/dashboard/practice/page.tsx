@@ -285,7 +285,7 @@ export default function PracticePage() {
 
 const seasonOf = (m: number) => (m < 0 ? 'none' : m === 11 || m <= 1 ? 'winter' : m <= 4 ? 'spring' : m <= 7 ? 'summer' : 'autumn')
 const SEASON = {
-  autumn: { sky: ['#ffd9a8', '#ffb36b'], hill: ['#d9822b', '#b9611d'], leaf: ['#e8590c', '#f59e0b'] },
+  autumn: { sky: ['#ffd9a8', '#ffb36b'], hill: ['#d9822b', '#b9611d'], leaf: ['#1cc45a', '#1dce5e'] },
   winter: { sky: ['#c9e3ff', '#eef6ff'], hill: ['#ffffff', '#d6e6fb'], leaf: ['#9fb7d6', '#9fb7d6'] },
   spring: { sky: ['#d6efff', '#fde4f2'], hill: ['#86d37a', '#58b95f'], leaf: ['#f9a8d4', '#fbcfe8'] },
   summer: { sky: ['#8fd3ff', '#e0f6ff'], hill: ['#4ade80', '#1fb85a'], leaf: ['#16a34a', '#22c55e'] },
@@ -318,9 +318,9 @@ function MonthArt({ month, id }: { month: number; id: string }) {
       {/* a campus hall */}
       <g transform="translate(36 70)">
         <rect x="0" y="22" width="48" height="36" fill={sn === 'winter' ? '#e9d5c0' : '#f3e2cf'} />
-        <path d="M-4 22 24 2 52 22Z" fill={sn === 'winter' ? '#f8fbff' : '#b45309'} />
+        <path d="M-4 22 24 2 52 22Z" fill={sn === 'winter' ? '#f8fbff' : '#169846'} />
         <rect x="19" y="-6" width="10" height="14" fill="#f3e2cf" />
-        <path d="M17 -6 24 -16 31 -6Z" fill={sn === 'winter' ? '#f8fbff' : '#b45309'} />
+        <path d="M17 -6 24 -16 31 -6Z" fill={sn === 'winter' ? '#f8fbff' : '#169846'} />
         {[6, 20, 34].map((x) => (
           <rect key={x} x={x} y="32" width="8" height="12" rx="4" fill="#7c5a3a" opacity=".55" />
         ))}
@@ -393,8 +393,8 @@ function HeroArt() {
       {[[420, 130, 34], [740, 120, 40], [380, 150, 24], [780, 150, 28]].map(([x, y, r], i) => (
         <g key={i}>
           <rect x={x - 3} y={y} width="7" height="60" rx="3" fill="#6b4423" />
-          <circle cx={x} cy={y - 6} r={r} fill={i % 2 ? '#e8590c' : '#f59e0b'} />
-          <circle cx={x - r * 0.5} cy={y + 8} r={r * 0.65} fill="#f97316" />
+          <circle cx={x} cy={y - 6} r={r} fill={i % 2 ? '#1cc45a' : '#1dce5e'} />
+          <circle cx={x - r * 0.5} cy={y + 8} r={r * 0.65} fill="#22c55e" />
         </g>
       ))}
       <ellipse cx="520" cy="228" rx="420" ry="40" fill="#c8742a" />

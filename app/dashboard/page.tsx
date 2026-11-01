@@ -157,7 +157,7 @@ export default function DashboardPage() {
         <img className="sd-hero-art sd-hero-art-day" src="/assets/student-banner.webp" alt="" width={1600} height={243} decoding="async" fetchPriority="high" />
         <img className="sd-hero-art sd-hero-art-night" src="/assets/student-banner-night.webp" alt="" width={1600} height={243} decoding="async" loading="lazy" />
         <div className="sd-hero-copy">
-          <div className="sd-kicker">SAT AKADEMIYASI</div>
+          <div className="sd-kicker">SAT BY USMON</div>
           <h2>{t('Katta natijalar kichik qadamlardan boshlanadi.')}</h2>
           <div className="sd-hero-actions">
             <Link href="/dashboard/practice" className="sd-primary">

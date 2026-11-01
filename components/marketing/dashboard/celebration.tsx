@@ -7,7 +7,7 @@ import { useT } from '@/components/i18n-provider'
 export const CELEBRATE_KEY = 'sd-celebrate'
 export type CelebrateInfo = { label: string; score: number; outOf: number }
 
-const COLORS = ['#ff6a00', '#ffb800', '#22c55e', '#38bdf8', '#a78bfa', '#f43f5e']
+const COLORS = ['#1dcd5e', '#1dcd5e', '#22c55e', '#38bdf8', '#a78bfa', '#f43f5e']
 
 /** Festive pop-up shown once on the dashboard after the student finishes a scored mock. */
 export function Celebration({ name, total }: { name: string; total: number | null }) {

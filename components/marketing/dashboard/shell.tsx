@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { BrandMark } from '@/components/brand-mark'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { ArrowUpRight, ChartColumn, FileText, GraduationCap, House, Layers, BookOpen, BookMarked, LayoutGrid, Menu, Settings, Sparkles } from 'lucide-react'
@@ -117,11 +118,9 @@ function Sidebar({ open, pathname, hash }: { open: boolean; pathname: string; ha
   return (
     <aside className={`sd-sidebar ${open ? 'sd-open' : ''}`} id="sidebar">
       <Link className="sd-brand" href="/dashboard">
-        <span className="sd-brand-mark">
-          <GraduationCap />
-        </span>
+        <BrandMark size={40} />
         <span>
-          <b>SAT Akademiyasi</b>
+          <b>SAT by <em>Usmon</em></b>
           <small>{t('LEARNING PLATFORM')}</small>
         </span>
       </Link>
