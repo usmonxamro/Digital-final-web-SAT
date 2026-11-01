@@ -69,6 +69,19 @@ export function CalculatorPanel({
   const [ready, setReady] = useState(false)
   const [mode, setMode] = useState<Mode>('graphing')
   const isMobile = useIsMobile()
+  // No open/close animation until the first frames have settled (breakpoint known, layout measured):
+  // otherwise the panel visibly slides from its first-guess position as the exam opens.
+  const [settled, setSettled] = useState(false)
+  useEffect(() => {
+    let b = 0
+    const a = requestAnimationFrame(() => {
+      b = requestAnimationFrame(() => setSettled(true))
+    })
+    return () => {
+      cancelAnimationFrame(a)
+      cancelAnimationFrame(b)
+    }
+  }, [])
 
   const [pos, setPos] = useState({ x: 0, y: 0 })
   const [size, setSize] = useState<{ width: number; height: number } | null>(null)
@@ -320,21 +333,31 @@ export function CalculatorPanel({
 
   /* ---------------------------------- mobile ---------------------------------- */
   if (isMobile) {
+    // Same element structure as the desktop branch (outer > inner > header + body) so React keeps the
+    // Desmos DOM when the breakpoint is first detected, and hidden while closed so the sheet never
+    // flashes on screen as the exam opens.
     return (
       <div
-        className={`fixed inset-x-0 z-40 flex flex-col overflow-hidden rounded-t-xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.3)] ease-in-out ${interacting ? '' : 'transition-transform duration-[600ms]'}`}
+        className="fixed inset-x-0 z-40 overflow-hidden rounded-t-xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.3)]"
         style={{
           height: sheetH ?? MOBILE_SHEET_HEIGHT,
           bottom: bottomOffset,
           transform: open ? 'translateY(0)' : `translateY(calc(100% + ${bottomOffset}px))`,
+          transition:
+            settled && !interacting
+              ? `transform 600ms cubic-bezier(.4,0,.2,1), visibility 0s linear ${open ? '0s' : '600ms'}`
+              : 'none',
+          visibility: open ? 'visible' : 'hidden',
           pointerEvents: open ? 'auto' : 'none',
         }}
         role="dialog"
         aria-label="Calculator"
         aria-hidden={!open}
       >
-        {header(false, true)}
-        {body}
+        <div className="flex h-full w-full flex-col overflow-hidden">
+          {header(false, true)}
+          {body}
+        </div>
       </div>
     )
   }
@@ -350,7 +373,7 @@ export function CalculatorPanel({
         height: size?.height ?? 600,
         opacity: open ? 1 : 0,
         transform: open ? 'translateX(0)' : 'translateX(-56px)',
-        transition: interacting ? 'none' : 'opacity 700ms cubic-bezier(.4,0,.2,1), transform 700ms cubic-bezier(.4,0,.2,1), visibility 0s linear ' + (open ? '0s' : '700ms'),
+        transition: interacting || !settled ? 'none' : 'opacity 700ms cubic-bezier(.4,0,.2,1), transform 700ms cubic-bezier(.4,0,.2,1), visibility 0s linear ' + (open ? '0s' : '700ms'),
         pointerEvents: open ? 'auto' : 'none',
         visibility: open ? 'visible' : 'hidden',
       }}

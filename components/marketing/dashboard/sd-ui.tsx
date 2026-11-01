@@ -52,6 +52,35 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
   const [msg, setMsg] = useState<string | null>(null)
   const [modal, setModal] = useState<ModalKind | null>(null)
   const [checkout, setCheckout] = useState(false)
+  // iOS-style close: play the exit animation, then unmount (transform/opacity only — no layout work).
+  const [closing, setClosing] = useState(false)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const closeModal = useCallback(() => {
+    if (closeTimer.current) return
+    setClosing(true)
+    closeTimer.current = setTimeout(() => {
+      closeTimer.current = null
+      setClosing(false)
+      setModal(null)
+    }, 170)
+  }, [])
+  const openModal = useCallback((m: ModalKind | null) => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+    setClosing(false)
+    setModal(m)
+  }, [])
+  // Background must not scroll while a modal is up.
+  useEffect(() => {
+    if (!modal) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [modal])
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const toast = useCallback((m: string) => {
@@ -62,10 +91,10 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!modal) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setModal(null)
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && closeModal()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [modal])
+  }, [modal, closeModal])
 
   const [code, setCode] = useState('')
   const [codeBusy, setCodeBusy] = useState(false)
@@ -104,22 +133,22 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
     if (modal === 'paid') {
       setModal('help')
     } else {
-      setModal(null)
+      closeModal()
     }
   }
 
   return (
-    <SdContext.Provider value={{ toast, openModal: setModal }}>
+    <SdContext.Provider value={{ toast, openModal }}>
       {children}
       {checkout && <Checkout onClose={() => setCheckout(false)} onHelp={() => { setCheckout(false); setModal('help') }} />}
       {m && (
-        <div className="sd-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && setModal(null)}>
+        <div className={`sd-modal-backdrop ${closing ? 'sd-closing' : ''}`} onMouseDown={(e) => e.target === e.currentTarget && closeModal()}>
           <div className={`sd-modal ${modal === 'help' ? 'sd-modal-wide' : ''} ${modal === 'plans' ? 'sd-modal-plans' : ''}`} role="dialog" aria-modal="true" aria-label={t(m.title)}>
-            <button className="sd-modal-close" onClick={() => setModal(null)} aria-label={t('Yopish')}>
+            <button className="sd-modal-close" onClick={closeModal} aria-label={t('Yopish')}>
               <X size={15} />
             </button>
             {modal === 'help' ? (
-              <HelpModal onClose={() => setModal(null)} />
+              <HelpModal onClose={closeModal} />
             ) : modal === 'plans' ? (
               <PlansModal onUpgrade={() => { setModal(null); setCheckout(true) }} />
             ) : modal === 'code' ? (
@@ -168,7 +197,7 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
                   {t(m.button)}
                 </button>
                 {(modal === 'locked' || modal === 'paid') && (
-                  <button className="sd-link" onClick={() => setModal(null)}>
+                  <button className="sd-link" onClick={closeModal}>
                     {t('Hozircha yopish')}
                   </button>
                 )}

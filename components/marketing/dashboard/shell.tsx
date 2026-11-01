@@ -46,6 +46,19 @@ function Frame({ children }: { children: React.ReactNode }) {
   const [hash, setHash] = useState('')
 
   useEffect(() => setOpen(false), [pathname, hash])
+  // Phones: while the side menu is open only the menu scrolls — the dashboard behind stays still.
+  useEffect(() => {
+    if (!open) return
+    const html = document.documentElement
+    const prev = html.style.overflow
+    const prevBody = document.body.style.overflow
+    html.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+    return () => {
+      html.style.overflow = prev
+      document.body.style.overflow = prevBody
+    }
+  }, [open])
   useEffect(() => {
     const sync = () => setHash(window.location.hash)
     sync()

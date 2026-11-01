@@ -24,6 +24,10 @@ export function ThemeSwitch({ defaultTheme, className = '' }: { defaultTheme?: '
       document.documentElement.setAttribute('data-sp-theme', defaultTheme)
     }
     setDark(document.documentElement.getAttribute('data-sp-theme') !== 'light')
+    // Stay in sync when the mode is changed elsewhere (Settings page).
+    const sync = () => setDark(document.documentElement.getAttribute('data-sp-theme') !== 'light')
+    window.addEventListener('sp-appearance-change', sync)
+    return () => window.removeEventListener('sp-appearance-change', sync)
   }, [defaultTheme])
 
   function toggle() {

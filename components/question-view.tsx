@@ -1,6 +1,7 @@
 'use client'
 
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Bookmark, Delete, Keyboard } from 'lucide-react'
 import { Math as MathTex } from '@/components/math'
 import { OptionCard } from '@/components/option-card'
@@ -183,7 +184,7 @@ function GridKeypad({ value, onChange }: { value: string; onChange: (v: string) 
     </button>
   )
   return (
-    <div role="group" aria-label="Raqamli klaviatura" className="mt-4 grid w-full max-w-[320px] grid-cols-4 gap-2">
+    <div role="group" aria-label="Raqamli klaviatura" className="grid w-full max-w-[420px] grid-cols-4 gap-2">
       {['7', '8', '9'].map((d) => k(d, d, () => press(d)))}
       {k('bs', <Delete className="size-6" />, () => onChange(value.slice(0, -1)), fn, 'O‘chirish (backspace)')}
       {['4', '5', '6'].map((d) => k(d, d, () => press(d)))}
@@ -199,12 +200,25 @@ function GridKeypad({ value, onChange }: { value: string; onChange: (v: string) 
 
 /** Bluebook-style student-produced response box: a small rounded box with a
  *  writing line inside, and an always-visible "Answer Preview:" underneath.
- *  On touch screens an on-screen number pad (with −, / and .) replaces the phone keyboard. */
+ *  On touch screens the on-screen number pad (with −, / and .) works like a phone keyboard:
+ *  hidden until the answer box is tapped, then it slides up from the bottom; "Tayyor" or a tap
+ *  anywhere else puts it away. */
 export function GridInInput({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
   const v = value ?? ''
   const touch = useTouchKeypad()
   const [system, setSystem] = useState(false) // the student prefers the phone's own keyboard
+  const [open, setOpen] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
   const keypad = touch && !system
+  const sheetOpen = keypad && open
+
+  // Bring the answer box above the sheet once it has slid up.
+  useEffect(() => {
+    if (!sheetOpen) return
+    const id = window.setTimeout(() => inputRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 120)
+    return () => window.clearTimeout(id)
+  }, [sheetOpen])
+
   return (
     <div className="flex flex-col">
       <label
@@ -213,6 +227,7 @@ export function GridInInput({ value, onChange }: { value?: string; onChange: (v:
       >
         <input
           id="gridin-answer"
+          ref={inputRef}
           type="text"
           // keypad: no phone keyboard pops up; otherwise a full keyboard on touch (it has − and /), numeric on desktop
           inputMode={keypad ? 'none' : touch ? 'text' : 'decimal'}
@@ -222,6 +237,9 @@ export function GridInInput({ value, onChange }: { value?: string; onChange: (v:
           spellCheck={false}
           aria-label="Answer"
           value={v}
+          onFocus={() => setOpen(true)}
+          onClick={() => setOpen(true)}
+          onBlur={() => setOpen(false)}
           onChange={(e) => onChange(sanitizeGridInput(e.target.value))}
           className="absolute inset-x-0 top-0 h-[44px] w-full bg-transparent px-3 pt-2 text-[22px] tracking-[0.02em] text-[#111] outline-none"
           // Same face as the Answer Preview (KaTeX's serif), so typed digits match it.
@@ -239,17 +257,60 @@ export function GridInInput({ value, onChange }: { value?: string; onChange: (v:
         )}
       </div>
 
-      {keypad && <GridKeypad value={v} onChange={onChange} />}
-      {touch && (
+      {touch && system && (
         <button
           type="button"
-          onClick={() => setSystem((x) => !x)}
+          onClick={() => setSystem(false)}
           className="mt-3 flex w-fit items-center gap-1.5 text-[12.5px] font-semibold text-[#0b4f4a] underline underline-offset-2"
         >
           <Keyboard className="size-4" />
-          {keypad ? 'Telefon klaviaturasidan foydalanish' : 'Raqamli klaviaturaga qaytish'}
+          Raqamli klaviaturaga qaytish
         </button>
       )}
+      {/* room so the answer box can scroll above the open sheet */}
+      {sheetOpen && <div aria-hidden className="h-[300px]" />}
+
+      {keypad &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className={`gridkp-sheet fixed inset-x-0 bottom-0 z-[60] border-t border-[#cfd8d6] bg-[#eef2f2] px-3 pb-[calc(10px+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(0,0,0,.14)] ${sheetOpen ? 'gridkp-open' : ''}`}
+            aria-hidden={!sheetOpen}
+            // keep the answer box focused while the sheet is used
+            onPointerDown={(e) => e.preventDefault()}
+          >
+            <div className="mx-auto flex w-full max-w-[420px] items-center justify-between pb-2">
+              <button
+                type="button"
+                tabIndex={sheetOpen ? 0 : -1}
+                onClick={() => {
+                  setSystem(true)
+                  setOpen(false)
+                  inputRef.current?.blur()
+                  window.setTimeout(() => inputRef.current?.focus(), 60)
+                }}
+                className="flex items-center gap-1.5 text-[12.5px] font-semibold text-[#0b4f4a]"
+              >
+                <Keyboard className="size-4" /> Telefon klaviaturasi
+              </button>
+              <button
+                type="button"
+                tabIndex={sheetOpen ? 0 : -1}
+                onClick={() => {
+                  setOpen(false)
+                  inputRef.current?.blur()
+                }}
+                className="rounded-full bg-[#0b4f4a] px-4 py-1.5 text-[13px] font-bold text-white"
+              >
+                Tayyor
+              </button>
+            </div>
+            <div className="mx-auto flex w-full max-w-[420px] justify-center">
+              <GridKeypad value={v} onChange={onChange} />
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
@@ -455,7 +516,7 @@ function QuestionViewImpl({
           className="flex flex-col px-4 py-5 sm:px-5 sm:py-6 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:px-10 lg:py-8"
           style={isMobile ? undefined : { width: `${leftPct}%` }}
         >
-          <div ref={passageRef} className="whitespace-pre-line select-text font-serif text-[14px] leading-[1.4] text-[#111] sm:text-[16.2px] sm:leading-[1.43]">
+          <div ref={passageRef} style={TEXT_ZOOM} className="whitespace-pre-line select-text font-serif text-[14px] leading-[1.4] text-[#111] sm:text-[16.2px] sm:leading-[1.43]">
             {markedPassage}
           </div>
           {image}
@@ -482,6 +543,7 @@ function QuestionViewImpl({
           className="flex flex-col border-t border-[#e2e8f0] px-4 py-5 sm:px-5 sm:py-6 lg:h-full lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:border-t-0 lg:px-10 lg:py-8"
           style={isMobile ? undefined : { width: `${100 - leftPct}%` }}
         >
+          <div style={TEXT_ZOOM}>
           {header}
           {useStimulus ? (
             <div className="mb-4">
@@ -499,6 +561,7 @@ function QuestionViewImpl({
             </div>
           )}
           {options}
+          </div>
         </section>
       </div>
     )
@@ -509,7 +572,7 @@ function QuestionViewImpl({
     <div className="h-full w-full overflow-y-auto bg-[#f8fafc]">
       <div
         className="mx-auto w-full max-w-2xl px-4 py-5 sm:px-5 sm:py-6 lg:py-10"
-        style={compact ? { zoom: 0.88 } : undefined}
+        style={{ zoom: compact ? 'calc(var(--exam-zoom, 1) * 0.88)' : 'var(--exam-zoom, 1)' } as React.CSSProperties}
       >
         {header}
         {useStimulus ? (
@@ -538,6 +601,9 @@ function QuestionViewImpl({
     </div>
   )
 }
+
+/** Reader text size (A− / A+ in the exam header's More menu) — a CSS variable on <html>. */
+const TEXT_ZOOM = { zoom: 'var(--exam-zoom, 1)' } as React.CSSProperties
 
 /** Memoised: the exam timer re-renders the page every second — the question (and its KaTeX) must not. */
 export const QuestionView = memo(QuestionViewImpl)

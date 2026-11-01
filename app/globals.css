@@ -133,37 +133,37 @@
   --gold-soft: #e3b764;
 
   /* SAT Pro theme — dark mode is the default (matches design brief) */
-  --sp-bg: #040b07;
-  --sp-card: rgba(10, 26, 18, 0.82);
-  --sp-border: rgba(110, 255, 170, 0.11);
-  --sp-green: #2ee27a;
-  --sp-green-glow: #16a34a;
-  --sp-orange: #2ee27a;
-  --sp-yellow: #a3e635;
-  --sp-yellow-glow: #65a30d;
-  --sp-text: #effcf4;
-  --sp-text-muted: #93b3a2;
-  --sp-header-bg: rgba(4, 11, 7, 0.85);
-  --sp-footer-bg: #030805;
-  --sp-input: rgba(120, 255, 180, 0.06);
-  --sp-bg-elev: #0b1a12;
+  --sp-bg: #05060a;
+  --sp-card: rgba(13, 16, 23, 0.8);
+  --sp-border: rgba(255, 255, 255, 0.08);
+  --sp-green: #10b981;
+  --sp-green-glow: #059669;
+  --sp-orange: #ff6600;
+  --sp-yellow: #f59e0b;
+  --sp-yellow-glow: #d97706;
+  --sp-text: #f8fafc;
+  --sp-text-muted: #94a3b8;
+  --sp-header-bg: rgba(5, 6, 10, 0.85);
+  --sp-footer-bg: #030406;
+  --sp-input: rgba(255, 255, 255, 0.06);
+  --sp-bg-elev: #12151d;
 }
 
 /* SAT Pro light mode override — toggled by ThemeToggle via localStorage */
 [data-sp-theme='light'] {
-  --sp-bg: #f3faf6;
-  --sp-card: rgba(255, 255, 255, 0.92);
-  --sp-border: rgba(10, 90, 50, 0.11);
-  --sp-green: #16a34a;
-  --sp-green-glow: #22c55e;
-  --sp-orange: #16a34a;
-  --sp-yellow: #65a30d;
-  --sp-yellow-glow: #84cc16;
-  --sp-text: #0b2418;
-  --sp-text-muted: #4b6457;
-  --sp-header-bg: rgba(243, 250, 246, 0.86);
-  --sp-footer-bg: #e8f5ed;
-  --sp-input: rgba(10, 90, 50, 0.05);
+  --sp-bg: #f8fafc;
+  --sp-card: rgba(255, 255, 255, 0.9);
+  --sp-border: rgba(0, 0, 0, 0.08);
+  --sp-green: #059669;
+  --sp-green-glow: #10b981;
+  --sp-orange: #e65c00;
+  --sp-yellow: #d97706;
+  --sp-yellow-glow: #f59e0b;
+  --sp-text: #0f172a;
+  --sp-text-muted: #475569;
+  --sp-header-bg: rgba(248, 250, 252, 0.85);
+  --sp-footer-bg: #f1f5f9;
+  --sp-input: rgba(0, 0, 0, 0.045);
   --sp-bg-elev: #ffffff;
 }
 
@@ -215,7 +215,7 @@
   .sp-hover-glow-gold:hover {
     transform: translateY(-6px);
     border-color: var(--sp-yellow);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), 0 0 26px rgba(163, 230, 53, 0.35);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), 0 0 26px rgba(245, 158, 11, 0.35);
   }
 
   .sp-hover-glow-orange {
@@ -225,7 +225,7 @@
   .sp-hover-glow-orange:hover {
     transform: translateY(-4px);
     border-color: var(--sp-orange);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), 0 0 24px rgba(46, 226, 122, 0.35);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), 0 0 24px rgba(255, 102, 0, 0.35);
   }
 
   @keyframes sp-pulse-green {
@@ -244,14 +244,14 @@
   }
 
   .sp-gradient-text-gold {
-    background: linear-gradient(135deg, var(--sp-yellow) 0%, #bef264 100%);
+    background: linear-gradient(135deg, var(--sp-yellow) 0%, #ffb84d 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .sp-gradient-text-orange {
-    background: linear-gradient(135deg, var(--sp-orange) 0%, #5cf29b 100%);
+    background: linear-gradient(135deg, var(--sp-orange) 0%, #ff9933 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -270,7 +270,7 @@
   left: -10%;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(22, 163, 74, 0.18) 0%, rgba(7, 7, 9, 0) 70%);
+  background: radial-gradient(circle, rgba(234, 88, 12, 0.18) 0%, rgba(7, 7, 9, 0) 70%);
   border-radius: 50%;
   z-index: 0;
   filter: blur(60px);
@@ -282,7 +282,7 @@
   right: -10%;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(34, 197, 94, 0.12) 0%, rgba(7, 7, 9, 0) 70%);
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.12) 0%, rgba(7, 7, 9, 0) 70%);
   border-radius: 50%;
   z-index: 0;
   filter: blur(80px);
@@ -297,8 +297,8 @@
   100% { transform: translate(-40px, -30px) scale(1.15); }
 }
 .sat-input-glow:focus {
-  box-shadow: 0 0 20px rgba(22, 163, 74, 0.35);
-  border-color: #16a34a;
+  box-shadow: 0 0 20px rgba(234, 88, 12, 0.35);
+  border-color: #ea580c;
 }
 .sat-glass-card {
   background: rgba(15, 15, 20, 0.65);
@@ -355,7 +355,7 @@ html[data-sp-theme='dark'] .admin-root .q-ink .katex{color:var(--ink)}
 .sp-lang-menu .sp-flag{font-size:16px;line-height:1}
 @keyframes sp-lang-in{from{opacity:0;transform:translateY(-4px) scale(.96)}to{opacity:1;transform:none}}
 
-.sp-lang-dark{--sp-border:rgba(110,255,170,.14);--sp-input:rgba(120,255,180,.06);--sp-text:#effcf4;--sp-text-muted:#93b3a2;--sp-bg-elev:#0b1a12;--sp-orange:#2ee27a;--sp-yellow:#a3e635}
+.sp-lang-dark{--sp-border:rgba(255,255,255,.12);--sp-input:rgba(255,255,255,.06);--sp-text:#f8fafc;--sp-text-muted:#94a3b8;--sp-bg-elev:#12151d;--sp-orange:#ff6600;--sp-yellow:#f59e0b}
 
 /* Phones: formulas in the exam follow the 1px smaller text */
 @media (max-width: 639px) { .exam-text .katex { font-size: 1.08em; } }
@@ -367,13 +367,13 @@ html[data-sp-theme='dark'] .admin-root .q-ink .katex{color:var(--ink)}
     background-color: rgba(255, 255, 255, 0.95);
     border-color: #e2e8f0;
     color: #64748b;
-    box-shadow: 0 0 0 0 rgba(163, 230, 53, 0);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
   }
   50% {
     background-color: #fef3c7;
     border-color: #f59e0b;
     color: #b45309;
-    box-shadow: 0 0 0 7px rgba(163, 230, 53, 0.28);
+    box-shadow: 0 0 0 7px rgba(245, 158, 11, 0.28);
   }
 }
 .report-glow {
@@ -433,3 +433,8 @@ html[data-sp-theme='dark'] .admin-root .adm-btn-primary{background:linear-gradie
   .adm-btn span{display:none}
   .adm-btn{width:36px;padding:0;justify-content:center}
 }
+
+/* Grid-in on-screen keypad: slides up like a phone keyboard while the answer box is focused. */
+.gridkp-sheet{transform:translateY(105%);visibility:hidden;transition:transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s linear .24s;will-change:transform;touch-action:manipulation}
+.gridkp-sheet.gridkp-open{transform:none;visibility:visible;transition:transform .26s cubic-bezier(.2,.8,.2,1),visibility 0s}
+@media (prefers-reduced-motion:reduce){.gridkp-sheet,.gridkp-sheet.gridkp-open{transition:none}}

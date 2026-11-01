@@ -20,9 +20,9 @@ function isReady(t: TestSummary): boolean {
 }
 
 const SUBJECT = {
-  math: { label: 'Math', Icon: Calculator, c: '#22c55e', c2: '#1dce5e' },
+  math: { label: 'Math', Icon: Calculator, c: '#ff6600', c2: '#f59e0b' },
   english: { label: 'Reading & Writing', Icon: PenLine, c: '#8b5cf6', c2: '#6366f1' },
-  full: { label: 'Full SAT', Icon: Crown, c: '#1dce5e', c2: '#fb7185' },
+  full: { label: 'Full SAT', Icon: Crown, c: '#f59e0b', c2: '#fb7185' },
 } as const
 
 export default function FreeMocksPage() {

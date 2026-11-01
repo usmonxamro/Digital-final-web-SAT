@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
 import 'katex/dist/katex.min.css'
 import './globals.css'
+import './palettes.css'
 import { SiteGuards } from '@/components/site-guards'
 import { VisitPing } from '@/components/visit-ping'
 import { cookies } from 'next/headers'
@@ -93,6 +94,9 @@ const THEME_INIT_SCRIPT = `
     // The dashboard design is light by default; everything else defaults to dark.
     var theme = saved === 'light' || saved === 'dark' ? saved : (location.pathname.indexOf('/dashboard') === 0 ? 'light' : 'dark');
     document.documentElement.setAttribute('data-sp-theme', theme);
+    // Colour palette: classic (default, no attribute) | green | yellow.
+    var pal = localStorage.getItem('sp-palette');
+    if (pal === 'green' || pal === 'yellow') document.documentElement.setAttribute('data-sp-palette', pal);
   } catch (e) {
     document.documentElement.setAttribute('data-sp-theme', 'dark');
   }

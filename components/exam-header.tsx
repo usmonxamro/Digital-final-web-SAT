@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, Highlighter, LogOut, Maximize, MoreVertical, StickyNote } from 'lucide-react'
+import { ChevronDown, Highlighter, LogOut, Maximize, MoreVertical, StickyNote, Type } from 'lucide-react'
 
 function formatTime(totalSeconds: number) {
   // Negative = overtime (the student chose to keep working after the time ran out).
@@ -28,6 +28,41 @@ type ExamHeaderProps = {
   /** Wraps the current text selection (inside the passage) in a highlight. No-op outside Reading. */
   onHighlight?: () => void
   onExit?: () => void
+}
+
+/** Reader text size steps for the A− / A+ control. Stored per device; applied as --exam-zoom on <html>. */
+const TEXT_STEPS = [0.9, 1, 1.1, 1.2, 1.35, 1.5]
+const TEXT_KEY = 'exam-text-scale'
+function useTextScale() {
+  const [scale, setScale] = useState(1)
+  useEffect(() => {
+    let saved = 1
+    try {
+      saved = Number(localStorage.getItem(TEXT_KEY)) || 1
+    } catch {
+      /* private mode */
+    }
+    setScale(TEXT_STEPS.includes(saved) ? saved : 1)
+  }, [])
+  useEffect(() => {
+    document.documentElement.style.setProperty('--exam-zoom', String(scale))
+    return () => {
+      document.documentElement.style.removeProperty('--exam-zoom')
+    }
+  }, [scale])
+  const step = (dir: 1 | -1) => {
+    setScale((cur) => {
+      const i = TEXT_STEPS.indexOf(cur)
+      const next = TEXT_STEPS[Math.min(TEXT_STEPS.length - 1, Math.max(0, (i < 0 ? 1 : i) + dir))]
+      try {
+        localStorage.setItem(TEXT_KEY, String(next))
+      } catch {
+        /* private mode */
+      }
+      return next
+    })
+  }
+  return { scale, step, canDown: scale > TEXT_STEPS[0], canUp: scale < TEXT_STEPS[TEXT_STEPS.length - 1] }
 }
 
 function usePopover() {
@@ -60,6 +95,7 @@ export function ExamHeader({
   const low = !countUp && seconds <= 60
   const dir = usePopover()
   const more = usePopover()
+  const text = useTextScale()
 
   function toggleFullscreen() {
     if (document.fullscreenElement) {
@@ -182,7 +218,35 @@ export function ExamHeader({
             </button>
 
             {more.open && (
-              <div className="absolute right-0 top-full z-40 mt-2 w-48 overflow-hidden rounded-lg border border-[#c7d6d4] bg-white py-1 shadow-xl">
+              <div className="absolute right-0 top-full z-40 mt-2 w-[248px] overflow-hidden rounded-lg border border-[#c7d6d4] bg-white py-1 shadow-xl">
+                <div className="flex items-center gap-2.5 px-3.5 py-2 text-[13.5px] font-medium text-[#1a1a1a]">
+                  <Type className="size-4 shrink-0" />
+                  <span className="flex-1 whitespace-nowrap">Text size</span>
+                  <div className="flex items-center overflow-hidden rounded-md border border-[#c7d6d4]">
+                    <button
+                      type="button"
+                      onClick={() => text.step(-1)}
+                      disabled={!text.canDown}
+                      aria-label="Smaller text"
+                      className="h-8 w-9 text-[13px] font-bold text-[#0b4f4a] hover:bg-[#d2ebe7] disabled:opacity-35"
+                    >
+                      A−
+                    </button>
+                    <span className="w-11 border-x border-[#c7d6d4] text-center text-[11.5px] font-semibold tabular-nums text-[#375957]">
+                      {Math.round(text.scale * 100)}%
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => text.step(1)}
+                      disabled={!text.canUp}
+                      aria-label="Larger text"
+                      className="h-8 w-9 text-[16px] font-bold text-[#0b4f4a] hover:bg-[#d2ebe7] disabled:opacity-35"
+                    >
+                      A+
+                    </button>
+                  </div>
+                </div>
+                <div className="mx-3 my-1 h-px bg-[#e3ebea]" />
                 <button
                   type="button"
                   onClick={toggleFullscreen}

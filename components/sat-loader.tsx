@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import './sat-loader.css';
+import { BrandMark } from '@/components/brand-mark';
 
 type LoaderVariant = 'brand' | 'exam' | 'results';
 type LoaderProps = { variant?: LoaderVariant; label?: string; fullscreen?: boolean; theme?: 'light' | 'dark'; };
@@ -13,7 +14,7 @@ export function SatLoader({ variant='brand',label,fullscreen=true,theme }:Loader
   const c = config[variant];
   return <div className={`sat-load sat-load--${variant} ${fullscreen?'sat-load--fullscreen':''} ${theme ? `sat-load--${theme}`:''}`} role="status" aria-live="polite" aria-label={label || c.title}>
     <div className="sat-load__content">
-      <div className="sat-load__mark" aria-hidden="true"><span className="sat-load__ring"/><span className="sat-load__logo">{c.icon}</span></div>
+      <div className="sat-load__mark" aria-hidden="true"><span className="sat-load__ring"/><span className="sat-load__halo"/><span className="sat-load__logo"><BrandMark size={68} glow={false} /></span><span className="sat-load__shine"/></div>
       <h2>{label || c.title}</h2><p>{c.subtitle}</p><div className="sat-load__dots" aria-hidden="true"><i/><i/><i/></div>
     </div>
   </div>;
