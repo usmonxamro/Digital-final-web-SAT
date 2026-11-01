@@ -3,6 +3,19 @@ import { BOOKS_I18N } from '@/components/marketing/landing/lp-books'
 
 /** Landing-page texts. The Uzbek/English source text is the key (see LP_BODY). */
 const RU: Record<string, string> = {
+  "Digital SAT’ga": "Подготовка к Digital SAT",
+  "o‘zbek tilida": "на узбекском",
+  "tayyorgarlik": "языке",
+  "Haqiqiy imtihondagidek mock testlar va natijalar tahlili — barchasi bir platformada.": "Пробные тесты как на реальном экзамене и разбор результатов — всё на одной платформе.",
+  "Mock testlar": "Пробные тесты",
+  "Savollar banki": "Банк вопросов",
+  "Video tahlil": "Видеоразбор",
+  "Taxminiy ball": "Примерный балл",
+  "↗ +280 ball": "↗ +280 баллов",
+  "Batafsil tahlil": "Подробный разбор",
+  "har bir testdan keyin": "после каждого теста",
+  "Bluebook’dagidek — Desmos bilan": "Как в Bluebook — с Desmos",
+  "Savollarni xuddi haqiqiy imtihondagidek yeching: taymer, belgilash, javoblar va Desmos kalkulyatori bir ekranda.": "Решайте вопросы как на настоящем экзамене: таймер, пометки, ответы и калькулятор Desmos на одном экране.",
   "Home": "Главная",
   "Mock Tests": "Пробные тесты",
   "Courses": "Курсы",
@@ -146,6 +159,19 @@ const RU: Record<string, string> = {
 }
 
 const EN: Record<string, string> = {
+  "Digital SAT’ga": "Digital SAT prep",
+  "o‘zbek tilida": "in Uzbek,",
+  "tayyorgarlik": "done right",
+  "Haqiqiy imtihondagidek mock testlar va natijalar tahlili — barchasi bir platformada.": "Real-exam-style mock tests and score analysis — all in one platform.",
+  "Mock testlar": "Mock tests",
+  "Savollar banki": "Question bank",
+  "Video tahlil": "Video reviews",
+  "Taxminiy ball": "Estimated score",
+  "↗ +280 ball": "↗ +280 points",
+  "Batafsil tahlil": "Detailed analysis",
+  "har bir testdan keyin": "after every test",
+  "Bluebook’dagidek — Desmos bilan": "Just like Bluebook — with Desmos",
+  "Savollarni xuddi haqiqiy imtihondagidek yeching: taymer, belgilash, javoblar va Desmos kalkulyatori bir ekranda.": "Solve questions exactly like on test day: timer, marking, answers and the Desmos calculator on one screen.",
   "Kirish": "Log in",
   "Haqiqiy imtihonga o‘xshash mock testlar, mavzulashtirilgan mashqlar, video darslar va natijalaringiz tahlili — barchasi bir platformada.": "Exam-like mock tests, topic-based practice, video lessons and an analysis of your results — all on one platform.",
   "Bepul boshlash": "Start for free",
