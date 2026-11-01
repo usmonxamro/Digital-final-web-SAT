@@ -151,38 +151,29 @@ export function Checkout({ onClose, onHelp }: { onClose: () => void; onHelp: () 
   return (
     <div className="co-backdrop" onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}>
       <div className="co-panel" role="dialog" aria-modal="true" aria-label={t('PRO tarifini sotib olish')} ref={panelRef} tabIndex={-1}>
-        {/* ---------- hero ---------- */}
-        <header className="co-hero">
-          <div className="co-hero-brand">
-            <BrandMark size={58} />
-            <div className="co-word">
-              SAT <span>by</span> <b>Usmon</b>
-            </div>
-          </div>
-          <div className="co-hero-txt">
-            <span className="co-badge">
-              <Crown size={15} /> PRO
+        {/* ---------- header ---------- */}
+        <header className="co-head">
+          <div className="co-brand">
+            <BrandMark size={26} />
+            <span>
+              SAT <i>by</i> Usmon
             </span>
-            <p className="co-slogan">{t('Maqsadingiz sari — har kuni bir qadam!')}</p>
-            <p className="co-price">
-              {formatSom(plan.price)} {t("so'm")}
-              <small>/ {t(plan.label)}</small>
-            </p>
           </div>
           <button className="co-close" onClick={onClose} disabled={busy} aria-label={t('Yopish')}>
-            <X size={22} />
+            <X size={18} />
           </button>
         </header>
 
-        <div className="co-tabs">
-          <div className="co-tab">
-            <CreditCard size={20} />
-            {t("To'lov ma'lumotlari")}
+        <div className="co-summary">
+          <div>
+            <span className="co-badge">
+              <Crown size={12} /> PRO
+            </span>
+            <p className="co-sum-title">{t('PRO obuna')} · {t(plan.label)}</p>
           </div>
-          <div className="co-secure">
-            <Lock size={14} />
-            {t('Xavfsiz va himoyalangan')}
-          </div>
+          <p className="co-sum-price">
+            {formatSom(plan.price)} <small>{t("so'm")}</small>
+          </p>
         </div>
 
         {step === 'card' && (
@@ -197,7 +188,6 @@ export function Checkout({ onClose, onHelp }: { onClose: () => void; onHelp: () 
                   className={`co-plan ${plan.id === p.id ? 'on' : ''}`}
                   onClick={() => setPlan(p)}
                 >
-                  <span className="co-plan-dot" />
                   <span className="co-plan-l">{t(p.label)}</span>
                   <span className="co-plan-p">
                     {formatSom(p.price)} {t("so'm")}
@@ -205,15 +195,6 @@ export function Checkout({ onClose, onHelp }: { onClose: () => void; onHelp: () 
                   {p.note && <em>{p.note}</em>}
                 </button>
               ))}
-            </div>
-
-            <div className="co-account">
-              <span className="co-avatar">{(user.firstName ?? '?').slice(0, 1).toUpperCase()}</span>
-              <span className="co-account-txt">
-                <b>{`${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()}</b>
-                {user.email && <small>{user.email}</small>}
-              </span>
-              <ShieldCheck size={18} className="co-account-ok" />
             </div>
 
             {/* live card preview */}
@@ -230,59 +211,60 @@ export function Checkout({ onClose, onHelp }: { onClose: () => void; onHelp: () 
                 ))}
               </div>
               <div className="co-card-bottom">
-                <div>
-                  <small>{t('KARTA EGASI')}</small>
-                  <b>{holder}</b>
-                </div>
-                <div className="r">
-                  <small>{t('AMAL QILADI')}</small>
-                  <b>{expiry.length ? expiry.padEnd(5, '•') : 'OO/YY'}</b>
-                </div>
+                <b>{holder}</b>
+                <b className="r">{expiry.length ? expiry.padEnd(5, '•') : 'OO/YY'}</b>
               </div>
             </div>
 
-            <label className="co-label" htmlFor="co-num">
-              <CreditCard size={17} /> {t('Karta raqami')}
-            </label>
-            <div className="co-field">
-              <CreditCard size={19} />
-              <input
-                id="co-num"
-                inputMode="numeric"
-                autoComplete="cc-number"
-                placeholder="0000 0000 0000 0000"
-                value={number}
-                onChange={(e) => onNumber(e.target.value)}
-                aria-invalid={!!error}
-              />
+            <div className="co-fields">
+              <label className="co-field co-field-num">
+                <span className="co-label">{t('Karta raqami')}</span>
+                <span className="co-input">
+                  <CreditCard size={16} />
+                  <input
+                    id="co-num"
+                    inputMode="numeric"
+                    autoComplete="cc-number"
+                    placeholder="0000 0000 0000 0000"
+                    value={number}
+                    onChange={(e) => onNumber(e.target.value)}
+                    aria-invalid={!!error}
+                  />
+                </span>
+              </label>
+              <label className="co-field co-field-exp">
+                <span className="co-label">{t('Muddati')}</span>
+                <span className="co-input">
+                  <CalendarDays size={16} />
+                  <input
+                    id="co-exp"
+                    inputMode="numeric"
+                    autoComplete="cc-exp"
+                    placeholder="OO/YY"
+                    value={expiry}
+                    onChange={(e) => onExpiry(e.target.value)}
+                  />
+                </span>
+              </label>
             </div>
 
-            <label className="co-label" htmlFor="co-exp">
-              <CalendarDays size={17} /> {t('Amal qilish muddati')}
-            </label>
-            <div className="co-field co-field-half">
-              <CalendarDays size={19} />
-              <input
-                id="co-exp"
-                inputMode="numeric"
-                autoComplete="cc-exp"
-                placeholder="OO/YY"
-                value={expiry}
-                onChange={(e) => onExpiry(e.target.value)}
-              />
-            </div>
-
-            <p className="co-hint">{t('UzCard va HUMO kartalarida CVV yo‘q — to‘lov SMS kod bilan tasdiqlanadi.')}</p>
             {error && <p className="co-error">{error}</p>}
 
             <button className="co-submit" type="submit" disabled={busy}>
-              {busy ? <Loader2 size={22} className="co-spin" /> : <CreditCard size={22} />}
-              {t('Tarifni tasdiqlash')}
-              {!busy && <ArrowRight size={22} />}
+              {busy ? <Loader2 size={18} className="co-spin" /> : <Lock size={16} />}
+              {t("{s} so'm to'lash", { s: formatSom(plan.price) })}
             </button>
-            <p className="co-foot">
-              <Lock size={12} /> {t("Karta ma'lumotlari to'g'ridan-to'g'ri Payme'ga yuboriladi va saytimizda saqlanmaydi.")}
-            </p>
+
+            <div className="co-trust">
+              <span>
+                <ShieldCheck size={14} /> {t("Xavfsiz to'lov · Payme orqali")}
+              </span>
+              <span className="co-nets">
+                <b>UzCard</b>
+                <b>HUMO</b>
+              </span>
+            </div>
+            <p className="co-foot">{t("Karta ma'lumotlari saytimizda saqlanmaydi. To'lov SMS kod bilan tasdiqlanadi.")}</p>
           </form>
         )}
 
@@ -290,12 +272,12 @@ export function Checkout({ onClose, onHelp }: { onClose: () => void; onHelp: () 
           <form className="co-body" onSubmit={submitCode} noValidate>
             <div className="co-state">
               <div className="co-state-ico">
-                <MessageSquareText size={30} />
+                <MessageSquareText size={24} />
               </div>
               <h3>{t('SMS kodni kiriting')}</h3>
               <p>{phone ? t('Kod {p} raqamiga yuborildi.', { p: phone }) : t('Kod kartangizga ulangan raqamga yuborildi.')}</p>
             </div>
-            <div className="co-field co-code">
+            <span className="co-input co-code">
               <input
                 inputMode="numeric"
                 autoComplete="one-time-code"
@@ -308,11 +290,11 @@ export function Checkout({ onClose, onHelp }: { onClose: () => void; onHelp: () 
                 }}
                 autoFocus
               />
-            </div>
+            </span>
             {error && <p className="co-error">{error}</p>}
             <button className="co-submit" type="submit" disabled={busy}>
-              {busy ? <Loader2 size={22} className="co-spin" /> : <ShieldCheck size={22} />}
-              {t("{s} so'm to'lash", { s: formatSom(plan.price) })}
+              {busy ? <Loader2 size={18} className="co-spin" /> : <ShieldCheck size={16} />}
+              {t('Tasdiqlash')}
             </button>
             <button type="button" className="co-link" onClick={() => setStep('card')} disabled={busy}>
               {t('Kartani o‘zgartirish')}
@@ -324,9 +306,9 @@ export function Checkout({ onClose, onHelp }: { onClose: () => void; onHelp: () 
           <div className="co-body">
             <div className="co-state">
               <div className="co-state-ico ok">
-                <CheckCircle2 size={34} />
+                <CheckCircle2 size={26} />
               </div>
-              <h3>{t('Tabriklaymiz, PRO faollashdi!')} 🎉</h3>
+              <h3>{t('PRO faollashdi')}</h3>
               <p>
                 {until
                   ? t('PRO {d} gacha amal qiladi.', { d: new Date(until).toLocaleDateString('ru-RU') })
@@ -334,7 +316,7 @@ export function Checkout({ onClose, onHelp }: { onClose: () => void; onHelp: () 
               </p>
             </div>
             <button className="co-submit" onClick={() => window.location.reload()}>
-              {t("Davom etish")} <ArrowRight size={22} />
+              {t('Davom etish')} <ArrowRight size={16} />
             </button>
           </div>
         )}
@@ -343,13 +325,13 @@ export function Checkout({ onClose, onHelp }: { onClose: () => void; onHelp: () 
           <div className="co-body">
             <div className="co-state">
               <div className="co-state-ico">
-                <Crown size={30} />
+                <Crown size={24} />
               </div>
               <h3>{t("Karta orqali to'lov tez orada ishga tushadi")}</h3>
-              <p>{t("Hozircha PRO ni admin orqali faollashtirish mumkin — yozing, darhol yordam beramiz.")}</p>
+              <p>{t('Hozircha PRO ni admin orqali faollashtirish mumkin — yozing, darhol yordam beramiz.')}</p>
             </div>
             <button className="co-submit" onClick={onHelp}>
-              {t('Admin bilan bog‘lanish')} <ArrowRight size={22} />
+              {t('Admin bilan bog‘lanish')} <ArrowRight size={16} />
             </button>
             <button type="button" className="co-link" onClick={() => setStep('card')}>
               {t('Orqaga')}

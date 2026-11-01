@@ -13,7 +13,7 @@ export default function BooksPage() {
     <>
       <div className="sd-page-header">
         <div>
-          <div className="sd-eyebrow">{t('SAT Akademiyasi / Kitoblar')}</div>
+          <div className="sd-eyebrow">{t('SAT by Usmon / Kitoblar')}</div>
           <h1>{t('Kitoblar')}</h1>
         </div>
         <span className="sd-pill">{t('Bepul kitoblar')}</span>

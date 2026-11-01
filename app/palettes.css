@@ -6,11 +6,11 @@
    The exam engine never reads these: it uses its own tokens. */
 
 /* ---------- brand mark colours (logo follows the palette) ---------- */
-:root{--brand-1:#ffb357;--brand-2:#ff7a1a;--brand-3:#d94b00;--brand-ring:#ffe0bf;--brand-glow:rgba(255,122,26,.45);--brand-text:#ff7a1a}
+:root{--brand-1:#ff9a3c;--brand-2:#ff7a1a;--brand-3:#ea4f00;--brand-ring:#ffe0bf;--brand-glow:rgba(255,122,26,.3);--brand-text:#ff7a1a}
 [data-sp-theme='light']{--brand-text:#ea580c}
-html[data-sp-palette="green"]{--brand-1:#4cf08f;--brand-2:#1fc566;--brand-3:#0b8a48;--brand-ring:#bdfdd6;--brand-glow:rgba(46,226,122,.45);--brand-text:#2ee27a}
+html[data-sp-palette="green"]{--brand-1:#34d77a;--brand-2:#1fc566;--brand-3:#0d8a47;--brand-ring:#bdfdd6;--brand-glow:rgba(46,226,122,.3);--brand-text:#2ee27a}
 html[data-sp-palette="green"][data-sp-theme='light']{--brand-text:#16a34a}
-html[data-sp-palette="yellow"]{--brand-1:#ffe27a;--brand-2:#f5b50b;--brand-3:#c27c00;--brand-ring:#fff1bf;--brand-glow:rgba(245,181,11,.45);--brand-text:#ffc414}
+html[data-sp-palette="yellow"]{--brand-1:#ffcf3a;--brand-2:#f5b50b;--brand-3:#d08700;--brand-ring:#fff1bf;--brand-glow:rgba(245,181,11,.3);--brand-text:#ffc414}
 html[data-sp-palette="yellow"][data-sp-theme='light']{--brand-text:#b77700}
 .sbu-accent-text{color:var(--brand-text)}
 

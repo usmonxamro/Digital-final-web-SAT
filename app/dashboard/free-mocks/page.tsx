@@ -43,7 +43,7 @@ export default function FreeMocksPage() {
     <>
       <div className="sd-page-header">
         <div>
-          <div className="sd-eyebrow">{t('SAT Akademiyasi / Testlar')}</div>
+          <div className="sd-eyebrow">{t('SAT by Usmon / Testlar')}</div>
           <h1>{t('Bepul mocklar')}</h1>
         </div>
         <span className="sd-pill">{t('Mashq testlar')}</span>

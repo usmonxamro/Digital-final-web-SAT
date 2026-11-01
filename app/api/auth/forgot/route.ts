@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   }
   const ok = await sendMail(
     email,
-    `SAT Akademiyasi: parolni tiklash kodi ${code}`,
+    `SAT by Usmon: parolni tiklash kodi ${code}`,
     `<div style="font-family:Arial,sans-serif;max-width:420px"><h2>Parolni tiklash</h2><p>Salom, ${user.first_name ?? ''}!</p><p>Tasdiqlash kodingiz:</p><p style="font-size:32px;font-weight:800;letter-spacing:6px">${code}</p><p>Kod ${RESET_MINUTES} daqiqa amal qiladi. Agar siz so'ramagan bo'lsangiz, bu xatni e'tiborsiz qoldiring.</p></div>`,
     `Parolni tiklash kodi: ${code} (${RESET_MINUTES} daqiqa amal qiladi).`,
   )

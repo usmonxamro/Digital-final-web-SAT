@@ -102,7 +102,7 @@ export async function buildCertificatePdf(data: CertificateData) {
   doc.setTextColor(...TEXT)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
-  doc.text('SAT AKADEMIYASI', iconCx + 16, iconCy + 3.6)
+  doc.text('SAT by Usmon', iconCx + 16, iconCy + 3.6)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7.5)
   doc.text('satbyusmon.com', iconCx + 16, iconCy + 13)
@@ -122,7 +122,7 @@ export async function buildCertificatePdf(data: CertificateData) {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
   const disclaimer = doc.splitTextToSize(
-    'This practice score report is provided by SAT AKADEMIYASI by Usmon Xamroyev for your personal use to help you prepare for test day. These scores are for personal practice only and cannot be sent to colleges or scholarship programs.',
+    'This practice score report is provided by SAT by Usmon (Usmon Xamroyev) for your personal use to help you prepare for test day. These scores are for personal practice only and cannot be sent to colleges or scholarship programs.',
     240,
   ) as string[]
   printLines(disclaimer, right, 67.9, 8, 9.4, 'right')
@@ -390,7 +390,7 @@ export async function buildCertificatePdf(data: CertificateData) {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   const footerText = doc.splitTextToSize(
-    "SAT AKADEMIYASI platformasida amaliy testlarni topshiring va natijalaringizni kuzatib boring.",
+    "SAT by Usmon platformasida amaliy testlarni topshiring va natijalaringizni kuzatib boring.",
     footerTextRight - footerTextX,
   ) as string[]
   printLines(footerText, footerTextX, fy + 10, 9, 10.5)
@@ -404,7 +404,7 @@ export async function buildCertificatePdf(data: CertificateData) {
   doc.setLineWidth(1.1)
   doc.line(qrDividerX, fy + 8, qrDividerX, fy + footerH - 8)
 
-  const qrDataUrl: string = await QRCode.toDataURL('@SATAKADEMIYASI', {
+  const qrDataUrl: string = await QRCode.toDataURL('@satbyusmon', {
     margin: 0,
     width: 240,
     color: { dark: '#000000', light: '#ffffff' },
@@ -415,7 +415,7 @@ export async function buildCertificatePdf(data: CertificateData) {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
   doc.setTextColor(...TEXT)
-  doc.text('\u00A9 SAT AKADEMIYASI by Usmon Xamroyev', boxLeft, baseline(fy + footerH + 26, 8))
+  doc.text('\u00A9 SAT by Usmon (Usmon Xamroyev)', boxLeft, baseline(fy + footerH + 26, 8))
 
   return doc
 }

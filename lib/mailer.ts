@@ -1,6 +1,6 @@
 /**
  * Sends e-mail through Resend (https://resend.com — free tier, HTTPS API, no SMTP needed).
- * Env: RESEND_API_KEY, MAIL_FROM (e.g. "SAT Akademiyasi <noreply@satbyusmon.com>" after the
+ * Env: RESEND_API_KEY, MAIL_FROM (e.g. "SAT by Usmon <noreply@satbyusmon.com>" after the
  * domain is verified in Resend; for a quick test use "onboarding@resend.dev").
  */
 export function mailConfigured(): boolean {
@@ -15,7 +15,7 @@ export async function sendMail(to: string, subject: string, html: string, text: 
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: process.env.MAIL_FROM || 'SAT Akademiyasi <onboarding@resend.dev>',
+        from: process.env.MAIL_FROM || 'SAT by Usmon <onboarding@resend.dev>',
         to: [to],
         subject,
         html,

@@ -35,7 +35,7 @@ const MODALS: Record<ModalKind, { icon: React.ReactNode; title: string; text: st
     title: 'Yordam markazi',
     text: HELP_URL
       ? "Darslar, testlar yoki hisobingiz bo'yicha savollaringiz bo'lsa, Telegram orqali yozing — tez orada javob beramiz."
-      : "Savollaringiz bo'lsa, SAT Akademiyasi Telegram kanali yoki guruhi orqali o'qituvchiga murojaat qiling.",
+      : "Savollaringiz bo'lsa, SAT by Usmon Telegram kanali yoki guruhi orqali o'qituvchiga murojaat qiling.",
     button: HELP_URL ? 'Telegramda yozish' : 'Tushunarli',
   },
   plans: { icon: <Lock />, title: 'Tariflar', text: '', button: '' },

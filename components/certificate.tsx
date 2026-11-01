@@ -89,7 +89,7 @@ export function Certificate({ studentName, testTitle, composite, rw, math, revie
     if (!pdfUrl) return
     const link = document.createElement('a')
     link.href = pdfUrl
-    link.download = `SAT_AKADEMIYASI_Sertifikat_${studentName.replace(/\s+/g, '_')}.pdf`
+    link.download = `SAT_by_Usmon_Sertifikat_${studentName.replace(/\s+/g, '_')}.pdf`
     link.click()
   }
 

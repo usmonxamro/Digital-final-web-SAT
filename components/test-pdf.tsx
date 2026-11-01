@@ -99,7 +99,7 @@ function Brand({ light }: { light?: boolean }) {
         </svg>
       </div>
       <div style={{ lineHeight: 1.15 }}>
-        <div style={{ fontWeight: 800, fontSize: 16, letterSpacing: 0.2, color: light ? '#fff' : '#0f172a' }}>SAT AKADEMIYASI</div>
+        <div style={{ fontWeight: 800, fontSize: 16, letterSpacing: 0.2, color: light ? '#fff' : '#0f172a' }}>SAT by Usmon</div>
         <div style={{ fontWeight: 600, fontSize: 10.5, color: light ? 'rgba(255,255,255,.85)' : '#64748b' }}>{SITE_DOMAIN}</div>
       </div>
     </div>
@@ -178,7 +178,7 @@ function Frame({
             </div>
           </div>
           <div style={{ position: 'absolute', left: '50%', top: 6, transform: 'translateX(-50%)', textAlign: 'center', lineHeight: 1.1 }}>
-            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: 0.4, color: '#111' }}>SAT AKADEMIYASI</div>
+            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: 0.4, color: '#111' }}>SAT by Usmon</div>
             <a
               href={SITE_URL}
               style={{ display: 'inline-block', marginTop: 5, border: '1px solid rgba(14,124,117,.45)', borderRadius: 999, padding: '1px 14px', fontSize: 12.5, fontWeight: 700, color: '#0e7c75', textDecoration: 'none' }}
@@ -814,7 +814,7 @@ function prefersFileDownload() {
 
 function fileNameOf(title: string) {
   const base = title.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'SAT test'
-  return `${base} - SAT AKADEMIYASI.pdf`
+  return `${base} - SAT by Usmon.pdf`
 }
 
 const OVERLAY_CSS = `

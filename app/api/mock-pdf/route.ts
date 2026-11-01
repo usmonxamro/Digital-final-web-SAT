@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     const base = label.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'SAT test'
     const { data: signed, error } = await supabase.storage
       .from('mock-pdfs')
-      .createSignedUrl(cfg.pdf_path as string, 120, { download: `${base} - SAT AKADEMIYASI.pdf` })
+      .createSignedUrl(cfg.pdf_path as string, 120, { download: `${base} - SAT by Usmon.pdf` })
     if (error || !signed?.signedUrl) return NextResponse.json({ cached: false })
     return NextResponse.json({ cached: true, url: signed.signedUrl })
   } catch {

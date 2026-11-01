@@ -30,7 +30,7 @@ export default function QuestionBankPage() {
     <>
       <div className="sd-page-header">
         <div>
-          <div className="sd-eyebrow">{t('SAT Akademiyasi / Mashq')}</div>
+          <div className="sd-eyebrow">{t('SAT by Usmon / Mashq')}</div>
           <h1>{t('Savollar banki')}</h1>
         </div>
       </div>

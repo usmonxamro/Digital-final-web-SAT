@@ -94,7 +94,7 @@ export default function ResultsPage() {
     <>
       <div className="sd-page-header">
         <div>
-          <div className="sd-eyebrow">{t('SAT Akademiyasi / Natijalar')}</div>
+          <div className="sd-eyebrow">{t('SAT by Usmon / Natijalar')}</div>
           <h1>{t('Natijalarim')}</h1>
         </div>
         {!loading && <span className="sd-pill">{t('{n} ta urinish', { n: summary.count })}</span>}

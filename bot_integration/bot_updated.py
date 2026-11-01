@@ -32,7 +32,7 @@ if not TOKEN:
 ADMIN_ID = 924190461
 ADMIN_IDS = [924190461, 7703440792]  # asosiy (kod ichidagi, o'zgarmas) adminlar -
                                       # FAQAT shular yangi admin qo'sha/olib tashlay oladi
-REQUIRED_CHANNELS = ["@SATAKADEMIYASI", "@SAT_surxon"]
+REQUIRED_CHANNELS = ["@satbyusmon", "@SAT_surxon"]
 NETLIFY_URL = "https://vazifatekshiruvchi.netlify.app/"
 DB_PATH = "sat_system.db"
 

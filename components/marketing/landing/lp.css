@@ -881,7 +881,7 @@ html[data-sp-theme="dark"] .lp .exam-foot .nb .nx{background:#1d5ff2;color:#fff}
 .lp .sp-lang-menu button{padding:9px 10px}
 
 /* ===== v-nov01: "SAT by Usmon" logo (colours follow the palette, see app/palettes.css) ===== */
-.lp .logo .logo-mark{width:44px;height:44px}
+.lp .logo .logo-mark{width:42px;height:42px;filter:drop-shadow(0 4px 10px var(--brand-glow))}
 .lp .logo .logo-by{font-style:normal;font-weight:600;opacity:.65}
 .lp .logo .logo-u{color:var(--brand-text);font-weight:800}
 html[data-sp-theme="dark"] .lp .logo .logo-u{text-shadow:0 0 14px var(--brand-glow)}

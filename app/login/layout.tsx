@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Kirish va ro‘yxatdan o‘tish',
-  description: "SAT Akademiyasi'ga kiring yoki bepul ro'yxatdan o'ting: Digital SAT mock testlar, savollar banki va natijalar tahlili.",
+  description: "SAT by Usmon'ga kiring yoki bepul ro'yxatdan o'ting: Digital SAT mock testlar, savollar banki va natijalar tahlili.",
   alternates: { canonical: '/login' },
 }
 

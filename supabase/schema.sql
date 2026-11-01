@@ -1,4 +1,4 @@
--- SAT AKADEMIYASI — Supabase schema
+-- SAT by Usmon — Supabase schema
 -- Run this once in your Supabase project: Dashboard → SQL Editor → New query → paste → Run.
 
 create extension if not exists "pgcrypto";

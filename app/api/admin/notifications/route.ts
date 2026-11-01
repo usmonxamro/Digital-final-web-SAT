@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   const title = typeof b?.title === 'string' ? b.title.trim().slice(0, 120) : ''
   const body = typeof b?.body === 'string' ? b.body.trim().slice(0, 1500) : ''
   if (!title && !body) return NextResponse.json({ error: 'Xabar matnini yozing.' }, { status: 400 })
-  const { error } = await supabaseAdmin().from('notifications').insert({ user_id: null, kind: 'admin', title: title || 'SAT Akademiyasi', body })
+  const { error } = await supabaseAdmin().from('notifications').insert({ user_id: null, kind: 'admin', title: title || 'SAT by Usmon', body })
   if (error) {
     return NextResponse.json({ error: isMissingTable(error) ? 'Jadval yo‘q — schema.sql oxiridagi v71 qismini ishga tushiring.' : 'Yuborib bo‘lmadi.' }, { status: 500 })
   }

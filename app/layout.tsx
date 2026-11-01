@@ -33,19 +33,19 @@ const jakarta = Plus_Jakarta_Sans({
 
 const SITE = 'https://satbyusmon.com'
 const DESCRIPTION =
-  "SAT Akademiyasi — O'zbekistonda Digital SAT'ga tayyorlanish platformasi: bepul SAT mock testlar, SAT Math va Reading & Writing mashqlari, o'tgan imtihonlar, savollar banki, video tahlillar va o'zbek tilidagi kurslar."
+  "SAT by Usmon — O'zbekistonda Digital SAT'ga tayyorlanish platformasi: bepul SAT mock testlar, SAT Math va Reading & Writing mashqlari, o'tgan imtihonlar, savollar banki, video tahlillar va o'zbek tilidagi kurslar."
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   title: {
-    default: "SAT Akademiyasi — Digital SAT mock testlar va kurslar | satbyusmon.com",
-    template: '%s | SAT Akademiyasi',
+    default: "SAT by Usmon — Digital SAT mock testlar va kurslar",
+    template: '%s | SAT by Usmon',
   },
   description: DESCRIPTION,
-  applicationName: 'SAT Akademiyasi',
+  applicationName: 'SAT by Usmon',
   authors: [{ name: 'Usmon Xamroyev', url: 'https://t.me/Usmon_Xamroyev' }],
-  creator: 'SAT Akademiyasi',
-  publisher: 'SAT Akademiyasi',
+  creator: 'Usmon Xamroyev',
+  publisher: 'SAT by Usmon',
   // Google mostly ignores this list, other engines (Yandex, Bing) still read it. The common ways people
   // misspell the site and the brand are here so a typo still finds us.
   keywords: [
@@ -60,16 +60,16 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     url: SITE,
-    siteName: 'SAT Akademiyasi',
-    title: "SAT Akademiyasi — Digital SAT'ga o'zbek tilida tayyorgarlik",
+    siteName: 'SAT by Usmon',
+    title: "SAT by Usmon — Digital SAT'ga o'zbek tilida tayyorgarlik",
     description: "Haqiqiy imtihondagidek SAT mock testlar, savollar banki, natijalar tahlili va Telegram kurslari. Bepul boshlang.",
     locale: 'uz_UZ',
     alternateLocale: ['ru_RU', 'en_US'],
-    images: [{ url: '/og.png', width: 1200, height: 630, alt: "SAT Akademiyasi — Digital SAT mock testlar va kurslar" }],
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: "SAT by Usmon — Digital SAT mock testlar va kurslar" }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "SAT Akademiyasi — Digital SAT'ga o'zbek tilida tayyorgarlik",
+    title: "SAT by Usmon — Digital SAT'ga o'zbek tilida tayyorgarlik",
     description: "Haqiqiy imtihondagidek SAT mock testlar, savollar banki, natijalar tahlili va Telegram kurslari.",
     images: ['/og.png'],
   },

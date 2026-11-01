@@ -1613,7 +1613,7 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
             <ShieldCheck size={18} />
           </span>
           <span>
-            <b>SAT Akademiyasi</b>
+            <b>SAT by Usmon</b>
             <small>Boshqaruv paneli</small>
           </span>
         </div>

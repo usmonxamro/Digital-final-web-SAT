@@ -114,7 +114,7 @@ export default function CourseTasksPage() {
     <>
       <div className="sd-page-header">
         <div>
-          <div className="sd-eyebrow">{t('SAT Akademiyasi / Kurslar')}</div>
+          <div className="sd-eyebrow">{t('SAT by Usmon / Kurslar')}</div>
           <h1>{t('Mening kurslarim')}</h1>
         </div>
         <button className="sd-soft" onClick={() => openModal('code')}>

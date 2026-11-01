@@ -157,7 +157,7 @@ function Sidebar({ open, pathname, hash }: { open: boolean; pathname: string; ha
             {t('Yordam markazi')} <ArrowUpRight size={13} style={{ display: 'inline', verticalAlign: '-2px' }} />
           </button>
         </div>
-        <p className="sd-copy">© 2026 SAT Akademiyasi · satbyusmon.com</p>
+        <p className="sd-copy">© 2026 SAT by Usmon · satbyusmon.com</p>
       </div>
     </aside>
   )
