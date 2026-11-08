@@ -3,13 +3,15 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { isMissingTable } from '@/lib/db-errors'
-import { COURSE_GROUPS, groupBySlug } from '@/lib/course-groups'
+import { courseGroups, groupBySlug } from '@/lib/course-groups'
 import { createJoinCode, type GroupCodeRow } from '@/lib/course-group-codes'
+import { loadCourseGroups } from '@/lib/course-groups-db'
 
 const NO_TABLE = { error: "Avval Supabase'da v75 SQL'ni ishga tushiring (course_group_codes)." }
 
 /** GET → the shared join code of every course group (a missing one is created on the spot). */
 export async function GET() {
+  await loadCourseGroups()
   try {
     await requireAdmin()
   } catch (e) {
@@ -19,7 +21,7 @@ export async function GET() {
   const { data, error } = await sb.from('course_group_codes').select('group_slug, code, active')
   if (error) return NextResponse.json(NO_TABLE, { status: isMissingTable(error) ? 503 : 500 })
   const rows = (data ?? []) as GroupCodeRow[]
-  for (const g of COURSE_GROUPS) {
+  for (const g of courseGroups()) {
     if (rows.some((r) => r.group_slug === g.slug)) continue
     const made = await createJoinCode(sb, g.slug)
     if (made.code) rows.push({ group_slug: g.slug, code: made.code, active: true })
@@ -29,6 +31,7 @@ export async function GET() {
 
 /** POST { slug, action: 'regenerate' | 'on' | 'off' } */
 export async function POST(req: NextRequest) {
+  await loadCourseGroups()
   try {
     await requireAdmin()
   } catch (e) {

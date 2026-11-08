@@ -6,6 +6,7 @@ import { SupportPanel } from '@/components/admin/support-panel'
 import { NotifyPanel } from '@/components/admin/notify-panel'
 import { ReportsPanel } from '@/components/admin/reports-panel'
 import { GroupsPanel } from '@/components/admin/groups-panel'
+import { CourseBannersPanel } from '@/components/admin/course-banners-panel'
 import { BotSyncPanel } from '@/components/admin/bot-sync-panel'
 import { StudentsPanel } from '@/components/admin/students-panel'
 import { BotTestPicker, type PickedBotTest } from '@/components/admin/bot-test-picker'
@@ -36,6 +37,7 @@ import {
   ClipboardList,
   Link2,
   TrendingUp,
+  Megaphone,
 } from 'lucide-react'
 import { AdminGate } from '@/components/admin/admin-gate'
 import { MocksPanel } from '@/components/admin/mocks-panel'
@@ -55,7 +57,8 @@ import { parseLatexQuestions, type LatexImportWarning } from '@/lib/latex-import
 import { parseTableQuestions, TABLE_TEMPLATE_CSV, type TableImportWarning } from '@/lib/table-import'
 import type { Question, SectionKind } from '@/lib/test-data'
 import type { MockTestSummary } from '@/app/api/tests/route'
-import { COURSE_GROUPS } from '@/lib/course-groups'
+import { activeCourseGroups, groupBySlug } from '@/lib/course-groups'
+import { useCourseGroups } from '@/components/use-course-groups'
 
 /* ------------------------------- shared bits ------------------------------ */
 
@@ -632,7 +635,7 @@ function TaskForm() {
     }
     const r = await saveModule({ kind, questions, testLabel: label })
     const base = r.ok
-      ? `"${label}" vazifasi saqlandi — ${questions.length} ta savol${groups.length ? `, guruh: ${groups.map((g) => COURSE_GROUPS.find((c) => c.slug === g)?.title).join(' + ')}` : ''}. Hozircha DRAFT.`
+      ? `"${label}" vazifasi saqlandi — ${questions.length} ta savol${groups.length ? `, guruh: ${groups.map((g) => groupBySlug(g)?.title ?? g).join(' + ')}` : ''}. Hozircha DRAFT.`
       : ''
     if (!r.ok) {
       setResult(r)
@@ -721,7 +724,7 @@ function TaskForm() {
       <div className="mb-4">
         <div className="mb-1.5 text-[12px] font-bold text-ink-soft">Qaysi guruh(lar)ga beriladi (bir nechtasini tanlash mumkin)</div>
         <div className="flex flex-wrap gap-2">
-          {COURSE_GROUPS.map((g) => {
+          {activeCourseGroups().map((g) => {
             const on = groups.includes(g.slug)
             return (
               <button
@@ -1517,7 +1520,7 @@ function SkillBankImport() {
 
 /* ------------------------------------ page ---------------------------------- */
 
-type Tab = 'mocks' | 'new' | 'task' | 'groups' | 'pupils' | 'botsync' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support' | 'notify' | 'reports'
+type Tab = 'banners' | 'mocks' | 'new' | 'task' | 'groups' | 'pupils' | 'botsync' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support' | 'notify' | 'reports'
 type NewMockType = 'full' | 'math' | 'english' | null
 
 /** Left menu of the admin panel, grouped like other admin dashboards: content · people · analytics · settings. */
@@ -1536,6 +1539,7 @@ const ADMIN_NAV: { title: string; items: { key: Tab; label: string; desc: string
     title: "O'quvchilar",
     items: [
       { key: 'groups', label: 'Guruhlar', desc: "Kurs guruhlari: berilgan mocklar va kim bajargani", icon: Users },
+      { key: 'banners', label: 'Kurs bannerlari', desc: "Yangi guruh banneri qo'shish, bosh sahifa va kabinetda ko'rsatish / yashirish", icon: Megaphone },
       { key: 'users', label: 'Foydalanuvchilar', desc: "Ro'yxatdan o'tganlar, tariflar va kirish huquqlari", icon: Users },
       { key: 'support', label: 'Xabarlar', desc: "O'quvchilardan kelgan murojaatlar", icon: MessageSquare },
       { key: 'reports', label: 'Xato xabarlari', desc: "Savollardagi xatolar haqida o'quvchilar xabarlari", icon: Flag },
@@ -1557,6 +1561,7 @@ const ADMIN_NAV: { title: string; items: { key: Tab; label: string; desc: string
 ]
 
 export default function AdminPage() {
+  useCourseGroups()
   return (
     <div className="admin-root min-h-screen">
       <AdminGate>{({ isOwner, lock }) => <AdminPanel isOwner={isOwner} onLock={lock} />}</AdminGate>
@@ -1677,6 +1682,7 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
         <KeepAlive active={tab === 'stats'}>
           <StatsPanel />
         </KeepAlive>
+        {tab === 'banners' && <CourseBannersPanel />}
         {tab === 'support' && <SupportPanel />}
         {tab === 'notify' && <NotifyPanel />}
         {tab === 'reports' && <ReportsPanel onChanged={refreshReportCount} />}

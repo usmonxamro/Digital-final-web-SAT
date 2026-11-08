@@ -16,6 +16,8 @@ export type DashboardUser = {
   courseAll?: boolean
   /** Course groups unlocked by a bot code or an admin (slugs, see lib/course-groups.ts). */
   courseGroups?: string[]
+  /** 'owner' = the site owner, 'admin' = staff: no plan, no trial days, no limits. */
+  staff?: 'owner' | 'admin' | null
   /** Account creation time (ISO) — used for the first-visit tour. */
   createdAt?: string | null
 }

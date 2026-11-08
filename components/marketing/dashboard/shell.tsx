@@ -14,6 +14,7 @@ import { LangPicker } from '@/components/marketing/dashboard/lang-picker'
 import { useT } from '@/components/i18n-provider'
 import { NotifCenter } from '@/components/marketing/dashboard/notif-center'
 import { Tour } from '@/components/marketing/dashboard/tour'
+import { GlobalSearch } from '@/components/marketing/dashboard/global-search'
 
 const NAV = [
   { href: '/dashboard', hash: '', label: 'Bosh sahifa', Icon: House },
@@ -169,8 +170,12 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
   const router = useRouter()
   const pathname = usePathname()
   const onProfile = pathname.startsWith('/dashboard/profile')
-  const isPro = user.plan === 'premium'
-  const planLabel = isPro ? (user.trialDaysLeft ? `PRO · ${t('{n} kun', { n: user.trialDaysLeft })}` : 'PRO') : 'FREE'
+  const isPro = user.plan === 'premium' || !!user.staff
+  const planLabel = user.staff
+    ? user.staff === 'owner' ? 'OWNER' : 'ADMIN'
+    : isPro
+      ? user.trialDaysLeft ? `PRO · ${t('{n} kun', { n: user.trialDaysLeft })}` : 'PRO'
+      : 'FREE'
 
   return (
     <header className="sd-topbar">
@@ -178,6 +183,7 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
         <button className="sd-icon-btn sd-menu-btn" onClick={onMenu} aria-label={t('Menyuni ochish')}>
           <Menu />
         </button>
+        <GlobalSearch />
       </div>
       <div className="sd-top-right">
         <LangSwitch />
@@ -231,15 +237,17 @@ function BalanceCard() {
       off = true
     }
   }, [])
-  const isPro = user.plan === 'premium'
+  const staff = user.staff
+  const isPro = user.plan === 'premium' || !!staff
   const left = quota ? Math.max(0, quota.perDay - quota.usedToday) : null
+  const open = () => !staff && openModal('plans')
   return (
-    <div className="sd-balance sd-balance-click" role="button" tabIndex={0} onClick={() => openModal('plans')} onKeyDown={(e) => e.key === 'Enter' && openModal('plans')}>
+    <div className={`sd-balance ${staff ? '' : 'sd-balance-click'}`} role="button" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === 'Enter' && open()}>
       <div className="sd-balance-head">
         <span>{t('Balansim')}</span>
-        <b className={isPro || elite ? 'sd-plan-pro' : ''}>{elite ? 'ELITE' : isPro ? 'PRO' : 'FREE'}</b>
+        <b className={isPro || elite ? 'sd-plan-pro' : ''}>{staff ? (staff === 'owner' ? 'OWNER' : 'ADMIN') : elite ? 'ELITE' : isPro ? 'PRO' : 'FREE'}</b>
       </div>
-      {unlimited ? (
+      {unlimited || staff ? (
         <div className="sd-balance-big">{t('Cheksiz')}</div>
       ) : (
         <>
@@ -254,7 +262,8 @@ function BalanceCard() {
           <p>{t('Bugun: {x} mock yechildi', { x: quota ? `${quota.usedToday}/${quota.perDay}` : '–' })}</p>
         </>
       )}
-      {isPro && user.trialDaysLeft ? <p>{t('Bepul PRO: yana {n} kun', { n: user.trialDaysLeft })}</p> : null}
+      {staff && <p>{t('Hech qanday cheklov yo‘q')}</p>}
+      {!staff && isPro && user.trialDaysLeft ? <p>{t('Bepul PRO: yana {n} kun', { n: user.trialDaysLeft })}</p> : null}
       {!isPro && !elite && (
         <button className="sd-text-btn" onClick={(e) => { e.stopPropagation(); openModal('plans') }}>
           {t("PRO ga o'tish")} <ArrowUpRight size={13} style={{ display: 'inline', verticalAlign: '-2px' }} />

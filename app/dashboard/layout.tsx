@@ -4,6 +4,7 @@ import { verifySession, SESSION_COOKIE } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { planInfo, trialEndFromNow } from '@/lib/plan'
 import { courseAccessFor } from '@/lib/course-access'
+import { adminIdentity } from '@/lib/admin-auth'
 import { UserProvider, type DashboardUser } from '@/components/marketing/dashboard/user-context'
 import { DashboardShell } from '@/components/marketing/dashboard/shell'
 import './sd.css'
@@ -29,7 +30,10 @@ async function loadUser(): Promise<DashboardUser | null> {
           await supabase.from('users').update({ premium_until: until }).eq('id', data.id)
         }
       }
-      const plan = planInfo(data)
+      const admin = await adminIdentity().catch(() => null)
+      const staff = admin ? (admin.isOwner ? 'owner' : 'admin') : null
+      // Owner / admins: no plan, no countdown, no limits — always full access.
+      const plan = staff ? { plan: 'premium' as const, trialDaysLeft: null } : planInfo(data)
       const access = await courseAccessFor(supabase, data)
       return {
         id: data.id,
@@ -39,8 +43,9 @@ async function loadUser(): Promise<DashboardUser | null> {
         plan: plan.plan,
         trialDaysLeft: plan.trialDaysLeft,
         // Before the v54 column exists everyone keeps access.
-        courseMember: access.all || access.groups.length > 0,
-        courseAll: access.all,
+        courseMember: !!staff || access.all || access.groups.length > 0,
+        courseAll: !!staff || access.all,
+        staff,
         courseGroups: access.groups,
         createdAt: (data.created_at as string | undefined) ?? null,
       }

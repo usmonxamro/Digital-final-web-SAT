@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { SectionAccessPicker, type Placement } from '@/components/admin/section-access'
 import { AlertTriangle, CalendarClock, ExternalLink, EyeOff, Globe, GraduationCap, Loader2, X } from 'lucide-react'
-import { COURSE_GROUPS, groupsOfTask } from '@/lib/course-groups'
+import { activeCourseGroups, groupsOfTask } from '@/lib/course-groups'
+import { useCourseGroups } from '@/components/use-course-groups'
 
 /**
  * "Check it now" + "Publish" for one mock.
@@ -20,6 +21,7 @@ export function PublishActions({
   variant?: 'floating' | 'inline'
   onChange?: (published: boolean) => void
 }) {
+  useCourseGroups()
   const [published, setPublished] = useState<boolean | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -247,7 +249,7 @@ export function PublishActions({
               <GraduationCap size={14} className="text-sky-600" /> Kurs guruhlari (My Courses)
             </div>
             <div className="flex flex-wrap gap-2">
-              {COURSE_GROUPS.map((g) => {
+              {activeCourseGroups().map((g) => {
                 const on = groups.includes(g.slug)
                 return (
                   <button

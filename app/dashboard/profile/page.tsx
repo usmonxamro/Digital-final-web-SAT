@@ -42,8 +42,8 @@ export default function SettingsPage() {
     router.refresh()
   }
 
-  const isPro = user.plan === 'premium'
-  const trial = isPro && !!user.trialDaysLeft
+  const isPro = user.plan === 'premium' || !!user.staff
+  const trial = isPro && !user.staff && !!user.trialDaysLeft
 
   return (
     <div className="sd-settings">
@@ -58,7 +58,7 @@ export default function SettingsPage() {
             <div className="text-[13.5px] text-sp-text-muted flex items-center gap-1.5 mt-0.5">
               {isPro ? (
                 <>
-                  <Crown size={13} className="text-sp-yellow" /> {trial ? t('PRO · {n} kun', { n: user.trialDaysLeft ?? 0 }) : t("Premium a'zo")}
+                  <Crown size={13} className="text-sp-yellow" /> {user.staff ? t('Owner · cheksiz kirish') : trial ? t('PRO · {n} kun', { n: user.trialDaysLeft ?? 0 }) : t("Premium a'zo")}
                 </>
               ) : (
                 t('Bepul tarif')
@@ -74,7 +74,7 @@ export default function SettingsPage() {
 
       <div className="sd-set-grid">
         {/* ---------- appearance ---------- */}
-        <section className="sp-glass rounded-2xl sd-set-card">
+        <section id="theme" className="sp-glass rounded-2xl sd-set-card">
           <h3>
             <PaletteIcon size={17} /> {t('Mavzu')}
           </h3>
@@ -115,7 +115,7 @@ export default function SettingsPage() {
         </section>
 
         {/* ---------- language ---------- */}
-        <section className="sp-glass rounded-2xl sd-set-card">
+        <section id="lang" className="sp-glass rounded-2xl sd-set-card">
           <h3>
             <Globe size={17} /> {t('Til')}
           </h3>
@@ -142,14 +142,14 @@ export default function SettingsPage() {
         </section>
 
         {/* ---------- PRO ---------- */}
-        <section className="sp-glass rounded-2xl sd-set-card sd-set-pro">
+        <section id="pro" className="sp-glass rounded-2xl sd-set-card sd-set-pro">
           <h3>
             <Sparkles size={17} /> PRO
           </h3>
           <div className="sd-pro-head">
             <BrandMark size={44} />
             <div>
-              <b>{isPro ? (trial ? t('PRO faol · yana {n} kun', { n: user.trialDaysLeft ?? 0 }) : t('PRO faol')) : t('Hozir: FREE tarif')}</b>
+              <b>{user.staff ? t('Owner · cheksiz kirish') : isPro ? (trial ? t('PRO faol · yana {n} kun', { n: user.trialDaysLeft ?? 0 }) : t('PRO faol')) : t('Hozir: FREE tarif')}</b>
               <small>
                 {t('PRO — {p} so‘mdan / oy', { p: formatSom(PRO_PLANS[0].price) })}
               </small>
@@ -169,7 +169,7 @@ export default function SettingsPage() {
         </section>
 
         {/* ---------- logout ---------- */}
-        <section className="sp-glass rounded-2xl sd-set-card sd-set-logout">
+        <section id="logout" className="sp-glass rounded-2xl sd-set-card sd-set-logout">
           <div>
             <h3 className="!text-red-400">
               <LogOut size={17} /> {t('Chiqish')}

@@ -9,7 +9,8 @@ import { useUser } from '@/components/marketing/dashboard/user-context'
 import { useSd } from '@/components/marketing/dashboard/sd-ui'
 import { CourseCard } from '@/components/marketing/dashboard/course-card'
 import { useT } from '@/components/i18n-provider'
-import { COURSE_GROUPS, groupsOfTask } from '@/lib/course-groups'
+import { groupsOfTask } from '@/lib/course-groups'
+import { useCourseGroups } from '@/components/use-course-groups'
 
 type Course = { name: string; slug: string; tasks: { task: string; test: TestSummary }[] }
 
@@ -24,23 +25,27 @@ export default function CourseTasksPage() {
   )
   const member = access.all || access.groups.length > 0
   const [open, setOpen] = useState<string | null>(null)
+  const allGroups = useCourseGroups()
 
   useEffect(() => {
     setOpen(new URLSearchParams(window.location.search).get('course'))
   }, [])
 
-  // Only the defined groups (Noyabr / Dekabr) are listed. A task or mock shows up in a group when the
+  // Groups whose banner the admin shows in the dashboard («Kurs bannerlari»), plus the student's own group
+  // (a member keeps seeing their tasks after its banner is hidden). Archived groups are gone.
+  // Only the defined groups are listed. A task or mock shows up in a group when the
   // admin gave it to that group (a mock can be in several groups), or — for older tasks — when its
   // name starts with the group's title. Anything not given to a group is simply not shown here.
   const courses = useMemo<Course[]>(() => {
-    return COURSE_GROUPS.map((g) => {
+    const visible = (allGroups ?? []).filter((g) => !g.archived && (g.dashboard || (!access.all && access.groups.includes(g.slug))))
+    return visible.map((g) => {
       const prefix = new RegExp(`^${g.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[—–-]\\s*`, 'i')
       const tasks = (tests ?? [])
         .filter((t) => groupsOfTask(t.label, t.courseGroups).includes(g.slug) && (t.placement === 'course_task' || !!t.courseGroups?.includes(g.slug)))
         .map((t) => ({ task: t.label.replace(prefix, '').trim() || t.label, test: t }))
       return { name: g.title, slug: g.slug, tasks }
     })
-  }, [tests])
+  }, [tests, allGroups, access])
 
   const unlocked = (c: Course) => access.all || access.groups.includes(c.slug)
   const current = open ? courses.find((c) => c.name === open && unlocked(c)) ?? null : null
@@ -130,7 +135,7 @@ export default function CourseTasksPage() {
         <h3>{member ? t('Kurs guruhlari') : t('Hozirda faol kurslar')}</h3>
       </div>
       <div className="sd-course-grid">
-        {tests === null && <div style={{ gridColumn: '1 / -1' }}><SatSkeleton kind="cards" count={3} /></div>}
+        {(tests === null || allGroups === null) && <div style={{ gridColumn: '1 / -1' }}><SatSkeleton kind="cards" count={3} /></div>}
         {courses.map((c, i) => (
           <CourseCard
             key={c.name}

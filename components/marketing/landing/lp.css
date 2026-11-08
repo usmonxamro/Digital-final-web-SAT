@@ -941,3 +941,6 @@ html[data-sp-palette="yellow"] .lp .hs-chip b{color:#1a1200}
 .lp .demo .demo-stage{max-width:820px}
 @media(max-width:1020px){.lp .hs-chip{left:4%;bottom:-8px}}
 @media(max-width:600px){.lp .hs-card{width:min(280px,78%)}.lp .hs-n{font-size:52px}}
+
+/* one course banner: centred, not half the grid */
+.lp .c-grid.c-one{grid-template-columns:minmax(0,620px);justify-content:center}

@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { fetchAll } from '@/lib/db-paginate'
 import { groupBySlug } from '@/lib/course-groups'
+import { loadCourseGroups } from '@/lib/course-groups-db'
 
 export type GroupStats = {
   /** Students in the group. */
@@ -14,6 +15,7 @@ export type GroupStats = {
 
 /** GET ?slug=nov → who is in the group and how many of them finished each test. */
 export async function GET(req: NextRequest) {
+  await loadCourseGroups()
   try {
     await requireAdmin()
   } catch (e) {

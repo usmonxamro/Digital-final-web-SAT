@@ -9,8 +9,8 @@ import { PRO_PLANS, formatSom } from '@/lib/pro-plans'
 export function PlansModal({ onUpgrade }: { onUpgrade: () => void }) {
   const t = useT()
   const user = useUser()
-  const isPro = user.plan === 'premium'
-  const trial = isPro && !!user.trialDaysLeft
+  const isPro = user.plan === 'premium' || !!user.staff
+  const trial = isPro && !user.staff && !!user.trialDaysLeft
   return (
     <>
       <h2>{t('Tariflar')}</h2>

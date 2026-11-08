@@ -7,6 +7,7 @@ import { checkAnswerKeys, keyGapMessage } from '@/lib/answer-keys'
 import { isMissingColumn } from '@/lib/db-columns'
 import { groupBySlug, configGroups } from '@/lib/course-groups'
 import { cleanSections, legacySection, rowSections, type MockSection } from '@/lib/mock-sections'
+import { loadCourseGroups } from '@/lib/course-groups-db'
 
 
 export type ModuleMinutes = { rw1?: number; rw2?: number; m1?: number; m2?: number; seq?: number }
@@ -69,6 +70,7 @@ function cleanGroups(v: unknown): string[] {
 }
 
 export async function POST(req: NextRequest) {
+  await loadCourseGroups()
   try {
     await requireAdmin()
   } catch (e) {
@@ -202,6 +204,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+  await loadCourseGroups()
   const testLabel = req.nextUrl.searchParams.get('testLabel')
   // One test's settings are public (the exam page needs them); the full list is admin-only.
   if (!testLabel) {
@@ -245,6 +248,7 @@ export async function GET(req: NextRequest) {
 
 /** Change where a mock lives / whether it is paid, without touching its other settings. */
 export async function PATCH(req: NextRequest) {
+  await loadCourseGroups()
   try {
     await requireAdmin()
   } catch (e) {

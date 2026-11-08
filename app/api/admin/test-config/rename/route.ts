@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { invalidateCounts } from '@/lib/mock-catalog'
 import { configGroups, groupOfLabel, groupsOfTask } from '@/lib/course-groups'
+import { loadCourseGroups } from '@/lib/course-groups-db'
 
 /**
  * POST { from, to } — rename a mock everywhere (settings, questions, results, starts, reports, bot link).
@@ -17,6 +18,7 @@ const ERRORS: Record<string, [number, string]> = {
 }
 
 export async function POST(req: NextRequest) {
+  await loadCourseGroups()
   try {
     await requireAdmin()
   } catch (e) {

@@ -8,6 +8,7 @@ import { loadCounts } from '@/lib/mock-catalog'
 import { configGroups } from '@/lib/course-groups'
 import { rowSections } from '@/lib/mock-sections'
 import type { TestSubject, TestPlacement, MathLayout, TestSection, TestAccess } from '@/app/api/admin/test-config/route'
+import { loadCourseGroups } from '@/lib/course-groups-db'
 
 export type MockTestSummary = {
   label: string
@@ -46,6 +47,7 @@ export type MockTestSummary = {
 }
 
 export async function GET(req: NextRequest) {
+  await loadCourseGroups()
   // ?all=1 (admin panel) also lists drafts; everyone else only sees published tests.
   let includeDrafts = false
   if (req.nextUrl.searchParams.get('all') === '1') {

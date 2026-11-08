@@ -5,7 +5,8 @@ import { Check, CheckCircle2, Copy, KeyRound, Loader2, Plus, RefreshCw, Search, 
 import type { MockTestSummary } from '@/app/api/tests/route'
 import type { GroupStats } from '@/app/api/admin/groups/route'
 import type { GroupMember } from '@/app/api/admin/groups/members/route'
-import { COURSE_GROUPS, groupsOfTask } from '@/lib/course-groups'
+import { activeCourseGroups, groupBySlug, groupsOfTask } from '@/lib/course-groups'
+import { useCourseGroups } from '@/components/use-course-groups'
 import { inSection } from '@/lib/mock-sections'
 
 /**
@@ -14,7 +15,8 @@ import { inSection } from '@/lib/mock-sections'
  * a mock can sit in several groups at once and stays in All Past Exams / Free Mocks as before.
  */
 export function GroupsPanel() {
-  const [slug, setSlug] = useState(COURSE_GROUPS[0].slug)
+  useCourseGroups()
+  const [slug, setSlug] = useState(activeCourseGroups()[0].slug)
   const [tests, setTests] = useState<MockTestSummary[] | null>(null)
   const [stats, setStats] = useState<GroupStats | null>(null)
   const [query, setQuery] = useState('')
@@ -60,7 +62,7 @@ export function GroupsPanel() {
   }
   useEffect(loadStats, [slug]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const group = COURSE_GROUPS.find((g) => g.slug === slug)!
+  const group = groupBySlug(slug) ?? activeCourseGroups()[0]
 
   /** Same rule the students' My Courses uses. */
   const inGroup = (t: MockTestSummary, s: string) =>
@@ -105,7 +107,7 @@ export function GroupsPanel() {
   return (
     <div className="rounded-2xl border border-line bg-white p-5">
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        {COURSE_GROUPS.map((g) => {
+        {activeCourseGroups().map((g) => {
           const n = (tests ?? []).filter((t) => inGroup(t, g.slug)).length
           return (
             <button
@@ -231,7 +233,7 @@ export function GroupsPanel() {
                     <div className="text-[11.5px] text-ink-faint">
                       {countOf(t)} ta savol
                       {t.courseGroups.length > 0 &&
-                        ` · boshqa guruh: ${t.courseGroups.map((g) => COURSE_GROUPS.find((c) => c.slug === g)?.short ?? g).join(', ')}`}
+                        ` · boshqa guruh: ${t.courseGroups.map((g) => groupBySlug(g)?.short ?? g).join(', ')}`}
                     </div>
                   </div>
                   <button

@@ -31,7 +31,8 @@ import { PublishActions } from '@/components/admin/publish-actions'
 import { DownloadTestPdfButton } from '@/components/test-pdf'
 import { loadMockPdfItems } from '@/lib/mock-pdf-items'
 import { mockShareUrl } from '@/lib/safe-next'
-import { COURSE_GROUPS, groupBySlug, groupsOfTask } from '@/lib/course-groups'
+import { activeCourseGroups, groupBySlug, groupsOfTask } from '@/lib/course-groups'
+import { useCourseGroups } from '@/components/use-course-groups'
 import { inSection, type MockSection } from '@/lib/mock-sections'
 
 type Filter = 'all' | 'published' | 'draft'
@@ -85,6 +86,7 @@ function applyBulk(t: MockTestSummary, add: Lists, remove: Lists, set: BulkSet):
  * onto a bo'lim, use the buttons to the right of its name, or tick many mocks and use the bar on top.
  */
 export function MocksPanel({ visible = true }: { visible?: boolean }) {
+  useCourseGroups()
   const [tests, setTests] = useState<MockTestSummary[] | null>(null)
   const [stats, setStats] = useState<Record<string, MockStat>>({})
   const [filter, setFilter] = useState<Filter>('all')
@@ -419,7 +421,7 @@ export function MocksPanel({ visible = true }: { visible?: boolean }) {
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {SYSTEM_TABS.map((t) => tabButton(t.key, t.label, t.hint))}
         <span className="mx-1 h-5 w-px bg-line" />
-        {COURSE_GROUPS.map((g) => tabButton(gKey(g.slug), `Guruh · ${g.short}`, `Mockni shu yerga tashlasangiz ${g.title} guruhiga ham beriladi`))}
+        {activeCourseGroups().map((g) => tabButton(gKey(g.slug), `Guruh · ${g.short}`, `Mockni shu yerga tashlasangiz ${g.title} guruhiga ham beriladi`))}
         <span className="mx-1 h-5 w-px bg-line" />
         {folders.map((f) => tabButton(f.id, f.name, `Mockni shu yerga tashlasangiz "${f.name}" bo‘limiga qo‘shiladi`, { folder: f }))}
         {creating ? (
@@ -696,7 +698,7 @@ export function MocksPanel({ visible = true }: { visible?: boolean }) {
                     <PlaceBtn active={t.access === 'paid'} tone="amber" onClick={() => patchMock(t.label, { access: t.access === 'paid' ? 'free' : 'paid' })} title="Pullik / bepul">
                       <Lock size={11} /> Pullik
                     </PlaceBtn>
-                    {COURSE_GROUPS.map((g) => (
+                    {activeCourseGroups().map((g) => (
                       <PlaceBtn key={g.slug} active={t.courseGroups.includes(g.slug)} tone="indigo" onClick={() => toggleGroup(t, g.slug)} title={`${g.title} guruhiga berish / olib tashlash`}>
                         {t.courseGroups.includes(g.slug) && <Check size={11} />} {g.short}
                       </PlaceBtn>
@@ -799,7 +801,7 @@ function BulkBar({
       <div className="flex flex-wrap items-center gap-2">
         <Chip label="All Past Exams" onAdd={() => onApply({ sections: ['exams'] }, {}, {}, 'All Past Exams ga qo‘shildi')} onRemove={() => onApply({}, { sections: ['exams'] }, {}, 'All Past Exams dan olindi')} />
         <Chip label="Free Mocks" onAdd={() => onApply({ sections: ['free'] }, {}, {}, 'Free Mocks ga qo‘shildi')} onRemove={() => onApply({}, { sections: ['free'] }, {}, 'Free Mocks dan olindi')} />
-        {COURSE_GROUPS.map((g) => (
+        {activeCourseGroups().map((g) => (
           <Chip key={g.slug} label={`Guruh · ${g.short}`} onAdd={() => onApply({ courseGroups: [g.slug] }, {}, {}, `${g.short} guruhiga berildi`)} onRemove={() => onApply({}, { courseGroups: [g.slug] }, {}, `${g.short} guruhidan olindi`)} />
         ))}
         {folders.map((f) => (

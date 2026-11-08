@@ -10,6 +10,7 @@ import { planInfo } from '@/lib/plan'
 import { courseAccessFor } from '@/lib/course-access'
 import { canOpenTask, configGroups } from '@/lib/course-groups'
 import { progressCutoff } from '@/lib/exam-progress'
+import { loadCourseGroups } from '@/lib/course-groups-db'
 
 /** How long an unfinished start can be resumed (page reload) without using up another mock. */
 const RESUME_HOURS = 3
@@ -20,6 +21,7 @@ const RESUME_HOURS = 3
  * present (one grading per start). Reloading the page reuses the open start.
  */
 export async function POST(req: NextRequest) {
+  await loadCourseGroups()
   const cookieStore = await cookies()
   const session = verifySession(cookieStore.get(SESSION_COOKIE)?.value)
   if (!session) {

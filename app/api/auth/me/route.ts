@@ -17,7 +17,7 @@ export async function GET() {
     const { data: user } = await supabase.from('users').select('*').eq('id', session.userId).maybeSingle()
     if (!user) return NextResponse.json({ user: null })
     const admin = await adminIdentity().catch(() => null)
-    const plan = planInfo(user)
+    const plan = admin ? { plan: 'premium' as const, trialDaysLeft: null } : planInfo(user)
     return NextResponse.json({
       user: {
         id: user.id,
@@ -29,6 +29,7 @@ export async function GET() {
         plan: plan.plan,
         trialDaysLeft: plan.trialDaysLeft,
         isAdmin: !!admin,
+        isOwner: !!admin?.isOwner,
       },
     })
   } catch {

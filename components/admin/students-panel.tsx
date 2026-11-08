@@ -28,6 +28,7 @@ import {
   type BotAttempt,
   type MockStats,
 } from '@/lib/bot-analytics'
+import { ReviewBasketBar, WrongList } from '@/components/admin/wrong-list'
 
 /**
  * Admin "O'quvchilar tahlili": the Telegram bot's results in one place.
@@ -165,6 +166,7 @@ export function StudentsPanel({ headers }: { headers?: Record<string, string> } 
       {view.k === 'group' && <GroupView key={view.chat} model={model} chat={view.chat} open={open} />}
       {view.k === 'mock' && <MockView key={`${view.code}|${view.chat}`} model={model} code={view.code} chat={view.chat} open={open} headers={headers} />}
       {view.k === 'student' && <StudentView key={`${view.tg}|${view.chat}`} model={model} tg={view.tg} chat={view.chat} open={open} />}
+      <ReviewBasketBar canCreate={!headers} />
     </div>
   )
 }
@@ -642,6 +644,8 @@ function MockView({ model, code, chat, open, headers }: { model: BotModel; code:
           </p>
         )}
       </Card>
+
+      {m.rows.length > 0 && <WrongList code={code} name={test?.name ?? `Test ${code}`} questions={m.questions} headers={headers} />}
     </>
   )
 }

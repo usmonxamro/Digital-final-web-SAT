@@ -7,9 +7,11 @@ import { isMissingTable } from '@/lib/db-errors'
 import { verifyCourseCode } from '@/lib/course-codes'
 import { groupBySlug } from '@/lib/course-groups'
 import { groupForJoinCode } from '@/lib/course-group-codes'
+import { loadCourseGroups } from '@/lib/course-groups-db'
 
 /** Student types the code the Telegram bot gave them: POST { code }. */
 export async function POST(req: NextRequest) {
+  await loadCourseGroups()
   const session = verifySession((await cookies()).get(SESSION_COOKIE)?.value)
   if (!session) return NextResponse.json({ error: 'Avval tizimga kiring.' }, { status: 401 })
 

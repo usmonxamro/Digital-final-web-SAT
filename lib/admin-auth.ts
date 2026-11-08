@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { SESSION_COOKIE, verifySession, hmac, safeEqual } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { phoneDigits, usersWithPhone } from '@/lib/phone'
+import { likeEscape } from '@/lib/email'
 
 /**
  * Who may use the admin panel:
@@ -17,6 +18,13 @@ export const ADMIN_GATE_COOKIE = 'sat_admin_gate'
 export const ADMIN_GATE_HOURS = 12
 
 export type AdminInfo = { userId: string; isOwner: boolean; phone: string }
+
+/** The site owner's own e-mail(s): no plan, no trial countdown, no limits anywhere. */
+export const OWNER_EMAILS = ['usmonxamro@gmail.com']
+export function ownerEmails(): string[] {
+  const env = (process.env.ADMIN_EMAIL ?? '').split(',').map((x) => x.trim().toLowerCase())
+  return [...new Set([...OWNER_EMAILS, ...env].filter(Boolean))]
+}
 
 
 /** Looks up the logged-in user's admin status, without checking the gate. */
@@ -36,10 +44,14 @@ export async function adminIdentity(): Promise<AdminInfo | null> {
   }
 
   const phone = (user.phone as string | null) ?? ''
-  // The owner may also be identified by Google/e-mail (ADMIN_EMAIL).
-  const ownerEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase() ?? ''
-  if (ownerEmail && typeof user.email === 'string' && user.email.toLowerCase() === ownerEmail && user.google_sub) {
-    return { userId: user.id, isOwner: true, phone }
+  // The owner may also be identified by e-mail (OWNER_EMAILS + ADMIN_EMAIL env).
+  const email = typeof user.email === 'string' ? user.email.trim().toLowerCase() : ''
+  if (email && ownerEmails().includes(email)) {
+    // Google sign-in proves the address. Otherwise accept only the OLDEST account with this e-mail
+    // (sign-up refuses a second account with the same address, so a newcomer can't claim it).
+    if (user.google_sub) return { userId: user.id, isOwner: true, phone }
+    const { data: same } = await db.from('users').select('id, created_at').ilike('email', likeEscape(email)).order('created_at', { ascending: true }).limit(1)
+    if (same?.[0]?.id === user.id) return { userId: user.id, isOwner: true, phone }
   }
   if (owner && phone && phoneDigits(phone) === owner) {
     // Defense in depth: the owner is the OLDEST account with that number, so

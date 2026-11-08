@@ -1,12 +1,14 @@
 'use client'
 
-import { COURSE_GROUPS } from '@/lib/course-groups'
+import { activeCourseGroups } from '@/lib/course-groups'
+import { useCourseGroups } from '@/components/use-course-groups'
 import { useEffect, useState } from 'react'
 import { Loader2, Search, ShieldCheck, UserPlus } from 'lucide-react'
 import type { UserRow } from '@/app/api/admin/users/route'
 
 /** Admin "Foydalanuvchilar": everyone who registered (password or Google). */
 export function UsersPanel({ isOwner }: { isOwner: boolean }) {
+  useCourseGroups()
   const [rows, setRows] = useState<UserRow[] | null>(null)
   const [total, setTotal] = useState(0)
   const [pageSize, setPageSize] = useState(25)
@@ -164,7 +166,7 @@ export function UsersPanel({ isOwner }: { isOwner: boolean }) {
                       {u.courseMember ? "HAMMASI ✓" : "hammasi emas"}
                     </button>
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {COURSE_GROUPS.map((g) => {
+                      {activeCourseGroups().map((g) => {
                         const on = u.courseGroups.includes(g.slug)
                         return (
                           <button

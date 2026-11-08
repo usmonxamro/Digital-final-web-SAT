@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { planInfo } from '@/lib/plan'
 import { groupBySlug } from '@/lib/course-groups'
+import { loadCourseGroups } from '@/lib/course-groups-db'
 
 export type UserRow = {
   id: string
@@ -24,6 +25,7 @@ const PAGE = 25
 
 /** Registered users, newest first: GET ?page=0&q=text (searches name / email / phone). */
 export async function GET(req: NextRequest) {
+  await loadCourseGroups()
   try {
     await requireAdmin()
   } catch (e) {
@@ -85,6 +87,7 @@ async function respond(
 
 /** Turn course membership on/off for one student: PATCH { userId, courseMember }. */
 export async function PATCH(req: NextRequest) {
+  await loadCourseGroups()
   try {
     await requireAdmin()
   } catch (e) {

@@ -5,6 +5,7 @@ import { adminErrorResponse } from '@/lib/admin-errors'
 import { configGroups, groupBySlug } from '@/lib/course-groups'
 import { cleanSections, legacySection, rowSections } from '@/lib/mock-sections'
 import { isMissingColumn } from '@/lib/db-columns'
+import { loadCourseGroups } from '@/lib/course-groups-db'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -22,6 +23,7 @@ const uniq = <T,>(a: T[]) => [...new Set(a)]
  * "add" / "remove" only touch the listed items, so a mock keeps every other place it is already in.
  */
 export async function POST(req: NextRequest) {
+  await loadCourseGroups()
   try {
     await requireAdmin()
   } catch (e) {

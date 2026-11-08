@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { fetchAll } from '@/lib/db-paginate'
 import { groupBySlug } from '@/lib/course-groups'
+import { loadCourseGroups } from '@/lib/course-groups-db'
 
 export type GroupMember = {
   userId: string
@@ -19,6 +20,7 @@ export type GroupMember = {
 
 /** GET ?slug=nov → the students who are in this group (separate list in Admin → Guruhlar → O'quvchilar). */
 export async function GET(req: NextRequest) {
+  await loadCourseGroups()
   try {
     await requireAdmin()
   } catch (e) {
