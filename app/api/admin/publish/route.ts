@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { isMissingColumn, MIGRATION_HINT } from '@/lib/db-columns'
 import { pushMockToBot } from '@/lib/bot-publish'
 import { checkAnswerKeys, keyGapMessage } from '@/lib/answer-keys'
+import { scanVocab } from '@/lib/vocab-scan'
+import { bustVocabCache } from '@/lib/vocab-server'
 
 /**
  * Publish / unpublish a mock: { testLabel, published: boolean }.
@@ -82,5 +84,16 @@ export async function POST(req: NextRequest) {
   }
   // A mock that goes live also becomes a bot test (code + answer key), unless the bot already has it.
   const bot = published ? await pushMockToBot(supabase, testLabel) : null
+  // Yangi mock chiqsa, lug'at ham yangilanadi: yangi so'zlar "tarjima kutayotganlar" ro'yxatiga tushadi (javobni kutdirmaydi, xato bo'lsa indamaydi).
+  if (published) {
+    after(async () => {
+      try {
+        await scanVocab(supabase)
+        bustVocabCache()
+      } catch {
+        // v111 SQL hali ishga tushirilmagan bo'lishi mumkin — nashr qilishga halaqit bermaydi
+      }
+    })
+  }
   return NextResponse.json({ ok: true, published, publishAt, bot })
 }

@@ -8,6 +8,7 @@ import { ReportsPanel } from '@/components/admin/reports-panel'
 import { GroupsPanel } from '@/components/admin/groups-panel'
 import { CourseBannersPanel } from '@/components/admin/course-banners-panel'
 import { BotSyncPanel } from '@/components/admin/bot-sync-panel'
+import { VocabPanel } from '@/components/admin/vocab-panel'
 import { StudentsPanel } from '@/components/admin/students-panel'
 import { BotTestPicker, type PickedBotTest } from '@/components/admin/bot-test-picker'
 import { ModuleMinutesField, defaultMinutes, type ModuleMinutes } from '@/components/admin/module-minutes'
@@ -38,6 +39,7 @@ import {
   Link2,
   TrendingUp,
   Megaphone,
+  Languages,
 } from 'lucide-react'
 import { AdminGate } from '@/components/admin/admin-gate'
 import { MocksPanel } from '@/components/admin/mocks-panel'
@@ -1520,7 +1522,7 @@ function SkillBankImport() {
 
 /* ------------------------------------ page ---------------------------------- */
 
-type Tab = 'banners' | 'mocks' | 'new' | 'task' | 'groups' | 'pupils' | 'botsync' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support' | 'notify' | 'reports'
+type Tab = 'vocab' | 'banners' | 'mocks' | 'new' | 'task' | 'groups' | 'pupils' | 'botsync' | 'edit' | 'bank' | 'stats' | 'users' | 'admins' | 'support' | 'notify' | 'reports'
 type NewMockType = 'full' | 'math' | 'english' | null
 
 /** Left menu of the admin panel, grouped like other admin dashboards: content · people · analytics · settings. */
@@ -1533,6 +1535,7 @@ const ADMIN_NAV: { title: string; items: { key: Tab; label: string; desc: string
       { key: 'task', label: "Vazifa qo'shish", desc: "Guruhlarga vaqtsiz, ballsiz vazifa berish", icon: ClipboardList },
       { key: 'edit', label: 'Testni tahrirlash', desc: "Mavjud mock savollari va javoblarini o'zgartirish", icon: PenSquare },
       { key: 'bank', label: 'Savol banki', desc: "Kitob savollar bankiga savol qo'shish", icon: UploadCloud },
+      { key: 'vocab', label: "Lug'atlar", desc: "Lug'at so'zlarini tahrirlash, o'chirish, yangi so'z va mocklardan topilgan so'zlar", icon: Languages },
     ],
   },
   {
@@ -1683,6 +1686,11 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
           <StatsPanel />
         </KeepAlive>
         {tab === 'banners' && <CourseBannersPanel />}
+        {tab === 'vocab' && (
+          <div className="bg-white border border-line rounded-2xl p-5">
+            <VocabPanel />
+          </div>
+        )}
         {tab === 'support' && <SupportPanel />}
         {tab === 'notify' && <NotifyPanel />}
         {tab === 'reports' && <ReportsPanel onChanged={refreshReportCount} />}
