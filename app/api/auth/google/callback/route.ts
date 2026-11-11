@@ -6,6 +6,7 @@ import { trialEndFromNow } from '@/lib/plan'
 import { normalizeEmail, likeEscape } from '@/lib/email'
 import { appOrigin, GOOGLE_STATE_COOKIE, GOOGLE_NEXT_COOKIE } from '@/lib/google'
 import { safeNext } from '@/lib/safe-next'
+import { isMissingColumn } from '@/lib/db-columns'
 
 /**
  * Google sends the visitor back here with ?code. We exchange it (server to
@@ -106,7 +107,13 @@ export async function GET(req: NextRequest) {
   let userFirst = firstName
 
   const bySub = await supabase.from('users').select('id, first_name').eq('google_sub', claims.sub).maybeSingle()
-  if (bySub.error) return fail('need_sql') // v50 columns missing
+  if (bySub.error) {
+    // Only blame the schema when a v50 column is really missing; any other
+    // error (wrong SUPABASE_URL / key, network) is logged and shown as a server error.
+    console.error('[google-callback] users lookup failed:', bySub.error)
+    const missing = ['google_sub', 'email', 'avatar_url'].some((c) => isMissingColumn(bySub.error, c))
+    return fail(missing ? 'need_sql' : 'server')
+  }
   if (bySub.data) {
     userId = bySub.data.id
     userFirst = bySub.data.first_name
