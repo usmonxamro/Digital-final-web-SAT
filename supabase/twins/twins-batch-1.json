@@ -1,0 +1,515 @@
+[
+ {
+  "sourceId": "2a44ba98-a0de-497c-b32b-57f3228b26df",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "The base of a right rectangular pyramid has a length of 24 centimeters and a width of 9 centimeters. The height of this pyramid is 7 centimeters. What is the volume, in cubic centimeters, of this pyramid?",
+  "correctValue": "504",
+  "explanation": "$V=\\dfrac{1}{3}(24)(9)(7)=504$."
+ },
+ {
+  "sourceId": "000efd2d-6d88-4ecc-bbda-268a5005a560",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "A plumbing company charges its customers $\\char36$95 for the first hour of a plumbing service call and $\\char36$40 for each additional hour, plus the cost of plumbing parts. Which equation represents the total cost $y$, in dollars, for an $x$-hour plumbing service call where the cost of parts was $\\char36$$z$ and $x\\ge1$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "y=95x+z"
+   },
+   {
+    "id": "B",
+    "tex": "y=40x+z"
+   },
+   {
+    "id": "C",
+    "tex": "y=40x+z+55"
+   },
+   {
+    "id": "D",
+    "tex": "y=95x+40z+55"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$y=95+40(x-1)+z=40x+z+55$."
+ },
+ {
+  "sourceId": "69048077-e85c-4f20-bce5-b84147989d22",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Algebra",
+  "prompt": "In the given system of equations, $t$ is a constant. If the system has no solution, what is the value of $t$?",
+  "equations": [
+   "\\begin{cases} 12x+11y=5y+7 \\\\ ty=\\dfrac{1}{4}+4x \\end{cases}"
+  ],
+  "correctValue": "-2",
+  "explanation": "First equation: $12x+6y=7$. Second: $-4x+ty=\\dfrac{1}{4}$, times $-3$: $12x-3ty=-\\dfrac{3}{4}$. No solution when $-3t=6$, so $t=-2$ (the constants $7$ and $-\\dfrac{3}{4}$ differ)."
+ },
+ {
+  "sourceId": "d836a24c-2b9d-4e2a-a591-3151652502ab",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "What is the sum of the solutions to the given equation?",
+  "equations": [
+   "3|x+5|-4=17"
+  ],
+  "correctValue": "-10",
+  "explanation": "$3|x+5|=21$, so $|x+5|=7$: $x=2$ or $x=-12$. Sum $=-10$."
+ },
+ {
+  "sourceId": "f4822e30-e1f2-4aac-80e8-d4cc71071c5a",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "Based on a model, on day 1 of a 9-day experiment, a lima bean plant had an estimated mass of 186 grams, and each day after day 1 of the experiment, the estimated mass of the plant decreased by 3 grams. Which equation represents this model, where $m$ is the estimated mass, in grams, of the plant on day $x$ of the experiment and $1\\le x\\le 9$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "m=-3x+183"
+   },
+   {
+    "id": "B",
+    "tex": "m=-3x+186"
+   },
+   {
+    "id": "C",
+    "tex": "m=-3x+189"
+   },
+   {
+    "id": "D",
+    "tex": "m=-3x+192"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$m=186-3(x-1)=-3x+189$."
+ },
+ {
+  "sourceId": "aecb9fc9-e365-4539-b6da-018d526b4b11",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "A certain model estimates that the number of trees in a forest decreases by 15% for each 1-inch increase in the average diameter of the trees. If there are 2,400 trees in the forest when the average diameter is 10 inches, which of the following functions $f$ best represents the estimated number of trees in the forest when the average diameter is $x$ inches, where $x\\ge 10$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "f(x)=12{,}000(0.15)^{x}"
+   },
+   {
+    "id": "B",
+    "tex": "f(x)=2{,}400(0.85)^{x}"
+   },
+   {
+    "id": "C",
+    "tex": "f(x)=2{,}400(0.15)^{x}"
+   },
+   {
+    "id": "D",
+    "tex": "f(x)=12{,}000(0.85)^{x}"
+   }
+  ],
+  "correct": "D",
+  "explanation": "$f(x)=2{,}400(0.85)^{x-10}=\\dfrac{2{,}400}{0.85^{10}}(0.85)^{x}\\approx12{,}000(0.85)^{x}$."
+ },
+ {
+  "sourceId": "ee99c50b-b53e-43e5-a31c-5dc50afb1e89",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "In triangle $ABC$, the measure of $\\angle A$ is $48^\\circ$ and $AC=24$. In triangle $PQR$, the measure of $\\angle P$ is $48^\\circ$ and $PR=60$. Which additional piece of information is sufficient to prove that triangle $ABC$ is similar to triangle $PQR$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "$AB=18$ and $PQ=45$"
+   },
+   {
+    "id": "B",
+    "text": "$BC=14$ and $QR=35$"
+   },
+   {
+    "id": "C",
+    "text": "The measures of $\\angle B$ and $\\angle Q$ are $48^\\circ$ and $62^\\circ$, respectively."
+   },
+   {
+    "id": "D",
+    "text": "$BC=35$ and $QR=14$"
+   }
+  ],
+  "correct": "A",
+  "explanation": "SAS similarity: $\\angle A=\\angle P$ and $\\dfrac{AC}{PR}=\\dfrac{24}{60}=\\dfrac{2}{5}$, so we need $\\dfrac{AB}{PQ}=\\dfrac{2}{5}$: $\\dfrac{18}{45}=\\dfrac{2}{5}$."
+ },
+ {
+  "sourceId": "2f984676-b2a1-4898-b2fc-1e9a88ea1c02",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The product of the solutions to the given equation is 56. What is the value of $k$?",
+  "equations": [
+   "\\frac{3}{7}(4x+7)\\left(x+\\sqrt{3k}+5\\right)\\left(x-\\sqrt{3k}+5\\right)=0"
+  ],
+  "correctValue": "19",
+  "explanation": "Solutions: $x=-\\dfrac{7}{4}$ and $x=-5\\pm\\sqrt{3k}$. The last two multiply to $25-3k$. So $-\\dfrac{7}{4}(25-3k)=56$, $25-3k=-32$, $k=19$."
+ },
+ {
+  "sourceId": "31178ff8-8f21-48e8-8682-d8d7f2f038f7",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given equation, $p$ and $w$ are integers. The equation has exactly one real solution. Which of the following is NOT a possible value of $w$?",
+  "equations": [
+   "9x^{2}-px+w=-40"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "-39"
+   },
+   {
+    "id": "B",
+    "text": "-40"
+   },
+   {
+    "id": "C",
+    "text": "41"
+   },
+   {
+    "id": "D",
+    "text": "45"
+   }
+  ],
+  "correct": "D",
+  "explanation": "$9x^2-px+(w+40)=0$ has one solution when $p^2=36(w+40)$, so $w+40$ must be a perfect square: $w=m^2-40$. $-39,-40,41$ work ($m=1,0,9$); $45+40=85$ is not a square."
+ },
+ {
+  "sourceId": "2e7ce922-a692-4ce4-b1c3-026b27d85099",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "A research manager selected 2 random samples of ovens of a certain type to estimate the average amount of time this type of oven takes to preheat to 400 degrees Fahrenheit ($^\\circ$F). The research manager recorded the amount of time, in minutes, each oven takes to preheat to $400^\\circ$F. Based on the first sample, the research manager estimated that this type of oven takes an average of 16.8 minutes to preheat to $400^\\circ$F, with an associated margin of error of 0.8 minute. Based on the second sample, the research manager estimated that this type of oven takes an average of 16.5 minutes to preheat to $400^\\circ$F, with an associated margin of error of 1.9 minutes. Assuming the margins of error were calculated the same way, which of the following best explains why the first sample obtained a smaller margin of error than the second sample?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "The first sample contained fewer ovens than the second sample."
+   },
+   {
+    "id": "B",
+    "text": "The first sample contained more ovens than the second sample."
+   },
+   {
+    "id": "C",
+    "text": "The first sample ovens took less time to preheat on average than the second sample ovens."
+   },
+   {
+    "id": "D",
+    "text": "The first sample ovens took more time to preheat on average than the second sample ovens."
+   }
+  ],
+  "correct": "B",
+  "explanation": "A larger sample gives a smaller margin of error."
+ },
+ {
+  "sourceId": "f813d484-df34-43e6-a8f4-fe15de449ed1",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given equation, $r$ is a constant. The equation has exactly one real solution. What is the value of $r$?",
+  "equations": [
+   "3x^2+5=24x+r"
+  ],
+  "correctValue": "-43",
+  "explanation": "$3x^2-24x+(5-r)=0$; one solution when $24^2-4(3)(5-r)=0$: $576=12(5-r)$, $5-r=48$, $r=-43$."
+ },
+ {
+  "sourceId": "6a4be157-de98-4840-a05c-5c6d4bfe8134",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "A circle has center $G$, and points $M$ and $N$ lie on the circle. Line segments $\\overline{MH}$ and $\\overline{NH}$ are tangent to the circle at points $M$ and $N$, respectively. If the radius of the circle is 180 millimeters and the perimeter of quadrilateral $GMHN$ is 738 millimeters, what is the distance, in millimeters, between points $G$ and $H$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "180"
+   },
+   {
+    "id": "B",
+    "text": "189"
+   },
+   {
+    "id": "C",
+    "text": "247"
+   },
+   {
+    "id": "D",
+    "text": "261"
+   }
+  ],
+  "correct": "D",
+  "explanation": "$2(180+MH)=738$, so $MH=189$. $\\angle GMH=90^\\circ$: $GH=\\sqrt{180^2+189^2}=261$."
+ },
+ {
+  "sourceId": "0c391c69-2063-4554-8703-2c399a1e9b9d",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The polynomial function $h$ is defined by the given equation, where $a$, $r$, and $s$ are positive constants. In the $xy$-plane, the graph of $y=h(x)$ intersects the $x$-axis at exactly three points. If $h(0)=p$, which of the following must be true?",
+  "equations": [
+   "h(x)=a(x+29)(x+r)(x+s)"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "p<29rs"
+   },
+   {
+    "id": "B",
+    "tex": "p=29rs"
+   },
+   {
+    "id": "C",
+    "tex": "p>29rs"
+   },
+   {
+    "id": "D",
+    "text": "There is not enough information to compare the values of $p$ and $29rs$."
+   }
+  ],
+  "correct": "D",
+  "explanation": "$p=h(0)=29ars$. Since $a$ can be any positive number, $p$ can be less than, equal to or greater than $29rs$."
+ },
+ {
+  "sourceId": "044b22c7-2227-4570-bb4a-678235bdd2a4",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "A researcher conducted a study to examine the melatonin levels of gamers and the amount of time the gamers spent playing video games. A total of 146 gamers were selected at random from three countries. The melatonin levels of the gamers and the amount of time they spent playing video games were recorded over a 6-week period. The table gives the number of selected gamers from each country.\nCountry | Japan | Brazil | Germany\nNumber of gamers | 38 | 51 | 57\nIf the results of this study suggest a relationship between melatonin levels and the amount of time spent playing video games, which of the following aspects of the study will prevent the results from being generalized to all gamers?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "The melatonin levels of the selected gamers were not measured over a long enough period of time."
+   },
+   {
+    "id": "B",
+    "text": "The number of selected gamers from each country is different."
+   },
+   {
+    "id": "C",
+    "text": "The number of selected gamers is too small."
+   },
+   {
+    "id": "D",
+    "text": "The gamers were not selected at random from all gamers."
+   }
+  ],
+  "correct": "D",
+  "explanation": "The sample came only from three countries, so it is not a random sample of all gamers."
+ },
+ {
+  "sourceId": "d5466d29-ac2c-4e60-b277-d365e8f1731e",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "A solution to the given system of equations is $(x,y)$. What is one possible value of $x+2$?",
+  "equations": [
+   "\\begin{cases} y=x+2 \\\\ y=15(x+2)^2-16 \\end{cases}"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "-\\dfrac{16}{15}"
+   },
+   {
+    "id": "B",
+    "tex": "-\\dfrac{1}{15}"
+   },
+   {
+    "id": "C",
+    "tex": "\\dfrac{1}{15}"
+   },
+   {
+    "id": "D",
+    "tex": "\\dfrac{16}{15}"
+   }
+  ],
+  "correct": "D",
+  "explanation": "Let $u=x+2$: $u=15u^2-16$, $15u^2-u-16=0$, $(15u-16)(u+1)=0$, so $u=\\dfrac{16}{15}$ or $u=-1$."
+ },
+ {
+  "sourceId": "c65c44ce-1359-47e5-b710-6646d5cc6738",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The expression $10x^{4}+29x^{2}+21$ can be rewritten as $(5x^{2}+a)(2x^{2}+b)$, where $a$ and $b$ are constants. What is the value of $a+b$?",
+  "correctValue": "10",
+  "explanation": "$5b+2a=29$ and $ab=21$: $a=7$, $b=3$. $a+b=10$."
+ },
+ {
+  "sourceId": "f3d67ae4-a0a8-4944-a904-1be4f0608e85",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "An angle has a measure of $\\dfrac{5\\pi}{18}$ radians. What is the measure, in degrees, of an angle that is supplementary to this angle?",
+  "correctValue": "130",
+  "explanation": "$\\dfrac{5\\pi}{18}=50^\\circ$; $180-50=130$."
+ },
+ {
+  "sourceId": "6773a51c-7c7e-4708-b9fd-ba74733728d2",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Algebra",
+  "prompt": "A cable company charges new customers a onetime installation fee and a monthly service fee for cable service. The equation $y=35x+90$ gives the total amount $y$, in dollars, the cable company charges new customers for $x$ months of cable service. What is the amount, in dollars, of the onetime installation fee the cable company charges new customers?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "0"
+   },
+   {
+    "id": "B",
+    "text": "35"
+   },
+   {
+    "id": "C",
+    "text": "90"
+   },
+   {
+    "id": "D",
+    "text": "125"
+   }
+  ],
+  "correct": "C",
+  "explanation": "When $x=0$, $y=90$: the installation fee is $90$."
+ },
+ {
+  "sourceId": "f3df1518-2fe5-4fd0-8c6f-4c6e7b36e48d",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "The price of an item increased by $p$% from $\\char36$45 to $\\char36$47. What is the value of $p$?",
+  "correctValue": "40/9",
+  "explanation": "$\\dfrac{47-45}{45}\\cdot100=\\dfrac{40}{9}$."
+ },
+ {
+  "sourceId": "7fe20d59-29bb-40c6-bf12-41fa3c2781fc",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "A beaker containing a liquid is placed on a table. The function $g(t)=297+(352-297)(2.72)^{-0.087t}$ gives the approximate temperature, in kelvins, of the liquid $t$ minutes after the beaker was placed on the table. According to this function, what was the approximate temperature, in kelvins, of the liquid when the beaker was placed on the table?",
+  "correctValue": "352",
+  "explanation": "$g(0)=297+55\\cdot1=352$."
+ },
+ {
+  "sourceId": "11b1cf2b-e665-4a5c-a213-7f92126cdd8d",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "A car dealership has only sedans, SUVs, and minivans for sale. On Monday, 15% of the vehicles for sale were sedans and 45% were SUVs. If there were 27 sedans for sale at the dealership on Monday, how many minivans were for sale?",
+  "correctValue": "72",
+  "explanation": "Total $=27/0.15=180$; minivans $=40\\%$ of $180=72$."
+ },
+ {
+  "sourceId": "2042342a-eb20-48f2-982b-0dd6086401be",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The given expression can be rewritten as $\\dfrac{a}{4}x^2+\\dfrac{b}{4}x+\\dfrac{c}{4}$, where $a$, $b$, and $c$ are constants. What is the value of $a+b+c$?",
+  "equations": [
+   "-8(3x-2)^2+4(3x-5)^2"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "2"
+   },
+   {
+    "id": "B",
+    "tex": "8"
+   },
+   {
+    "id": "C",
+    "tex": "16"
+   },
+   {
+    "id": "D",
+    "tex": "32"
+   }
+  ],
+  "correct": "D",
+  "explanation": "At $x=1$: $\\dfrac{a+b+c}{4}=-8(1)^2+4(-2)^2=8$, so $a+b+c=32$."
+ },
+ {
+  "sourceId": "a93076ab-87d7-4b98-b855-9f4023ac9192",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "The mass of object A is 336% of the mass of object B, and the mass of object A is 0.048% of the mass of object C. If the mass of object C is $p$% of the mass of object B, what is the value of $\\dfrac{p}{1{,}000}$?",
+  "correctValue": "700",
+  "explanation": "$A=3.36B$ and $A=0.00048C$, so $C=\\dfrac{3.36}{0.00048}B=7{,}000B$, i.e. $p=700{,}000$."
+ },
+ {
+  "sourceId": "3a364d26-9aca-4dd0-b237-a3c635d4c614",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by the given equation. If $f(a)=-5a$, where $a$ is a constant, what is the value of $a$?",
+  "equations": [
+   "f(x)=\\sqrt{5x+12}"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "-\\dfrac{4}{5}"
+   },
+   {
+    "id": "B",
+    "tex": "-\\dfrac{3}{5}"
+   },
+   {
+    "id": "C",
+    "tex": "\\dfrac{3}{5}"
+   },
+   {
+    "id": "D",
+    "tex": "\\dfrac{4}{5}"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$5a+12=25a^2$, $(5a-4)(5a+3)=0$. Since $-5a\\ge0$, $a\\le0$: $a=-\\dfrac{3}{5}$."
+ },
+ {
+  "sourceId": "290850ed-eecd-4690-b950-26dceda069ff",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "An organization sells tickets to a fundraiser for $\\char36$45 per person. The organization's expenses are $\\char36$500 for a rental space and $\\char36$15 per person for food. The organization's goal is to earn at least $\\char36$2,000 after paying all expenses. What is the minimum number of tickets that must be sold to meet this goal?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "45"
+   },
+   {
+    "id": "B",
+    "text": "56"
+   },
+   {
+    "id": "C",
+    "text": "67"
+   },
+   {
+    "id": "D",
+    "text": "84"
+   }
+  ],
+  "correct": "D",
+  "explanation": "$30n-500\\ge2{,}000$, $n\\ge83.\\overline{3}$, so $84$."
+ },
+ {
+  "sourceId": "372fb641-02f4-4835-b3ca-bd6cd7c4705f",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "Out of 800 attempts, 35% were successful. How many of these attempts were successful?",
+  "correctValue": "280",
+  "explanation": "$0.35\\cdot800=280$."
+ }
+]
