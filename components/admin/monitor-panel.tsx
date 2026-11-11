@@ -288,6 +288,7 @@ export function MonitorPanel() {
                             <li key={a.id} className="flex flex-wrap items-baseline gap-x-2 text-[12.5px]">
                               <span className="w-28 shrink-0 tabular-nums text-ink-faint">{dateTime(a.at)}</span>
                               <span className="min-w-0 flex-1 truncate font-semibold text-ink">{model.testName(a.code)}</span>
+                              {a.web && <span className="rounded bg-blue-50 px-1.5 py-px text-[10px] font-extrabold text-blue-700">SAYT</span>}
                               <span className="font-bold tabular-nums text-ink">{a.s || `${a.c}/${a.t}`}</span>
                               {!model.isAssigned(chat!, a.code) && <span className="text-[10.5px] text-ink-faint">(boshqa guruh testi)</span>}
                             </li>

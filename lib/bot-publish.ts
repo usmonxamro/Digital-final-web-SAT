@@ -79,6 +79,22 @@ export async function pushMockToBot(supabase: SupabaseClient, label: string): Pr
       return { status: 'incomplete', message: `${missing} ta savolning javobi kiritilmagan — avval javoblarni to'liq kiriting, keyin botga qo'shing.` }
     }
 
+    // The same test may already exist in the bot under its own code (created in the bot before the site
+    // had it). Link that one instead of making a second code — otherwise results split between two codes.
+    const norm = (s: string) => s.toLowerCase().replace(/\(math\)/g, '').replace(/[^a-z0-9]+/g, '')
+    const { data: botOnly } = await supabase.from('bot_tests').select('code, name, question_count').is('test_label', null)
+    const twin = (botOnly ?? []).find((b) => norm(String(b.name ?? '')) === norm(label) && (!b.question_count || b.question_count === items.length))
+    if (twin) {
+      const { error: linkErr } = await supabase.from('bot_tests').update({ test_label: label }).eq('code', twin.code)
+      if (!linkErr) {
+        return {
+          status: 'exists',
+          code: twin.code as string,
+          message: `Botda bu test allaqachon bor edi (kod: ${twin.code}) — yangi kod yaratilmadi, sayt shu kodga ulandi.`,
+        }
+      }
+    }
+
     const code = await freeCode(supabase)
     if (!code) return { status: 'error', message: "Bo'sh test kodi topilmadi." }
     const count = items.length

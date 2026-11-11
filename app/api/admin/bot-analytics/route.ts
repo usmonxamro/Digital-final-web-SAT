@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/admin-auth'
 import { adminErrorResponse } from '@/lib/admin-errors'
 import { isMissingTable } from '@/lib/db-errors'
+import { botTestQuestions } from '@/lib/bot-question-map'
 import { fetchAll } from '@/lib/db-paginate'
 import type { BotAnalyticsData, BotAnswersData } from '@/lib/bot-analytics'
 import { verifyTahlilKey } from '@/lib/tahlil-link'
@@ -97,10 +98,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: failed.error.message }, { status: 500 })
   }
 
+  // Site attempts (a mock solved on the website, e.g. from a direct link in the group / channel) count too,
+  // for students whose site account is linked to their Telegram (bot code in «Mening kurslarim»).
+  const webAttempts = await siteAttemptsAsBot(sb).catch(() => [])
+
   // Names: only accounts that appear somewhere on the page.
   const ids = new Set<number>()
   for (const m of members.data) ids.add(m.tg_id)
   for (const a of attempts.data) if (a.tg_id != null) ids.add(a.tg_id)
+  for (const a of webAttempts) ids.add(a.tg)
   const accounts: BotAnalyticsData['accounts'] = {}
   const idList = [...ids]
   for (let i = 0; i < idList.length; i += 300) {
@@ -141,8 +147,66 @@ export async function GET(req: NextRequest) {
       s: a.score_text ?? '',
       w: a.wrong_nos ?? [],
       at: a.submitted_at,
-    })),
+    })).concat(webAttempts),
     accounts,
   }
   return NextResponse.json(out, { headers: { 'Cache-Control': 'private, no-store' } })
+}
+
+/**
+ * Website attempts → bot-style attempts: site account → Telegram id (course_memberships.tg_id from the
+ * personal bot code, or tg_accounts.user_id), site mock → its bot code (bot_tests.test_label), wrong
+ * question ids → the bot's question numbers. chat = null, so the attempt counts for a group only if the
+ * student was already a member when he solved it (see BotModel.inGroup) — after moving to a new group
+ * an old solve stays with the old group.
+ */
+async function siteAttemptsAsBot(sb: ReturnType<typeof supabaseAdmin>): Promise<BotAnalyticsData['attempts']> {
+  const [mem, acc] = await Promise.all([
+    sb.from('course_memberships').select('user_id, tg_id').not('tg_id', 'is', null),
+    sb.from('tg_accounts').select('user_id, tg_id').not('user_id', 'is', null),
+  ])
+  const tgOf = new Map<string, number>()
+  for (const r of [...(acc.data ?? []), ...(mem.data ?? [])]) if (r.user_id && r.tg_id) tgOf.set(r.user_id as string, Number(r.tg_id))
+  if (!tgOf.size) return []
+  const users = [...tgOf.keys()]
+  const rows: { id: number; user_id: string; test_label: string | null; correct: number | null; total: number | null; score_text: string | null; wrong_qids: string[] | null; submitted_at: string }[] = []
+  for (let i = 0; i < users.length; i += 200) {
+    const { data } = await sb
+      .from('attempt_log')
+      .select('id, user_id, test_label, correct, total, score_text, wrong_qids, submitted_at')
+      .eq('source', 'web')
+      .in('user_id', users.slice(i, i + 200))
+      .not('test_label', 'is', null)
+    rows.push(...((data ?? []) as typeof rows))
+  }
+  if (!rows.length) return []
+  const labels = [...new Set(rows.map((r) => r.test_label as string))]
+  const { data: bt } = await sb.from('bot_tests').select('code, test_label, origin').in('test_label', labels)
+  const codeOf = new Map<string, string>()
+  // prefer the code the site created (origin 'site'); an older linked bot code otherwise
+  for (const b of (bt ?? []).sort((x, y) => (x.origin === 'site' ? 1 : 0) - (y.origin === 'site' ? 1 : 0))) codeOf.set(b.test_label as string, b.code as string)
+  const numOf = new Map<string, Map<string, number>>()
+  for (const code of new Set(codeOf.values())) {
+    const m = await botTestQuestions(sb, code).catch(() => null)
+    if (m) numOf.set(code, new Map(m.items.map((q) => [q.id as string, q.no])))
+  }
+  const out: BotAnalyticsData['attempts'] = []
+  for (const r of rows) {
+    const code = codeOf.get(r.test_label as string)
+    if (!code) continue
+    const nums = numOf.get(code)
+    out.push({
+      id: -Number(r.id), // negative: never collides with bot attempt ids
+      tg: tgOf.get(r.user_id)!,
+      chat: null,
+      code,
+      c: r.correct ?? 0,
+      t: r.total ?? 0,
+      s: r.score_text ?? '',
+      w: nums ? (r.wrong_qids ?? []).map((id) => nums.get(id)).filter((n): n is number => !!n).sort((a, b) => a - b) : [],
+      at: r.submitted_at,
+      web: true,
+    })
+  }
+  return out
 }

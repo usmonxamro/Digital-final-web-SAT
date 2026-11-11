@@ -25,7 +25,7 @@ export type BotGroup = { chatId: number; title: string; slug: string | null; add
 export type BotMember = { chatId: number; tg: number; n: string; u: string; at: string | null }
 export type BotAssignment = { code: string; chatId: number; at: string | null }
 /** One submission. c/t = correct/total, s = score text ("730 / 800" or "18/20"), w = wrong question numbers. */
-export type BotAttempt = { id: number; tg: number; chat: number | null; code: string; c: number; t: number; s: string; w: number[]; at: string }
+export type BotAttempt = { id: number; tg: number; chat: number | null; code: string; c: number; t: number; s: string; w: number[]; at: string; /** solved on the website */ web?: boolean }
 export type BotAnalyticsData = {
   generatedAt: string
   tests: BotTest[]
@@ -134,6 +134,7 @@ export class BotModel {
   private memberName = new Map<number, string>()
   private memberUser = new Map<number, string>()
   private membersOfGroup = new Map<number, Set<number>>()
+  private joinedAt = new Map<string, string>()
   private groupsOfStudent = new Map<number, Set<number>>()
   private assignedOf = new Map<number, BotAssignment[]>()
   private assignedSet = new Set<string>()
@@ -155,6 +156,7 @@ export class BotModel {
     for (const m of data.members) {
       if (!this.group.has(m.chatId)) continue
       join(m.chatId, m.tg)
+      if (m.at) this.joinedAt.set(`${m.chatId}|${m.tg}`, m.at)
       if (m.n && !this.memberName.has(m.tg)) this.memberName.set(m.tg, m.n)
       if (m.u && !this.memberUser.has(m.tg)) this.memberUser.set(m.tg, m.u)
     }
@@ -205,7 +207,10 @@ export class BotModel {
   }
   inGroup(a: BotAttempt, chat: number): boolean {
     if (a.chat != null) return a.chat === chat
-    return !!this.membersOfGroup.get(chat)?.has(a.tg) && this.isAssigned(chat, a.code)
+    if (!this.membersOfGroup.get(chat)?.has(a.tg) || !this.isAssigned(chat, a.code)) return false
+    // Solved before joining this group (e.g. moved here from another group) → it belongs to the old group.
+    const joined = this.joinedAt.get(`${chat}|${a.tg}`)
+    return !joined || a.at >= joined
   }
   solved(tg: number, code: string): boolean {
     return (this.byStudent.get(tg) ?? []).some((a) => a.code === code)
