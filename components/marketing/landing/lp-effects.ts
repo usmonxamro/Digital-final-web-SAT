@@ -19,6 +19,9 @@ export function startLpEffects(root: HTMLElement, lang: Lang): () => void {
   root.addEventListener('click', onClick)
   cleanups.push(() => root.removeEventListener('click', onClick))
 
+  /* ---------------- daraja: typed-and-erased headline ---------------- */
+  cleanups.push(startTypewriter(root, reduce))
+
   /* ---------------- book preview lightbox ---------------- */
   cleanups.push(startBookPreview(root))
 
@@ -610,4 +613,40 @@ function startVideoLessons(root: HTMLElement, lang: Lang, reduce: boolean): () =
     root.removeEventListener('click', onClick)
     close()
   }
+}
+
+
+/** Types each phrase, holds it, erases it, then moves to the next one. Texts come (already translated) from hidden <i> items. */
+function startTypewriter(root: HTMLElement, reduce: boolean): () => void {
+  const h = root.querySelector<HTMLElement>('[data-typewriter]')
+  const out = h?.querySelector<HTMLElement>('.dj-tw-text')
+  const items = h ? Array.from(h.querySelectorAll('.dj-tw-src i')).map((i) => i.textContent ?? '') : []
+  if (!h || !out || items.length < 2 || reduce) return () => {}
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let p = 0
+  let c = 0
+  let erasing = false
+  let live = false
+  const tick = () => {
+    if (!live) return
+    const full = items[p]
+    if (!erasing) {
+      c++
+      out.textContent = full.slice(0, c)
+      if (c >= full.length) { erasing = true; timer = setTimeout(tick, 1600); return }
+      timer = setTimeout(tick, 55)
+    } else {
+      c--
+      out.textContent = full.slice(0, Math.max(c, 0))
+      if (c <= 0) { erasing = false; p = (p + 1) % items.length; timer = setTimeout(tick, 350); return }
+      timer = setTimeout(tick, 28)
+    }
+  }
+  const io = new IntersectionObserver((es) => {
+    const vis = es.some((e) => e.isIntersecting)
+    if (vis && !live) { live = true; c = items[p].length; erasing = true; timer = setTimeout(tick, 1200) }
+    else if (!vis) { live = false; if (timer) clearTimeout(timer) }
+  })
+  io.observe(h)
+  return () => { live = false; if (timer) clearTimeout(timer); io.disconnect() }
 }

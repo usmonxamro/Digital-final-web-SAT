@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 690 740" width="690" height="740" font-family="Times New Roman,serif" font-size="22" font-weight="bold" text-rendering="geometricPrecision">
+<rect width="690" height="740" fill="#fff"/>
+<polygon points="296,74 604,74 604,690 450,690" fill="#000" opacity="0.16"/>
+<path d="M76 74V690M120 74V690M164 74V690M208 74V690M252 74V690M296 74V690M340 74V690M384 74V690M428 74V690M472 74V690M516 74V690M560 74V690M604 74V690M76 690H604M76 646H604M76 602H604M76 558H604M76 514H604M76 470H604M76 426H604M76 382H604M76 338H604M76 294H604M76 250H604M76 206H604M76 162H604M76 118H604M76 74H604" stroke="#555" stroke-width="1.4" shape-rendering="crispEdges"/>
+<path d="M76 514H638M340 690V44" stroke="#000" stroke-width="3.4" shape-rendering="crispEdges"/>
+<path d="M644 514l-14 -6v12z" fill="#000"/><path d="M340 38l-6 14h12z" fill="#000"/><path d="M296 74L450 690" stroke="#000" stroke-width="4.4" stroke-dasharray="11 8"/>
+<circle cx="340" cy="250" r="7"/><circle cx="428" cy="602" r="7"/>
+<text x="76" y="541" font-size="22" text-anchor="middle">−6</text>
+<text x="164" y="541" font-size="22" text-anchor="middle">−4</text>
+<text x="252" y="541" font-size="22" text-anchor="middle">−2</text>
+<text x="428" y="541" font-size="22" text-anchor="middle">2</text>
+<text x="516" y="541" font-size="22" text-anchor="middle">4</text>
+<text x="604" y="541" font-size="22" text-anchor="middle">6</text>
+<text x="330" y="434" font-size="22" text-anchor="end">2</text>
+<text x="330" y="346" font-size="22" text-anchor="end">4</text>
+<text x="330" y="258" font-size="22" text-anchor="end">6</text>
+<text x="330" y="170" font-size="22" text-anchor="end">8</text>
+<text x="330" y="82" font-size="22" text-anchor="end">10</text>
+<text x="330" y="610" font-size="22" text-anchor="end">−2</text>
+<text x="330" y="698" font-size="22" text-anchor="end">−4</text>
+<text x="328" y="541" font-size="22" text-anchor="end" font-style="italic">O</text>
+<text x="656" y="544" font-size="26" text-anchor="middle" font-style="italic">x</text>
+<text x="362" y="44" font-size="26" text-anchor="middle" font-style="italic">y</text>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 325" width="640" height="325" font-family="Times New Roman,serif" font-size="22" font-weight="bold" text-rendering="geometricPrecision">
+<rect width="640" height="325" fill="#fff"/>
+<g stroke="#000" stroke-width="3.2" stroke-linejoin="round" fill="none">
+<path d="M100 215V50L500 215H100"/>
+<path d="M545 215V50L150 215H545"/>
+<path d="M100 200h15v15" stroke-width="2"/><path d="M545 200h-15v15" stroke-width="2"/>
+</g>
+<text x="86" y="46" font-size="22" text-anchor="end" font-style="italic">A</text>
+<text x="559" y="46" font-size="22" text-anchor="start" font-style="italic">C</text>
+<text x="323.9" y="128.4" font-size="22" text-anchor="middle" font-style="italic">B</text>
+<text x="88" y="245" font-size="22" text-anchor="end" font-style="italic">G</text>
+<text x="144" y="245" font-size="22" text-anchor="middle" font-style="italic">F</text>
+<text x="504" y="245" font-size="22" text-anchor="middle" font-style="italic">E</text>
+<text x="557" y="245" font-size="22" text-anchor="start" font-style="italic">D</text>
+<text x="320" y="300" font-size="22" text-anchor="middle">Note: Figure not drawn to scale.</text>
+</svg>

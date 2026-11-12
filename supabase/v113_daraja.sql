@@ -1,0 +1,67 @@
+-- v113: Daraja (til bo'yicha daraja aniqlash testi). Kalitlar repoda EMAS, faqat shu jadvalda.
+create table if not exists public.daraja_keys (
+  module smallint not null, n smallint not null,
+  type text not null check (type in ('mcq','gridin')),
+  correct text, correct_value text,
+  domain text, difficulty text,
+  sat_format boolean not null default false,
+  primary key (module, n)
+);
+create table if not exists public.daraja_attempts (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  lang text not null check (lang in ('uz','en')),
+  prep text not null,
+  name text, contact text,
+  correct_count int, total int, adjusted_raw44 int, scaled int,
+  detail jsonb
+);
+alter table public.daraja_keys enable row level security;
+alter table public.daraja_attempts enable row level security;
+insert into public.daraja_keys (module,n,type,correct,correct_value,domain,difficulty,sat_format) values
+(1,1,'mcq','A',NULL,'Algebra','Easy',false),
+(1,2,'mcq','D',NULL,'Geometry and Trigonometry','Medium',false),
+(1,3,'mcq','D',NULL,'Algebra','Easy',false),
+(1,4,'mcq','A',NULL,'Geometry and Trigonometry','Easy',false),
+(1,5,'mcq','A',NULL,'Advanced Math','Easy',false),
+(1,6,'mcq','D',NULL,'Algebra','Medium',false),
+(1,7,'mcq','A',NULL,'Algebra','Easy',false),
+(1,8,'mcq','A',NULL,'Algebra','Easy',false),
+(1,9,'mcq','C',NULL,'Advanced Math','Hard',false),
+(1,10,'mcq','C',NULL,'Algebra','Medium',false),
+(1,11,'mcq','D',NULL,'Advanced Math','Medium',false),
+(1,12,'mcq','C',NULL,'Advanced Math','Medium',false),
+(1,13,'mcq','A',NULL,'Algebra','Medium',false),
+(1,14,'mcq','C',NULL,'Algebra','Medium',false),
+(1,15,'mcq','C',NULL,'Advanced Math','Easy',false),
+(1,16,'mcq','A',NULL,'Problem-Solving and Data Analysis','Medium',false),
+(1,17,'mcq','B',NULL,'Problem-Solving and Data Analysis','Medium',false),
+(1,18,'gridin',NULL,'13','Geometry and Trigonometry','Easy',false),
+(1,19,'gridin',NULL,'3610','Problem-Solving and Data Analysis','Easy',false),
+(1,20,'gridin',NULL,'105','Geometry and Trigonometry','Easy',false),
+(1,21,'mcq','C',NULL,'Geometry and Trigonometry','Hard',false),
+(1,22,'mcq','C',NULL,'Algebra','Medium',false),
+(2,1,'mcq','D',NULL,'Advanced Math','Medium',false),
+(2,2,'mcq','D',NULL,'Advanced Math','Easy',false),
+(2,3,'gridin',NULL,'79','Advanced Math','Easy',false),
+(2,4,'mcq','B',NULL,'Algebra','Easy',false),
+(2,5,'gridin',NULL,'35','Algebra','Easy',false),
+(2,6,'mcq','A',NULL,'Algebra','Easy',false),
+(2,7,'mcq','A',NULL,'Advanced Math','Medium',false),
+(2,8,'gridin',NULL,'72','Problem-Solving and Data Analysis','Medium',false),
+(2,9,'mcq','C',NULL,'Advanced Math','Medium',false),
+(2,10,'mcq','D',NULL,'Algebra','Easy',false),
+(2,11,'gridin',NULL,'42','Advanced Math','Medium',false),
+(2,12,'gridin',NULL,'168','Algebra','Easy',false),
+(2,13,'mcq','C',NULL,'Geometry and Trigonometry','Medium',false),
+(2,14,'mcq','D',NULL,'Problem-Solving and Data Analysis','Medium',true),
+(2,15,'mcq','B',NULL,'Problem-Solving and Data Analysis','Medium',true),
+(2,16,'gridin',NULL,'4140','Geometry and Trigonometry','Medium',false),
+(2,17,'gridin',NULL,'21','Algebra','Medium',false),
+(2,18,'mcq','D',NULL,'Geometry and Trigonometry','Medium',false),
+(2,19,'mcq','A',NULL,'Geometry and Trigonometry','Easy',false),
+(2,20,'mcq','D',NULL,'Advanced Math','Hard',true),
+(2,21,'mcq','B',NULL,'Algebra','Medium',false),
+(2,22,'mcq','D',NULL,'Geometry and Trigonometry','Medium',false)
+on conflict (module,n) do update set type=excluded.type, correct=excluded.correct, correct_value=excluded.correct_value,
+ domain=excluded.domain, difficulty=excluded.difficulty, sat_format=excluded.sat_format;

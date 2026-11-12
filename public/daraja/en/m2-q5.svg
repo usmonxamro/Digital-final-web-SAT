@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 678 580" width="678" height="580" font-family="Times New Roman,serif" font-size="22" font-weight="bold" text-rendering="geometricPrecision">
+<rect width="678" height="580" fill="#fff"/>
+<path d="M118 484V44M168 484V44M218 484V44M268 484V44M318 484V44M368 484V44M418 484V44M468 484V44M518 484V44M568 484V44M618 484V44M118 484H618M118 456.5H618M118 429H618M118 401.5H618M118 374H618M118 346.5H618M118 319H618M118 291.5H618M118 264H618M118 236.5H618M118 209H618M118 181.5H618M118 154H618M118 126.5H618M118 99H618M118 71.5H618M118 44H618" stroke="#555" stroke-width="1.4" shape-rendering="crispEdges"/>
+<path d="M118 484H648M118 484V18" stroke="#000" stroke-width="3.4" shape-rendering="crispEdges"/>
+<path d="M654 484l-14 -6v12z" fill="#000"/><path d="M118 12l-6 14h12z" fill="#000"/><path d="M118 291.5L618 71.5" stroke="#000" stroke-width="4.6"/>
+<text x="218" y="512" font-size="22" text-anchor="middle">2</text>
+<text x="318" y="512" font-size="22" text-anchor="middle">4</text>
+<text x="418" y="512" font-size="22" text-anchor="middle">6</text>
+<text x="518" y="512" font-size="22" text-anchor="middle">8</text>
+<text x="618" y="512" font-size="22" text-anchor="middle">10</text>
+<text x="108" y="437" font-size="22" text-anchor="end">10</text>
+<text x="108" y="382" font-size="22" text-anchor="end">20</text>
+<text x="108" y="327" font-size="22" text-anchor="end">30</text>
+<text x="108" y="272" font-size="22" text-anchor="end">40</text>
+<text x="108" y="217" font-size="22" text-anchor="end">50</text>
+<text x="108" y="162" font-size="22" text-anchor="end">60</text>
+<text x="108" y="107" font-size="22" text-anchor="end">70</text>
+<text x="108" y="52" font-size="22" text-anchor="end">80</text>
+<text x="106" y="512" font-size="22" text-anchor="end" font-style="italic">O</text>
+<text x="670" y="514" font-size="26" text-anchor="middle" font-style="italic">x</text>
+<text x="140" y="20" font-size="26" text-anchor="middle" font-style="italic">y</text>
+<text x="368" y="562" font-size="23" text-anchor="middle">Time since initial deposit (months)</text>
+<text transform="translate(34 264) rotate(-90)" font-size="23" text-anchor="middle">Bank account balance (dollars)</text>
+</svg>

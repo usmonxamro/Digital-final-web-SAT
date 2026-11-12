@@ -5,6 +5,7 @@ import './lp.css'
 import { useI18n } from '@/components/i18n-provider'
 import { LP_BODY } from '@/components/marketing/landing/lp-body'
 import { LP_BOOKS } from '@/components/marketing/landing/lp-books'
+import { LP_DARAJA } from '@/components/marketing/landing/lp-daraja'
 import { translateHtml } from '@/components/marketing/landing/lp-i18n'
 import { startLpEffects } from '@/components/marketing/landing/lp-effects'
 import { LpHeader } from '@/components/marketing/landing/lp-header'
@@ -14,7 +15,7 @@ import { useCourseGroups } from '@/components/use-course-groups'
 
 /** The books section sits between the features and the Telegram courses. */
 const COURSES_MARK = '<!-- SCREEN 3: COURSES -->'
-const FULL = LP_BODY.includes(COURSES_MARK) ? LP_BODY.replace(COURSES_MARK, LP_BOOKS + '\n' + COURSES_MARK) : LP_BODY + LP_BOOKS
+const FULL = LP_BODY.includes(COURSES_MARK) ? LP_BODY.replace(COURSES_MARK, LP_DARAJA + '\n' + LP_BOOKS + '\n' + COURSES_MARK) : LP_BODY + LP_DARAJA + LP_BOOKS
 /** Course cards come from Admin → «Kurs bannerlari»; the static ones are only colour templates. */
 const { body: BODY_SPLIT, templates: CARD_TPL } = splitCourseCards(FULL)
 const cardsFor = (groups: CourseGroup[]) =>

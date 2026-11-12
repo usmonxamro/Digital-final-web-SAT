@@ -944,3 +944,16 @@ html[data-sp-palette="yellow"] .lp .hs-chip b{color:#1a1200}
 
 /* one course banner: centred, not half the grid */
 .lp .c-grid.c-one{grid-template-columns:minmax(0,620px);justify-content:center}
+
+/* ---- daraja section ---- */
+.lp .daraja{padding:70px 0}
+.lp .dj-box{position:relative;overflow:hidden;text-align:center;background:var(--card);border:1px solid var(--border);border-radius:30px;padding:46px 28px;box-shadow:var(--shadow)}
+.lp .dj-box::before{content:"";position:absolute;right:-120px;top:-140px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(249,115,22,.16),transparent 68%);pointer-events:none}
+.lp .dj-type{position:relative;font-size:clamp(28px,4.2vw,46px);font-weight:800;letter-spacing:-.02em;margin:18px 0 14px;min-height:1.25em}
+.lp .dj-caret{display:inline-block;width:3px;height:.95em;margin-left:4px;vertical-align:-.1em;background:#f97316;animation:djblink 1s steps(1) infinite}
+@keyframes djblink{50%{opacity:0}}
+.lp .dj-box>p{position:relative;max-width:700px;margin:0 auto 18px;font-size:17px}
+.lp .dj-pts{position:relative;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
+.lp .dj-pts span{background:rgba(249,115,22,.1);border-radius:99px;padding:8px 14px;font-size:14px;font-weight:600}
+@media(max-width:640px){.lp .daraja{padding:40px 0}.lp .dj-box{padding:30px 18px;border-radius:24px}.lp .dj-box>p{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.lp .dj-caret{animation:none}}

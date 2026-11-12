@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" font-family="Times New Roman,serif" font-size="22" font-weight="bold" text-rendering="geometricPrecision">
+<rect width="640" height="640" fill="#fff"/>
+<g stroke="#000" stroke-width="3.2" fill="none" stroke-linejoin="round">
+<ellipse cx="250" cy="190" rx="76" ry="22"/><ellipse cx="250" cy="190" rx="66" ry="16"/>
+<path d="M174 190V560A76 22 0 0 0 326 560V190"/>
+<path d="M174 128H326M174 118V138M326 118V138" stroke-width="2.6"/>
+<path d="M176 128l12 -6v12zM324 128l-12 -6v12z" fill="#000" stroke-width="1"/>
+<path d="M388 190V560M378 190H398M378 560H398" stroke-width="2.6"/>
+<path d="M388 192l-6 12h12zM388 558l-6 -12h12z" fill="#000" stroke-width="1"/>
+<path d="M108 164L176 176" stroke-width="2.6"/>
+</g>
+<path d="M176 176l-14 -2 8 -10z" fill="#000"/>
+<text x="250" y="52" font-size="24" text-anchor="middle">tashqi</text>
+<text x="250" y="84" font-size="24" text-anchor="middle">diametr</text>
+<text x="20" y="152" font-size="24" text-anchor="start">devor qalinligi</text>
+<text x="406" y="383" font-size="24" text-anchor="start">balandlik</text>
+<text x="320" y="614" font-size="22" text-anchor="middle">Eslatma: Chizma masshtabda chizilmagan.</text>
+</svg>

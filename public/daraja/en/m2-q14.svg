@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 658 616" width="658" height="616" font-family="Times New Roman,serif" font-size="22" font-weight="bold" text-rendering="geometricPrecision">
+<rect width="658" height="616" fill="#fff"/>
+<path d="M84 556V44M148 556V44M212 556V44M276 556V44M340 556V44M404 556V44M468 556V44M532 556V44M596 556V44M84 556H596M84 492H596M84 428H596M84 364H596M84 300H596M84 236H596M84 172H596M84 108H596M84 44H596" stroke="#555" stroke-width="1.4" shape-rendering="crispEdges"/>
+<path d="M84 556H626M84 556V18" stroke="#000" stroke-width="3.4" shape-rendering="crispEdges"/>
+<path d="M632 556l-14 -6v12z" fill="#000"/><path d="M84 12l-6 14h12z" fill="#000"/><circle cx="84" cy="492" r="7.5"/><circle cx="180" cy="428" r="7.5"/><circle cx="244" cy="412" r="7.5"/><circle cx="292" cy="316" r="7.5"/><circle cx="324" cy="284" r="7.5"/><circle cx="410.4" cy="220" r="7.5"/><circle cx="538.4" cy="156" r="7.5"/>
+<text x="74" y="500" font-size="21" text-anchor="end">100</text>
+<text x="154" y="584" font-size="21" text-anchor="middle">100</text>
+<text x="74" y="436" font-size="21" text-anchor="end">200</text>
+<text x="212" y="584" font-size="21" text-anchor="middle">200</text>
+<text x="74" y="372" font-size="21" text-anchor="end">300</text>
+<text x="276" y="584" font-size="21" text-anchor="middle">300</text>
+<text x="74" y="308" font-size="21" text-anchor="end">400</text>
+<text x="340" y="584" font-size="21" text-anchor="middle">400</text>
+<text x="74" y="244" font-size="21" text-anchor="end">500</text>
+<text x="404" y="584" font-size="21" text-anchor="middle">500</text>
+<text x="74" y="180" font-size="21" text-anchor="end">600</text>
+<text x="468" y="584" font-size="21" text-anchor="middle">600</text>
+<text x="74" y="116" font-size="21" text-anchor="end">700</text>
+<text x="532" y="584" font-size="21" text-anchor="middle">700</text>
+<text x="74" y="52" font-size="21" text-anchor="end">800</text>
+<text x="596" y="584" font-size="21" text-anchor="middle">800</text>
+<text x="70" y="584" font-size="22" text-anchor="end" font-style="italic">O</text>
+<text x="648" y="586" font-size="26" text-anchor="middle" font-style="italic">x</text>
+<text x="106" y="20" font-size="26" text-anchor="middle" font-style="italic">y</text>
+</svg>
