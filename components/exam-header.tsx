@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { currentExamAccent, setExamAccent, type ExamAccent } from '@/lib/palette'
 import { ChevronDown, Highlighter, LogOut, Maximize, MoreVertical, StickyNote, Type } from 'lucide-react'
 
 function formatTime(totalSeconds: number) {
@@ -96,6 +97,12 @@ export function ExamHeader({
   const dir = usePopover()
   const more = usePopover()
   const text = useTextScale()
+  const [accent, setAccent] = useState<ExamAccent>('teal')
+  useEffect(() => setAccent(currentExamAccent()), [])
+  const pickAccent = (a: ExamAccent) => {
+    setExamAccent(a)
+    setAccent(a)
+  }
 
   function toggleFullscreen() {
     if (document.fullscreenElement) {
@@ -107,25 +114,25 @@ export function ExamHeader({
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[#d7e7e4] bg-[#e7f3f1]">
+    <header className="sticky top-0 z-30 border-b border-[#d7e7e4] bg-[var(--ex-tint2,#e7f3f1)]">
       {/* Main row — one compact line on phones too (title+Directions | timer | tools). */}
       <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-1.5 sm:flex sm:justify-between sm:gap-x-2 sm:px-6 sm:py-2.5">
         {/* Left: title + directions */}
         <div ref={dir.ref} className="relative flex min-w-0 flex-1 flex-col sm:flex-none">
-          <h1 className="truncate text-[12.5px] font-bold leading-tight tracking-tight text-[#0b4f4a] sm:text-[15px]">{label}</h1>
+          <h1 className="truncate text-[12.5px] font-bold leading-tight tracking-tight text-[var(--ex-d,#0b4f4a)] sm:text-[15px]">{label}</h1>
           <button
             type="button"
             onClick={() => dir.setOpen((o) => !o)}
             aria-expanded={dir.open}
-            className="flex w-fit items-center gap-1 text-[11.5px] font-semibold leading-tight text-[#0e7c75] sm:mt-0.5 sm:text-[13px] hover:text-[#0a625c]"
+            className="flex w-fit items-center gap-1 text-[11.5px] font-semibold leading-tight text-[var(--ex-a,#0e7c75)] sm:mt-0.5 sm:text-[13px] hover:text-[var(--ex-h,#0a625c)]"
           >
             Directions
             <ChevronDown className={`size-3.5 transition-transform ${dir.open ? 'rotate-180' : ''}`} />
           </button>
 
           {dir.open && (
-            <div className="absolute left-0 top-full z-40 mt-2 w-[min(28rem,calc(100vw-2rem))] rounded-lg border border-[#c7d6d4] bg-white p-4 text-[13.5px] leading-relaxed text-[#1a1a1a] shadow-xl">
-              <p className="mb-2 font-bold text-[#0b4f4a]">Directions</p>
+            <div className="absolute left-0 top-full z-40 mt-2 w-[min(28rem,calc(100vw-2rem))] rounded-lg border border-[var(--ex-line,#c7d6d4)] bg-white p-4 text-[13.5px] leading-relaxed text-[#1a1a1a] shadow-xl">
+              <p className="mb-2 font-bold text-[var(--ex-d,#0b4f4a)]">Directions</p>
               <p>
                 Ushbu bo&apos;limdagi savollar bilan tanishib chiqing. Har bir savolga javob
                 bering va &quot;Next&quot; tugmasini bosing. Kerak bo&apos;lsa &quot;Back&quot;
@@ -149,7 +156,7 @@ export function ExamHeader({
           <button
             type="button"
             onClick={() => setHidden((h) => !h)}
-            className="rounded-full border border-[#0e7c75]/40 px-2.5 text-[10px] font-semibold leading-[15px] text-[#0e7c75] transition-colors hover:bg-[#d2ebe7] sm:mt-0.5 sm:px-3 sm:py-0.5 sm:text-[11.5px] sm:leading-normal"
+            className="rounded-full border border-[var(--ex-a,#0e7c75)]/40 px-2.5 text-[10px] font-semibold leading-[15px] text-[var(--ex-a,#0e7c75)] transition-colors hover:bg-[var(--ex-tint,#d2ebe7)] sm:mt-0.5 sm:px-3 sm:py-0.5 sm:text-[11.5px] sm:leading-normal"
           >
             {hidden ? 'Show' : 'Hide'}
           </button>
@@ -165,7 +172,7 @@ export function ExamHeader({
                 aria-pressed={calculatorOpen}
                 aria-label="Calculator"
                 className={`flex flex-col items-center gap-0.5 text-[10.5px] font-semibold transition-colors sm:text-[11.5px] ${
-                  calculatorOpen ? 'text-[#0b4f4a]' : 'text-[#375957] hover:text-[#0b4f4a]'
+                  calculatorOpen ? 'text-[var(--ex-d,#0b4f4a)]' : 'text-[var(--ex-ink,#375957)] hover:text-[var(--ex-d,#0b4f4a)]'
                 }`}
               >
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="sm:w-5 sm:h-5">
@@ -180,7 +187,7 @@ export function ExamHeader({
                 aria-pressed={referenceOpen}
                 aria-label="Reference"
                 className={`flex flex-col items-center gap-0.5 text-[10.5px] font-semibold transition-colors sm:text-[11.5px] ${
-                  referenceOpen ? 'text-[#0b4f4a]' : 'text-[#375957] hover:text-[#0b4f4a]'
+                  referenceOpen ? 'text-[var(--ex-d,#0b4f4a)]' : 'text-[var(--ex-ink,#375957)] hover:text-[var(--ex-d,#0b4f4a)]'
                 }`}
               >
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="sm:w-5 sm:h-5">
@@ -196,7 +203,7 @@ export function ExamHeader({
             <button
               type="button"
               onClick={onHighlight}
-              className="flex flex-col items-center gap-0.5 text-[10.5px] font-semibold text-[#375957] transition-colors hover:text-[#0b4f4a] sm:text-[11.5px]"
+              className="flex flex-col items-center gap-0.5 text-[10.5px] font-semibold text-[var(--ex-ink,#375957)] transition-colors hover:text-[var(--ex-d,#0b4f4a)] sm:text-[11.5px]"
             >
               <span className="flex items-center gap-0.5">
                 <Highlighter className="size-4 sm:size-[18px]" />
@@ -211,28 +218,28 @@ export function ExamHeader({
               type="button"
               onClick={() => more.setOpen((o) => !o)}
               aria-expanded={more.open}
-              className="flex flex-col items-center gap-0.5 text-[10.5px] font-semibold text-[#375957] transition-colors hover:text-[#0b4f4a] sm:text-[11.5px]"
+              className="flex flex-col items-center gap-0.5 text-[10.5px] font-semibold text-[var(--ex-ink,#375957)] transition-colors hover:text-[var(--ex-d,#0b4f4a)] sm:text-[11.5px]"
             >
               <MoreVertical className="size-4 sm:size-5" />
               <span className="hidden sm:inline">More</span>
             </button>
 
             {more.open && (
-              <div className="absolute right-0 top-full z-40 mt-2 w-[248px] overflow-hidden rounded-lg border border-[#c7d6d4] bg-white py-1 shadow-xl">
+              <div className="absolute right-0 top-full z-40 mt-2 w-[248px] overflow-hidden rounded-lg border border-[var(--ex-line,#c7d6d4)] bg-white py-1 shadow-xl">
                 <div className="flex items-center gap-2.5 px-3.5 py-2 text-[13.5px] font-medium text-[#1a1a1a]">
                   <Type className="size-4 shrink-0" />
                   <span className="flex-1 whitespace-nowrap">Text size</span>
-                  <div className="flex items-center overflow-hidden rounded-md border border-[#c7d6d4]">
+                  <div className="flex items-center overflow-hidden rounded-md border border-[var(--ex-line,#c7d6d4)]">
                     <button
                       type="button"
                       onClick={() => text.step(-1)}
                       disabled={!text.canDown}
                       aria-label="Smaller text"
-                      className="h-8 w-9 text-[13px] font-bold text-[#0b4f4a] hover:bg-[#d2ebe7] disabled:opacity-35"
+                      className="h-8 w-9 text-[13px] font-bold text-[var(--ex-d,#0b4f4a)] hover:bg-[var(--ex-tint,#d2ebe7)] disabled:opacity-35"
                     >
                       A−
                     </button>
-                    <span className="w-11 border-x border-[#c7d6d4] text-center text-[11.5px] font-semibold tabular-nums text-[#375957]">
+                    <span className="w-11 border-x border-[var(--ex-line,#c7d6d4)] text-center text-[11.5px] font-semibold tabular-nums text-[var(--ex-ink,#375957)]">
                       {Math.round(text.scale * 100)}%
                     </span>
                     <button
@@ -240,17 +247,35 @@ export function ExamHeader({
                       onClick={() => text.step(1)}
                       disabled={!text.canUp}
                       aria-label="Larger text"
-                      className="h-8 w-9 text-[16px] font-bold text-[#0b4f4a] hover:bg-[#d2ebe7] disabled:opacity-35"
+                      className="h-8 w-9 text-[16px] font-bold text-[var(--ex-d,#0b4f4a)] hover:bg-[var(--ex-tint,#d2ebe7)] disabled:opacity-35"
                     >
                       A+
                     </button>
                   </div>
                 </div>
                 <div className="mx-3 my-1 h-px bg-[#e3ebea]" />
+                <div className="flex items-center gap-2.5 px-3.5 py-2 text-[13.5px] font-medium text-[#1a1a1a]">
+                  <span className="size-4 shrink-0 rounded-full" style={{ background: 'linear-gradient(135deg,#0e7c75 50%,#f97316 50%)' }} />
+                  <span className="flex-1 whitespace-nowrap">Color</span>
+                  <div className="flex items-center gap-2">
+                    {([['teal', '#0e7c75', 'Teal'], ['orange', '#f97316', 'Orange']] as const).map(([k, c, name]) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => pickAccent(k)}
+                        aria-label={name}
+                        aria-pressed={accent === k}
+                        className="size-7 rounded-full border-2 transition-transform hover:scale-110"
+                        style={{ background: c, borderColor: accent === k ? '#111' : 'transparent', boxShadow: accent === k ? '0 0 0 2px #fff inset' : 'none' }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="mx-3 my-1 h-px bg-[#e3ebea]" />
                 <button
                   type="button"
                   onClick={toggleFullscreen}
-                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13.5px] font-medium text-[#1a1a1a] hover:bg-[#d2ebe7]"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13.5px] font-medium text-[#1a1a1a] hover:bg-[var(--ex-tint,#d2ebe7)]"
                 >
                   <Maximize className="size-4" /> Fullscreen
                 </button>
@@ -280,7 +305,7 @@ export function ExamHeader({
 
       {/* Practice test banner — a hairline strip on phones, the full bar from sm up */}
       <div className="px-4 sm:px-10 sm:py-1">
-        <div className="rounded-b-md bg-[#0b4f4a] py-px text-center text-[8.5px] font-bold uppercase leading-[13px] tracking-wider text-white sm:rounded-b-xl sm:py-1 sm:text-[11.5px] sm:leading-normal">
+        <div className="rounded-b-md bg-[var(--ex-d,#0b4f4a)] py-px text-center text-[8.5px] font-bold uppercase leading-[13px] tracking-wider text-white sm:rounded-b-xl sm:py-1 sm:text-[11.5px] sm:leading-normal">
           This is a practice test
         </div>
       </div>

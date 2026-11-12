@@ -65,8 +65,8 @@ function ExamFooterImpl({
           </button>
 
           {gridOpen && (
-            <div className="absolute bottom-full left-1/2 mb-3 w-[min(24rem,calc(100vw-1.5rem))] -translate-x-1/2 rounded-lg border border-[#c7d6d4] bg-white p-4 shadow-xl">
-              <div className="mb-3 text-[13.5px] font-bold text-[#0b4f4a]">{sectionLabel}</div>
+            <div className="absolute bottom-full left-1/2 mb-3 w-[min(24rem,calc(100vw-1.5rem))] -translate-x-1/2 rounded-lg border border-[var(--ex-line,#c7d6d4)] bg-white p-4 shadow-xl">
+              <div className="mb-3 text-[13.5px] font-bold text-[var(--ex-d,#0b4f4a)]">{sectionLabel}</div>
 
               <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[11.5px] text-[#444]">
                 <span className="flex items-center gap-1.5">
@@ -76,7 +76,7 @@ function ExamFooterImpl({
                   <span className="size-3 rounded-full border-[1.5px] border-dashed border-[#767676] bg-white" /> Unanswered
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="size-3 rounded-full bg-[#0e7c75]" /> Answered
+                  <span className="size-3 rounded-full bg-[var(--ex-a,#0e7c75)]" /> Answered
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="inline-block size-3 bg-[#c8102e]" style={{ clipPath: 'polygon(0 0,100% 0,100% 60%,50% 100%,0 60%)' }} />
@@ -101,8 +101,8 @@ function ExamFooterImpl({
                         isCurrent
                           ? 'border-[#111] bg-white text-[#111]'
                           : isAnswered
-                            ? 'border-[#0e7c75] bg-[#0e7c75] text-white'
-                            : 'border-dashed border-[#767676] bg-white text-[#444] hover:border-[#0e7c75]'
+                            ? 'border-[var(--ex-a,#0e7c75)] bg-[var(--ex-a,#0e7c75)] text-white'
+                            : 'border-dashed border-[#767676] bg-white text-[#444] hover:border-[var(--ex-a,#0e7c75)]'
                       }`}
                     >
                       {i + 1}
@@ -120,7 +120,7 @@ function ExamFooterImpl({
               <button
                 type="button"
                 onClick={() => setGridOpen(false)}
-                className="mt-3 w-full rounded-full border border-[#0e7c75] py-1.5 text-center text-[12.5px] font-semibold text-[#0e7c75] hover:bg-[#d2ebe7]"
+                className="mt-3 w-full rounded-full border border-[var(--ex-a,#0e7c75)] py-1.5 text-center text-[12.5px] font-semibold text-[var(--ex-a,#0e7c75)] hover:bg-[var(--ex-tint,#d2ebe7)]"
               >
                 Go to Review Page
               </button>
@@ -134,7 +134,7 @@ function ExamFooterImpl({
             type="button"
             onClick={onBack}
             disabled={current === 0}
-            className="flex items-center gap-1 rounded-full border-[1.5px] border-[#0e7c75] bg-white px-3.5 py-1.5 text-[13.5px] font-semibold text-[#0e7c75] transition-colors hover:bg-[#d2ebe7] disabled:cursor-not-allowed disabled:opacity-40 sm:px-4"
+            className="flex items-center gap-1 rounded-full border-[1.5px] border-[var(--ex-a,#0e7c75)] bg-white px-3.5 py-1.5 text-[13.5px] font-semibold text-[var(--ex-a,#0e7c75)] transition-colors hover:bg-[var(--ex-tint,#d2ebe7)] disabled:cursor-not-allowed disabled:opacity-40 sm:px-4"
           >
             <ChevronLeft className="size-4" />
             <span className="hidden sm:inline">Back</span>
@@ -142,7 +142,7 @@ function ExamFooterImpl({
           <button
             type="button"
             onClick={onNext}
-            className="flex items-center gap-1 rounded-full bg-[#0e7c75] px-3.5 py-1.5 text-[13.5px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0a625c] sm:px-4"
+            className="flex items-center gap-1 rounded-full bg-[var(--ex-a,#0e7c75)] px-3.5 py-1.5 text-[13.5px] font-semibold text-white shadow-sm transition-colors hover:bg-[var(--ex-h,#0a625c)] sm:px-4"
           >
             <span className={nextLabel && nextLabel !== 'Next' ? 'text-[12.5px] sm:text-[13.5px]' : 'hidden sm:inline'}>{nextLabel ?? (current >= total - 1 ? 'Finish' : 'Next')}</span>
             <ChevronRight className="size-4" />

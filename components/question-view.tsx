@@ -174,9 +174,9 @@ function GridKeypad({ value, onChange }: { value: string; onChange: (v: string) 
   const press = (ch: string) => onChange(sanitizeGridInput(value + ch))
   const toggleMinus = () => onChange(sanitizeGridInput(value.startsWith('-') ? value.slice(1) : '-' + value))
   const base =
-    'flex h-[50px] select-none items-center justify-center rounded-xl border border-[#cfd8d6] text-[22px] font-semibold shadow-[0_1px_0_rgba(0,0,0,.08)] active:translate-y-px active:bg-[#e3f4f1] touch-manipulation'
+    'flex h-[50px] select-none items-center justify-center rounded-xl border border-[#cfd8d6] text-[22px] font-semibold shadow-[0_1px_0_rgba(0,0,0,.08)] active:translate-y-px active:bg-[var(--ex-tint2,#e3f4f1)] touch-manipulation'
   const key = `${base} bg-white text-[#111]`
-  const fn = `${base} bg-[#f3f6f6] text-[#0b4f4a]`
+  const fn = `${base} bg-[#f3f6f6] text-[var(--ex-d,#0b4f4a)]`
   const noFocus = (e: React.PointerEvent | React.MouseEvent) => e.preventDefault() // keep the answer box focused
   const k = (id: string, label: React.ReactNode, onClick: () => void, cls = key, aria?: string, extra = '') => (
     <button key={id} type="button" onPointerDown={noFocus} onClick={onClick} aria-label={aria} className={`${cls} ${extra}`}>
@@ -223,7 +223,7 @@ export function GridInInput({ value, onChange }: { value?: string; onChange: (v:
     <div className="flex flex-col">
       <label
         htmlFor="gridin-answer"
-        className="relative block h-[62px] w-[112px] cursor-text rounded-[8px] border border-[#3a3a3a] bg-white transition-shadow focus-within:border-[#111] focus-within:shadow-[0_0_0_2px_rgba(14,124,117,0.25)]"
+        className="relative block h-[62px] w-[112px] cursor-text rounded-[8px] border border-[#3a3a3a] bg-white transition-shadow focus-within:border-[#111] focus-within:shadow-[0_0_0_2px_color-mix(in srgb,var(--ex-a,#0e7c75) 25%,transparent)]"
       >
         <input
           id="gridin-answer"
@@ -261,7 +261,7 @@ export function GridInInput({ value, onChange }: { value?: string; onChange: (v:
         <button
           type="button"
           onClick={() => setSystem(false)}
-          className="mt-3 flex w-fit items-center gap-1.5 text-[12.5px] font-semibold text-[#0b4f4a] underline underline-offset-2"
+          className="mt-3 flex w-fit items-center gap-1.5 text-[12.5px] font-semibold text-[var(--ex-d,#0b4f4a)] underline underline-offset-2"
         >
           <Keyboard className="size-4" />
           Raqamli klaviaturaga qaytish
@@ -289,7 +289,7 @@ export function GridInInput({ value, onChange }: { value?: string; onChange: (v:
                   inputRef.current?.blur()
                   window.setTimeout(() => inputRef.current?.focus(), 60)
                 }}
-                className="flex items-center gap-1.5 text-[12.5px] font-semibold text-[#0b4f4a]"
+                className="flex items-center gap-1.5 text-[12.5px] font-semibold text-[var(--ex-d,#0b4f4a)]"
               >
                 <Keyboard className="size-4" /> Telefon klaviaturasi
               </button>
@@ -300,7 +300,7 @@ export function GridInInput({ value, onChange }: { value?: string; onChange: (v:
                   setOpen(false)
                   inputRef.current?.blur()
                 }}
-                className="rounded-full bg-[#0b4f4a] px-4 py-1.5 text-[13px] font-bold text-white"
+                className="rounded-full bg-[var(--ex-d,#0b4f4a)] px-4 py-1.5 text-[13px] font-bold text-white"
               >
                 Tayyor
               </button>
@@ -436,8 +436,8 @@ function QuestionViewImpl({
           aria-label="Toggle answer eliminator"
           className={`ml-auto flex h-6 w-7 items-center justify-center rounded border text-[11px] font-bold transition-colors ${
             crossOutMode
-              ? 'border-[#0e7c75] bg-[#0e7c75] text-white'
-              : 'border-[#0e7c75] bg-white text-[#0e7c75] hover:bg-[#d2ebe7]'
+              ? 'border-[var(--ex-a,#0e7c75)] bg-[var(--ex-a,#0e7c75)] text-white'
+              : 'border-[var(--ex-a,#0e7c75)] bg-white text-[var(--ex-a,#0e7c75)] hover:bg-[var(--ex-tint,#d2ebe7)]'
           }`}
         >
           <span className="relative">

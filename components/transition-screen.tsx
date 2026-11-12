@@ -63,17 +63,17 @@ function ModuleStartScreen({
 }) {
   return (
     <div className="flex h-dvh flex-col items-center justify-center bg-white px-6 text-center">
-      <span className="flex size-16 items-center justify-center rounded-full border-2 border-[#0e7c75] bg-white text-[#0e7c75]">
+      <span className="flex size-16 items-center justify-center rounded-full border-2 border-[var(--ex-a,#0e7c75)] bg-white text-[var(--ex-a,#0e7c75)]">
         <CheckCircle2 className="size-9" />
       </span>
-      <h1 className="mt-6 text-2xl font-bold text-[#0b4f4a]">{title}</h1>
+      <h1 className="mt-6 text-2xl font-bold text-[var(--ex-d,#0b4f4a)]">{title}</h1>
       <p className="mt-2 max-w-md text-sm text-[#475569]">{subtitle}</p>
       {badge && (
-        <p className="mt-4 rounded-full border border-[#0e7c75]/30 bg-[#e7f3f1] px-4 py-1.5 text-sm font-bold text-[#0b4f4a]">{badge}</p>
+        <p className="mt-4 rounded-full border border-[var(--ex-a,#0e7c75)]/30 bg-[var(--ex-tint2,#e7f3f1)] px-4 py-1.5 text-sm font-bold text-[var(--ex-d,#0b4f4a)]">{badge}</p>
       )}
       <Button
         onClick={onContinue}
-        className="mt-8 rounded-md bg-[#0e7c75] px-8 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0a625c]"
+        className="mt-8 rounded-md bg-[var(--ex-a,#0e7c75)] px-8 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[var(--ex-h,#0a625c)]"
       >
         Begin Section
       </Button>
@@ -98,7 +98,7 @@ function AutoNextScreen({ onProceed, seconds }: { onProceed: () => void; seconds
 
   return (
     <div className="flex h-dvh flex-col items-center justify-center bg-white px-6 text-center">
-      <h1 className="text-2xl font-bold text-[#0b4f4a]">This Module Is Over</h1>
+      <h1 className="text-2xl font-bold text-[var(--ex-d,#0b4f4a)]">This Module Is Over</h1>
       <p className="mt-4 text-[15px] text-[#334155]">All your work has been saved.</p>
       <p className="mt-2 text-[15px] text-[#334155]">You&apos;ll move on automatically in just a moment.</p>
       <p className="mt-2 text-[15px] text-[#334155]">Do not refresh this page or quit the app.</p>
@@ -140,18 +140,18 @@ function BreakScreen({
 
   return (
     <div className="flex h-dvh flex-col items-center justify-center bg-white px-6 text-center">
-      <span className="flex size-16 items-center justify-center rounded-full border-2 border-[#0e7c75] bg-white text-[#0e7c75]">
+      <span className="flex size-16 items-center justify-center rounded-full border-2 border-[var(--ex-a,#0e7c75)] bg-white text-[var(--ex-a,#0e7c75)]">
         <Coffee className="size-9" />
       </span>
-      <h1 className="mt-6 text-2xl font-bold text-[#0b4f4a]">{title ?? 'All Your Work Is Saved'}</h1>
+      <h1 className="mt-6 text-2xl font-bold text-[var(--ex-d,#0b4f4a)]">{title ?? 'All Your Work Is Saved'}</h1>
       <p className="mt-2 max-w-md text-sm text-[#475569]">
         {subtitle ??
           "You've completed this section. Take a short break before continuing. Your break will end automatically when the timer reaches zero, or you can resume early."}
       </p>
-      <div className="mt-6 text-4xl font-bold tabular-nums text-[#0b4f4a]">{formatTime(seconds)}</div>
+      <div className="mt-6 text-4xl font-bold tabular-nums text-[var(--ex-d,#0b4f4a)]">{formatTime(seconds)}</div>
       <Button
         onClick={onContinue}
-        className="mt-8 rounded-md bg-[#0e7c75] px-8 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0a625c]"
+        className="mt-8 rounded-md bg-[var(--ex-a,#0e7c75)] px-8 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[var(--ex-h,#0a625c)]"
       >
         Resume Now
       </Button>

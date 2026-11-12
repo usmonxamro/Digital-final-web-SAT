@@ -659,7 +659,7 @@ function ExamEngine({
             <button
               type="button"
               onClick={submitForGrading}
-              className="rounded-lg bg-[#0e7c75] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#0b4f4a]"
+              className="rounded-lg bg-[var(--ex-a,#0e7c75)] px-5 py-2.5 text-sm font-bold text-white hover:bg-[var(--ex-d,#0b4f4a)]"
             >
               Qayta urinish
             </button>
@@ -850,7 +850,7 @@ function ExamEngine({
                   setOvertime(true)
                   setOvertimePrompt(false)
                 }}
-                className="h-11 flex-1 rounded-xl bg-[#0e7c75] text-sm font-bold text-white hover:bg-[#0a625c]"
+                className="h-11 flex-1 rounded-xl bg-[var(--ex-a,#0e7c75)] text-sm font-bold text-white hover:bg-[var(--ex-h,#0a625c)]"
               >
                 Davom etish
               </button>
@@ -1147,7 +1147,7 @@ function PageInner() {
           {loadError?.href && (
             <a
               href={loadError.href}
-              className="rounded-lg bg-[#0e7c75] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#0b4f4a]"
+              className="rounded-lg bg-[var(--ex-a,#0e7c75)] px-5 py-2.5 text-sm font-bold text-white hover:bg-[var(--ex-d,#0b4f4a)]"
             >
               {loadError.hrefLabel}
             </a>

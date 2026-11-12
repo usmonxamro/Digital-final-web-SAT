@@ -97,6 +97,8 @@ const THEME_INIT_SCRIPT = `
     // Colour palette: classic (default, no attribute) | green | yellow.
     var pal = localStorage.getItem('sp-palette');
     if (pal === 'green' || pal === 'yellow') document.documentElement.setAttribute('data-sp-palette', pal);
+    // Exam interface accent: teal (default, no attribute) | orange (same orange as the /daraja test).
+    if (localStorage.getItem('ex-accent') === 'orange') document.documentElement.setAttribute('data-ex-accent', 'orange');
   } catch (e) {
     document.documentElement.setAttribute('data-sp-theme', 'dark');
   }

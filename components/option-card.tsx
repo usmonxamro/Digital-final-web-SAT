@@ -40,19 +40,19 @@ export function OptionCard({
         disabled={eliminated}
         className={`group flex min-h-[42px] flex-1 items-center gap-3 rounded-lg border-[1.5px] px-3 py-2 sm:min-h-[47px] sm:gap-3.5 sm:px-3.5 sm:py-2.5 text-left ${serif ? 'font-serif' : 'font-sans'} transition-colors duration-150 ${
           selected
-            ? 'border-2 border-[#0e7c75] bg-[#e3f4f1]'
+            ? 'border-2 border-[var(--ex-a,#0e7c75)] bg-[var(--ex-tint2,#e3f4f1)]'
             : eliminated
               ? 'border-dashed border-[#9b9b9b] bg-white'
-              : 'border-[#777] bg-white hover:border-[#0e7c75]/60 hover:bg-[#f3fbf9]'
+              : 'border-[#777] bg-white hover:border-[var(--ex-a,#0e7c75)]/60 hover:bg-[var(--ex-bg,#f3fbf9)]'
         }`}
       >
         <span
           className={`flex size-6 shrink-0 items-center justify-center rounded-full border-[1.5px] font-sans text-sm font-bold transition-colors duration-150 ${
             selected
-              ? 'border-[#0e7c75] bg-[#0e7c75] text-white'
+              ? 'border-[var(--ex-a,#0e7c75)] bg-[var(--ex-a,#0e7c75)] text-white'
               : eliminated
                 ? 'border-[#9b9b9b] text-[#9b9b9b]'
-                : 'border-[#777] text-[#111] group-hover:border-[#0e7c75]'
+                : 'border-[#777] text-[#111] group-hover:border-[var(--ex-a,#0e7c75)]'
           }`}
         >
           {option.id}
@@ -82,7 +82,7 @@ export function OptionCard({
           className="relative flex size-[26px] shrink-0 items-center justify-center rounded-full text-[12px] font-bold transition-colors"
         >
           {eliminated ? (
-            <span className="font-sans font-bold text-[#0e7c75] underline">Undo</span>
+            <span className="font-sans font-bold text-[var(--ex-a,#0e7c75)] underline">Undo</span>
           ) : (
             <span className="relative flex size-[22px] items-center justify-center rounded-full border border-[#767676] text-[#767676]">
               {option.id}

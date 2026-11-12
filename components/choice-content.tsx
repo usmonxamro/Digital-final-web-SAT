@@ -115,13 +115,13 @@ export function ChoiceImage({
             onPointerUp={onResizeEnd}
             onPointerCancel={onResizeEnd}
             onClick={stop}
-            className="absolute -bottom-1.5 -right-1.5 size-4 cursor-nwse-resize rounded-sm border-2 border-white bg-[#0e7c75] shadow"
+            className="absolute -bottom-1.5 -right-1.5 size-4 cursor-nwse-resize rounded-sm border-2 border-white bg-[var(--ex-a,#0e7c75)] shadow"
           />
         )}
       </span>
       {editable && (
         // Spans, not buttons: this sits inside the answer's own <button>.
-        <span className="inline-flex items-center gap-1 text-[#0b4f4a]" onClick={stop} onPointerDown={stop}>
+        <span className="inline-flex items-center gap-1 text-[var(--ex-d,#0b4f4a)]" onClick={stop} onPointerDown={stop}>
           <MiniBtn label="Kichraytirish" onClick={() => step(-1)}>
             <Minus className="size-3" />
           </MiniBtn>
@@ -152,7 +152,7 @@ function MiniBtn({ label, onClick, children }: { label: string; onClick: () => v
         onClick()
       }}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.stopPropagation(), onClick())}
-      className="flex size-5 cursor-pointer items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-[#c7d6d4] hover:bg-[#e3f4f1]"
+      className="flex size-5 cursor-pointer items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-[var(--ex-line,#c7d6d4)] hover:bg-[var(--ex-tint2,#e3f4f1)]"
     >
       {children}
     </span>

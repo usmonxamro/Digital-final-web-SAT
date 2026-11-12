@@ -273,3 +273,6 @@ html[data-sp-palette="yellow"] .sat-login{--color-orange-600:#d99400;--color-ora
 html[data-sp-palette="yellow"] .sat-login button[type=submit]{color:#1a1200}
 html[data-sp-palette="yellow"]:not([data-sp-theme='light']){--sp-bg:#0a0f1f;--sp-bg-elev:#121a30;--sp-card:rgba(16,22,40,.82);--sp-header-bg:rgba(10,15,31,.86);--sp-footer-bg:#070b17;--sp-border:rgba(255,214,102,.10)}
 html[data-sp-palette="yellow"][data-sp-theme="dark"] .sd-modal{background:#0f1528}
+
+/* ---------- exam interface accent: orange (the /daraja colour). Teal is the default (fallbacks in the components). ---------- */
+html[data-ex-accent="orange"]{--ex-a:#f97316;--ex-d:#c2410c;--ex-h:#ea580c;--ex-line:#fed7aa;--ex-tint:#ffedd5;--ex-tint2:#fff1e0;--ex-bg:#fff7ed;--ex-ink:#7c2d12}

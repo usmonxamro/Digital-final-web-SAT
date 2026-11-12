@@ -311,7 +311,7 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
         style={outer}
         className={`group/blk relative rounded-md border border-dashed px-2 transition-colors ${
           rowLen > 1 ? 'min-w-0 flex-1' : ''
-        } ${dragId === b.id ? 'border-[#0e7c75] opacity-40' : 'border-[#9cc9c3] hover:border-[#0e7c75] hover:bg-[#f3fbf9]'}`}
+        } ${dragId === b.id ? 'border-[var(--ex-a,#0e7c75)] opacity-40' : 'border-[#9cc9c3] hover:border-[var(--ex-a,#0e7c75)] hover:bg-[var(--ex-bg,#f3fbf9)]'}`}
         draggable={!isEditing}
         onPointerDownCapture={(e) => {
           noDrag.current = !!(e.target as HTMLElement).closest('[data-nodrag]')
@@ -349,7 +349,7 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
       >
         {sideHover && (
           <span
-            className={`pointer-events-none absolute inset-y-0 w-1.5 rounded bg-[#0e7c75] ${
+            className={`pointer-events-none absolute inset-y-0 w-1.5 rounded bg-[var(--ex-a,#0e7c75)] ${
               sideHover === 'left' ? '-left-1' : '-right-1'
             }`}
           />
@@ -357,7 +357,7 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
 
         {/* hover toolbar */}
         {!isEditing && (
-          <div className="absolute -top-3 right-1 z-10 flex items-center gap-0.5 rounded-md border border-[#c7d6d4] bg-white px-0.5 py-0.5 opacity-0 shadow-sm transition-opacity group-hover/blk:opacity-100">
+          <div className="absolute -top-3 right-1 z-10 flex items-center gap-0.5 rounded-md border border-[var(--ex-line,#c7d6d4)] bg-white px-0.5 py-0.5 opacity-0 shadow-sm transition-opacity group-hover/blk:opacity-100">
             <span className="cursor-grab px-0.5 text-[#64748b]" title="Sudrab olib boring">
               <GripVertical className="size-3.5" />
             </span>
@@ -413,7 +413,7 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
               title={prop === 'mt' ? 'Tepadagi masofa — sudrang' : 'Pastdagi masofa — sudrang'}
               onPointerDown={(e) => startTune(e, b.id, prop)}
               {...tuneHandlers}
-              className={`absolute left-1/2 z-10 flex h-2.5 w-12 -translate-x-1/2 cursor-ns-resize items-center justify-center rounded-full bg-[#0e7c75] transition-opacity ${
+              className={`absolute left-1/2 z-10 flex h-2.5 w-12 -translate-x-1/2 cursor-ns-resize items-center justify-center rounded-full bg-[var(--ex-a,#0e7c75)] transition-opacity ${
                 prop === 'mt' ? '-top-1.5' : '-bottom-1.5'
               } ${tuning === prop ? 'opacity-100' : 'opacity-0 group-hover/blk:opacity-70 hover:!opacity-100'}`}
             >
@@ -429,7 +429,7 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
             title="Chapga / o'ngga surish — sudrang"
             onPointerDown={(e) => startTune(e, b.id, 'dx')}
             {...tuneHandlers}
-            className={`absolute -left-2.5 top-1/2 z-10 flex size-5 -translate-y-1/2 cursor-ew-resize items-center justify-center rounded-full bg-[#0e7c75] text-white shadow transition-opacity ${
+            className={`absolute -left-2.5 top-1/2 z-10 flex size-5 -translate-y-1/2 cursor-ew-resize items-center justify-center rounded-full bg-[var(--ex-a,#0e7c75)] text-white shadow transition-opacity ${
               tuning === 'dx' ? 'opacity-100' : 'opacity-0 group-hover/blk:opacity-80 hover:!opacity-100'
             }`}
           >
@@ -445,7 +445,7 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
             title="Kattalashtirish / kichraytirish — sudrang"
             onPointerDown={(e) => startTune(e, b.id, 'scale')}
             {...tuneHandlers}
-            className={`absolute -bottom-1.5 -right-1.5 z-10 size-3.5 cursor-nwse-resize rounded-sm border-2 border-white bg-[#0e7c75] shadow transition-opacity ${
+            className={`absolute -bottom-1.5 -right-1.5 z-10 size-3.5 cursor-nwse-resize rounded-sm border-2 border-white bg-[var(--ex-a,#0e7c75)] shadow transition-opacity ${
               tuning === 'scale' ? 'opacity-100' : 'opacity-0 group-hover/blk:opacity-90 hover:!opacity-100'
             }`}
           />
@@ -479,7 +479,7 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
 
         {/* Live value while dragging */}
         {tuning && (
-          <span className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md bg-[#0b4f4a] px-2 py-1 text-[11px] font-bold text-white shadow-lg">
+          <span className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md bg-[var(--ex-d,#0b4f4a)] px-2 py-1 text-[11px] font-bold text-white shadow-lg">
             {tuning === 'mt' && `Tepa: ${st.mt ?? 0}px`}
             {tuning === 'mb' && `Past: ${st.mb ?? 0}px`}
             {tuning === 'dx' && (guide?.centered ? 'Markazda' : `Surish: ${st.dx ?? 0}px`)}
@@ -517,7 +517,7 @@ export function QuestionStimulus({ question, withFigure, textClassName, editable
           applyDrop({ kind: 'gap', rowIndex })
         }}
         className={`rounded transition-all ${
-          dragId ? (active ? 'my-1 h-8 border-2 border-dashed border-[#0e7c75] bg-[#e3f4f1]' : 'h-3') : 'h-3'
+          dragId ? (active ? 'my-1 h-8 border-2 border-dashed border-[var(--ex-a,#0e7c75)] bg-[var(--ex-tint2,#e3f4f1)]' : 'h-3') : 'h-3'
         }`}
       />
     )
@@ -563,7 +563,7 @@ function ToolBtn({
       aria-label={title}
       disabled={disabled}
       onClick={onClick}
-      className={`rounded p-1 disabled:opacity-30 ${danger ? 'text-[#dc2626] hover:bg-[#fee2e2]' : 'text-[#0b4f4a] hover:bg-[#e3f4f1]'}`}
+      className={`rounded p-1 disabled:opacity-30 ${danger ? 'text-[#dc2626] hover:bg-[#fee2e2]' : 'text-[var(--ex-d,#0b4f4a)] hover:bg-[var(--ex-tint2,#e3f4f1)]'}`}
     >
       {children}
     </button>
@@ -599,7 +599,7 @@ function TextBlockEditor({
           if (e.key === 'Escape') onCancel()
           if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) onSave()
         }}
-        className="w-full resize-none rounded border border-[#0e7c75] bg-white px-2 py-1.5 font-mono text-[13px] leading-relaxed text-[#111] outline-none"
+        className="w-full resize-none rounded border border-[var(--ex-a,#0e7c75)] bg-white px-2 py-1.5 font-mono text-[13px] leading-relaxed text-[#111] outline-none"
       />
       <div className="flex items-center gap-2">
         <span className="flex-1 text-[11px] text-[#64748b]">
@@ -616,7 +616,7 @@ function TextBlockEditor({
         <button type="button" onClick={onCancel} className="rounded p-1 text-[#64748b] hover:bg-[#f1f5f9]" aria-label="Bekor qilish">
           <X className="size-4" />
         </button>
-        <button type="button" onClick={onSave} className="rounded bg-[#0e7c75] p-1 text-white hover:bg-[#0b4f4a]" aria-label="Saqlash">
+        <button type="button" onClick={onSave} className="rounded bg-[var(--ex-a,#0e7c75)] p-1 text-white hover:bg-[var(--ex-d,#0b4f4a)]" aria-label="Saqlash">
           <Check className="size-4" />
         </button>
       </div>

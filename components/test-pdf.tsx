@@ -43,8 +43,8 @@ const FOOT_H = 68
 const BODY_H = PAGE_H - HEAD_H - FOOT_H
 const COL = 800
 const MIN_SCALE = 0.62
-const GREEN = '#0e7c75'
-const GREEN_DEEP = '#0b4f4a'
+const GREEN = '#f97316'
+const GREEN_DEEP = '#c2410c'
 /** A4 width in CSS px (210 mm) — what the page canvas is scaled to when printed. */
 const A4_W = 793.7
 /** Telegram channels advertised in the PDF. */
@@ -82,25 +82,22 @@ const COVER_H = 1123
 function Brand({ light }: { light?: boolean }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <div
-        style={{
-          width: 34,
-          height: 34,
-          borderRadius: 10,
-          background: 'linear-gradient(155deg,#34d399,#059669)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-          <path d="M12 3c5 0 8 3 8 8 0 6-5 10-8 10S4 17 4 11c0-5 3-8 8-8Z" />
-          <path d="M12 3v18" />
-        </svg>
-      </div>
+      <svg width="38" height="38" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
+        <defs>
+          <linearGradient id="pdf-tile" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stopColor="#ff9a3c" />
+            <stop offset="1" stopColor="#ea4f00" />
+          </linearGradient>
+        </defs>
+        <rect x="2" y="2" width="44" height="44" rx="12" fill={light ? '#fff' : 'url(#pdf-tile)'} />
+        <g fill="none" stroke={light ? '#ea580c' : '#fff'} strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M13 25.5l7 7 15.5-15.5" />
+          <path d="M27.5 16.5h8v8" />
+        </g>
+      </svg>
       <div style={{ lineHeight: 1.15 }}>
         <div style={{ fontWeight: 800, fontSize: 16, letterSpacing: 0.2, color: light ? '#fff' : '#0f172a' }}>SAT by Usmon</div>
-        <div style={{ fontWeight: 600, fontSize: 10.5, color: light ? 'rgba(255,255,255,.85)' : '#64748b' }}>{SITE_DOMAIN}</div>
+        <div style={{ fontWeight: 600, fontSize: 10.5, color: light ? 'rgba(255,255,255,.88)' : '#64748b' }}>{SITE_DOMAIN}</div>
       </div>
     </div>
   )
@@ -116,7 +113,7 @@ function Chevron() {
 
 function Tick() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0e7c75" strokeWidth="3" style={{ flexShrink: 0 }}>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="3" style={{ flexShrink: 0 }}>
       <path d="m5 12 5 5 9-10" />
     </svg>
   )
@@ -169,11 +166,11 @@ function Frame({
       }}
     >
       {/* ------------------------------ header (like ExamHeader) ------------------------------ */}
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: HEAD_H, background: '#e7f3f1', borderBottom: '1px solid #d7e7e4' }}>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: HEAD_H, background: '#ffedd5', borderBottom: '1px solid #fde6d0' }}>
         <div style={{ position: 'relative', height: 70, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 44px' }}>
           <div style={{ lineHeight: 1.25, maxWidth: 340 }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: GREEN_DEEP, letterSpacing: -0.2 }}>{label}</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#0e7c75', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#f97316', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
               Directions <Chevron />
             </div>
           </div>
@@ -181,12 +178,12 @@ function Frame({
             <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: 0.4, color: '#111' }}>SAT by Usmon</div>
             <a
               href={SITE_URL}
-              style={{ display: 'inline-block', marginTop: 5, border: '1px solid rgba(14,124,117,.45)', borderRadius: 999, padding: '1px 14px', fontSize: 12.5, fontWeight: 700, color: '#0e7c75', textDecoration: 'none' }}
+              style={{ display: 'inline-block', marginTop: 5, border: '1px solid rgba(249,115,22,.45)', borderRadius: 999, padding: '1px 14px', fontSize: 12.5, fontWeight: 700, color: '#f97316', textDecoration: 'none' }}
             >
               {SITE_DOMAIN}
             </a>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 26, color: '#375957', fontSize: 12.5, fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 26, color: '#7c2d12', fontSize: 12.5, fontWeight: 600 }}>
             {math && (
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
@@ -266,7 +263,7 @@ function Frame({
           bottom: 0,
           height: FOOT_H,
           padding: '0 50px',
-          borderTop: '1px solid #d7e7e4',
+          borderTop: '1px solid #fde6d0',
           background: '#fff',
           display: 'grid',
           gridTemplateColumns: '1fr auto 1fr',
@@ -287,8 +284,8 @@ function Frame({
               href={c.url}
               style={
                 i === 0
-                  ? { border: '1.5px solid #0e7c75', color: '#0e7c75', borderRadius: 999, padding: '6px 14px', textDecoration: 'none', background: '#fff' }
-                  : { background: '#0e7c75', color: '#fff', borderRadius: 999, padding: '7px 15px', textDecoration: 'none' }
+                  ? { border: '1.5px solid #f97316', color: '#f97316', borderRadius: 999, padding: '6px 14px', textDecoration: 'none', background: '#fff' }
+                  : { background: '#f97316', color: '#fff', borderRadius: 999, padding: '7px 15px', textDecoration: 'none' }
               }
             >
               {c.handle}
@@ -348,7 +345,7 @@ function QuestionBody({ item }: { item: PdfItem }) {
             <span style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: 0.6, color: '#64748b', textTransform: 'uppercase' }}>{q.difficulty}</span>
           )}
           {!gridin && (
-            <span style={{ border: '1.5px solid #0e7c75', borderRadius: 4, color: '#0e7c75', fontSize: 12, fontWeight: 800, padding: '2px 7px', textDecoration: 'line-through' }}>ABC</span>
+            <span style={{ border: '1.5px solid #f97316', borderRadius: 4, color: '#f97316', fontSize: 12, fontWeight: 800, padding: '2px 7px', textDecoration: 'line-through' }}>ABC</span>
           )}
         </span>
       </div>
@@ -424,68 +421,81 @@ function QuestionBody({ item }: { item: PdfItem }) {
 }
 
 function CoverPage({ testTitle, count, qr, date }: { testTitle: string; count: number; qr: string; date: string }) {
+  const perks = [
+    ['Real Bluebook uslubidagi onlayn mocklar', 'Imtihon muhitiga to‘liq o‘xshash'],
+    ['Har bir savolga batafsil yechim', 'Video tahlillar bilan birga'],
+    ['Natija, ball va sertifikat', 'Score report PDF ko‘rinishida'],
+    ['O‘zbek tilidagi qulay interfeys', 'Telefon va kompyuterda ishlaydi'],
+  ]
   return (
     <div
       data-page
-      style={{
-        position: 'relative',
-        width: COVER_W,
-        height: COVER_H,
-        overflow: 'hidden',
-        background: '#fff',
-        fontFamily: PDF_FONT,
-        color: '#0f172a',
-      }}
+      style={{ position: 'relative', width: COVER_W, height: COVER_H, overflow: 'hidden', background: '#fffaf4', fontFamily: PDF_FONT, color: '#0f172a' }}
     >
-      <div style={{ height: 430, background: 'linear-gradient(150deg,#059669 0%,#16a34a 55%,#34d399 100%)', padding: '48px 56px', color: '#fff', position: 'relative' }}>
-        <div aria-hidden style={{ position: 'absolute', right: -90, top: -90, width: 340, height: 340, borderRadius: 170, background: 'rgba(255,255,255,.10)' }} />
-        <div aria-hidden style={{ position: 'absolute', right: 80, bottom: -120, width: 260, height: 260, borderRadius: 130, background: 'rgba(255,255,255,.08)' }} />
+      {/* hero */}
+      <div style={{ position: 'relative', height: 520, background: 'linear-gradient(145deg,#ff9a3c 0%,#f97316 48%,#ea4f00 100%)', padding: '48px 56px', color: '#fff', overflow: 'hidden' }}>
+        <svg aria-hidden width="520" height="520" viewBox="0 0 48 48" style={{ position: 'absolute', right: -90, bottom: -70, opacity: 0.13 }}>
+          <g fill="none" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M13 25.5l7 7 15.5-15.5" />
+            <path d="M27.5 16.5h8v8" />
+          </g>
+        </svg>
+        <div aria-hidden style={{ position: 'absolute', left: -120, top: -120, width: 320, height: 320, borderRadius: 160, background: 'rgba(255,255,255,.10)' }} />
         <Brand light />
-        <div style={{ marginTop: 92, fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', opacity: 0.9 }}>Digital SAT · Mashq testi</div>
-        <div style={{ marginTop: 12, fontSize: testTitle.length > 36 ? 38 : 46, fontWeight: 900, lineHeight: 1.1, maxWidth: 640 }}>{testTitle}</div>
-        <div style={{ marginTop: 22, fontSize: 16, fontWeight: 600, opacity: 0.95 }}>
-          {count} ta savol
+        <div
+          style={{ marginTop: 78, display: 'inline-block', padding: '7px 16px', borderRadius: 99, background: 'rgba(255,255,255,.2)', border: '1px solid rgba(255,255,255,.45)', fontSize: 12.5, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase' }}
+        >
+          Digital SAT · Mashq testi
+        </div>
+        <div style={{ position: 'relative', marginTop: 20, fontSize: testTitle.length > 36 ? 40 : 50, fontWeight: 900, lineHeight: 1.08, maxWidth: 620, letterSpacing: -0.5 }}>{testTitle}</div>
+        <div style={{ position: 'relative', marginTop: 20, fontSize: 17, fontWeight: 700, opacity: 0.96 }}>{count} ta savol · to‘liq yechimlar bilan</div>
+        <svg aria-hidden viewBox="0 0 794 60" preserveAspectRatio="none" style={{ position: 'absolute', left: 0, bottom: -1, width: '100%', height: 54 }}>
+          <path d="M0 60V28C150 -8 330 -8 500 24S720 52 794 18V60Z" fill="#fffaf4" />
+        </svg>
+      </div>
+
+      {/* benefits */}
+      <div style={{ padding: '34px 56px 0' }}>
+        <div style={{ fontSize: 24, fontWeight: 900, color: '#9a3412', letterSpacing: -0.2 }}>Ko‘proq mock va tahlillar bizda</div>
+        <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {perks.map(([t, d]) => (
+            <div key={t} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#fff', border: '1px solid #fde0c4', borderRadius: 16, padding: '14px 16px' }}>
+              <div style={{ width: 30, height: 30, borderRadius: 10, background: '#ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Tick />
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 800, lineHeight: 1.3, color: '#1e293b' }}>{t}</div>
+                <div style={{ marginTop: 2, fontSize: 12, fontWeight: 600, color: '#64748b' }}>{d}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div style={{ padding: '44px 56px 0', display: 'flex', gap: 40, alignItems: 'flex-start' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 22, fontWeight: 900, color: GREEN_DEEP }}>Ko‘proq mock va tahlillar bizda</div>
-          <ul style={{ marginTop: 14, paddingLeft: 0, listStyle: 'none', fontSize: 15, lineHeight: 1.9, color: '#334155', fontWeight: 600 }}>
-            <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Tick /> Real Bluebook uslubidagi onlayn mocklar
-            </li>
-            <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Tick /> Har bir savolga batafsil yechim va video tahlil
-            </li>
-            <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Tick /> Natija, ball va sertifikat (PDF)
-            </li>
-            <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Tick /> O‘zbek tilidagi qulay interfeys
-            </li>
-          </ul>
-          <div style={{ marginTop: 22, fontSize: 15, fontWeight: 800 }}>
+      {/* contacts + QR */}
+      <div style={{ position: 'absolute', left: 56, right: 56, top: 790, display: 'flex', gap: 28, alignItems: 'center', background: '#fff', border: '1px solid #fde0c4', borderRadius: 22, padding: '22px 26px' }}>
+        <div style={{ flex: 1, fontSize: 15, fontWeight: 800, lineHeight: 2 }}>
+          <div>
             Sayt:{' '}
             <a href={SITE_URL} style={{ color: GREEN_DEEP, textDecoration: 'none' }}>
               {SITE_DOMAIN}
             </a>
           </div>
-          <div style={{ marginTop: 6, fontSize: 15, fontWeight: 800 }}>
+          <div>
             Telegram: <span style={{ color: GREEN_DEEP }}>{PDF_CHANNELS.map((c) => c.handle).join(' · ')}</span>
           </div>
-          <div style={{ marginTop: 6, fontSize: 15, fontWeight: 800 }}>
+          <div>
             Murojaat: <span style={{ color: GREEN_DEEP }}>{TG_PERSONAL}</span>
           </div>
         </div>
-        <div style={{ textAlign: 'center', width: 190 }}>
+        <div style={{ textAlign: 'center', width: 168 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qr} alt="QR" width={170} height={170} style={{ display: 'block', margin: '0 auto', borderRadius: 8, border: '1px solid #e2e8f0', padding: 6 }} />
-          <div style={{ marginTop: 10, fontSize: 12.5, fontWeight: 700, color: '#475569' }}>Saytni ochish uchun skanerlang</div>
+          <img src={qr} alt="QR" width={140} height={140} style={{ display: 'block', margin: '0 auto', borderRadius: 12, border: '2px solid #fdba74', padding: 6, background: '#fff' }} />
+          <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: '#475569' }}>Saytni ochish uchun skanerlang</div>
         </div>
       </div>
 
-      <div style={{ position: 'absolute', left: 56, right: 56, bottom: 120, fontSize: 12, color: '#64748b', lineHeight: 1.6, borderTop: '1px solid #e2e8f0', paddingTop: 14 }}>
+      <div style={{ position: 'absolute', left: 56, right: 56, bottom: 56, fontSize: 12, color: '#64748b', lineHeight: 1.6, borderTop: '1px solid #fde0c4', paddingTop: 14 }}>
         Ushbu fayl {SITE_DOMAIN} saytidan {date} sanasida yuklab olindi. Faylni do‘stlaringiz bilan baham ko‘rishingiz mumkin — manbani ko‘rsatsangiz xursand bo‘lamiz.
       </div>
     </div>
@@ -534,7 +544,7 @@ function PageBody({ items }: { items: PdfItem[] }) {
   return (
     <>
       {items.map((it, k) => (
-        <div key={k} style={k > 0 ? { marginTop: 26, paddingTop: 26, borderTop: '2px dashed #b6c8c6' } : undefined}>
+        <div key={k} style={k > 0 ? { marginTop: 26, paddingTop: 26, borderTop: '2px dashed #e6c9ae' } : undefined}>
           <QuestionBody item={it} />
         </div>
       ))}
@@ -824,8 +834,8 @@ const OVERLAY_CSS = `
 @keyframes pdfPulse { 0%,100% { opacity: .55 } 50% { opacity: 1 } }
 @keyframes pdfPop { 0% { transform: scale(.4); opacity: 0 } 70% { transform: scale(1.12) } 100% { transform: scale(1); opacity: 1 } }
 @keyframes pdfDots { 0% { content: '' } 25% { content: '.' } 50% { content: '..' } 75% { content: '...' } }
-.pdf-ov { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: center; padding: 20px; background: radial-gradient(circle at 50% 30%, rgba(14,124,117,.38), rgba(5,12,12,.86)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-.pdf-card { width: min(360px, 100%); padding: 26px 24px 22px; border-radius: 28px; text-align: center; color: #e8fffd; background: linear-gradient(160deg, rgba(15,40,39,.96), rgba(7,20,20,.96)); border: 1px solid rgba(94,234,212,.22); box-shadow: 0 30px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.07); animation: pdfIn .45s cubic-bezier(.2,.9,.3,1.2) both; }
+.pdf-ov { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: center; padding: 20px; background: radial-gradient(circle at 50% 30%, rgba(249,115,22,.38), rgba(18,9,3,.86)); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.pdf-card { width: min(360px, 100%); padding: 26px 24px 22px; border-radius: 28px; text-align: center; color: #fff4e8; background: linear-gradient(160deg, rgba(44,24,10,.96), rgba(26,14,6,.96)); border: 1px solid rgba(94,234,212,.22); box-shadow: 0 30px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.07); animation: pdfIn .45s cubic-bezier(.2,.9,.3,1.2) both; }
 .pdf-stage { position: relative; width: 168px; height: 168px; margin: 0 auto 14px; }
 .pdf-ring { position: absolute; inset: 0; transform: rotate(-90deg); }
 .pdf-ring circle { fill: none; stroke-width: 7; stroke-linecap: round; }
@@ -836,11 +846,11 @@ const OVERLAY_CSS = `
 .pdf-sheet:nth-child(1) { --r: -13deg; background: #bdeee8; animation-delay: -.8s; }
 .pdf-sheet:nth-child(2) { --r: 9deg; background: #d9f7f3; animation-delay: -1.5s; }
 .pdf-sheet:nth-child(3) { --r: 0deg; }
-.pdf-sheet i { position: absolute; left: 9px; right: 9px; height: 4px; border-radius: 3px; background: #0e7c75; opacity: .55; }
+.pdf-sheet i { position: absolute; left: 9px; right: 9px; height: 4px; border-radius: 3px; background: #f97316; opacity: .55; }
 .pdf-sheet i:nth-child(1) { top: 14px; right: 24px; opacity: .9 }
 .pdf-sheet i:nth-child(2) { top: 26px } .pdf-sheet i:nth-child(3) { top: 36px; right: 16px } .pdf-sheet i:nth-child(4) { top: 46px } .pdf-sheet i:nth-child(5) { top: 56px; right: 28px }
 .pdf-sheet b { position: absolute; left: 0; right: 0; height: 18px; top: 8%; background: linear-gradient(transparent, rgba(45,212,191,.55), transparent); animation: pdfScan 1.4s ease-in-out infinite alternate; }
-.pdf-pct { position: absolute; left: 0; right: 0; bottom: -2px; text-align: center; font-size: 13px; font-weight: 800; letter-spacing: .3px; color: #5eead4; }
+.pdf-pct { position: absolute; left: 0; right: 0; bottom: -2px; text-align: center; font-size: 13px; font-weight: 800; letter-spacing: .3px; color: #fdba74; }
 .pdf-big { font-size: 38px; font-weight: 800; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
 .pdf-title { margin: 0 0 4px; font-size: 17px; font-weight: 800; }
 .pdf-sub { margin: 0 0 16px; min-height: 36px; font-size: 13px; line-height: 1.45; color: #9bd1cb; }
@@ -848,11 +858,11 @@ const OVERLAY_CSS = `
 .pdf-ok .pdf-sub::after { content: none; animation: none; }
 .pdf-steps { display: flex; justify-content: center; gap: 6px; margin-bottom: 14px; }
 .pdf-steps span { flex: 1; padding: 6px 4px; border-radius: 10px; font-size: 10.5px; font-weight: 700; color: #6aa8a2; background: rgba(255,255,255,.05); border: 1px solid transparent; }
-.pdf-steps span.on { color: #021412; background: #5eead4; animation: pdfPulse 1.2s ease-in-out infinite; }
-.pdf-steps span.dn { color: #5eead4; border-color: rgba(94,234,212,.35); }
+.pdf-steps span.on { color: #1c0f06; background: #fdba74; animation: pdfPulse 1.2s ease-in-out infinite; }
+.pdf-steps span.dn { color: #fdba74; border-color: rgba(94,234,212,.35); }
 .pdf-warn { margin: 0; font-size: 11.5px; color: #7fb3ad; }
-.pdf-check { display: grid; place-items: center; width: 92px; height: 92px; margin: 38px auto 28px; border-radius: 50%; background: linear-gradient(135deg, #34d399, #0e7c75); color: #fff; box-shadow: 0 0 0 10px rgba(52,211,153,.14), 0 0 40px rgba(52,211,153,.5); animation: pdfPop .55s cubic-bezier(.2,.9,.3,1.3) both; }
-.pdf-close { margin-top: 14px; width: 100%; height: 44px; border: 0; border-radius: 14px; background: #5eead4; color: #021412; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+.pdf-check { display: grid; place-items: center; width: 92px; height: 92px; margin: 38px auto 28px; border-radius: 50%; background: linear-gradient(135deg, #fb923c, #f97316); color: #fff; box-shadow: 0 0 0 10px rgba(251,146,60,.14), 0 0 40px rgba(251,146,60,.5); animation: pdfPop .55s cubic-bezier(.2,.9,.3,1.3) both; }
+.pdf-close { margin-top: 14px; width: 100%; height: 44px; border: 0; border-radius: 14px; background: #fdba74; color: #1c0f06; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .pdf-sheet, .pdf-sheet b, .pdf-steps span.on, .pdf-sub::after { animation: none !important } }
 `
 
@@ -894,8 +904,8 @@ function PdfProgressOverlay({ prog, finished, fileMode, onClose }: { prog: Prog;
               <svg className="pdf-ring" viewBox="0 0 168 168" aria-hidden>
                 <defs>
                   <linearGradient id="pdfGrad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stopColor="#34d399" />
-                    <stop offset="1" stopColor="#5eead4" />
+                    <stop offset="0" stopColor="#fb923c" />
+                    <stop offset="1" stopColor="#fdba74" />
                   </linearGradient>
                 </defs>
                 <circle className="bg" cx="84" cy="84" r={R} />
@@ -1012,7 +1022,8 @@ export function DownloadTestPdfButton({
   async function run(forceMode?: 'print' | 'file') {
     if (running.current) return
     running.current = true
-    const mode = forceMode ?? 'print'
+    // Phones/tablets: window.print() would print the CURRENT PAGE (the site's own list), not the test — always build a file there.
+    const mode = forceMode ?? (prefersFileDownload() ? 'file' : 'print')
     setFileMode(mode === 'file')
     setState(loadItems ? 'loading' : 'busy')
     if (!compact) setOverlay('busy')
@@ -1061,7 +1072,7 @@ export function DownloadTestPdfButton({
         disabled={working}
         title={state === 'error' ? errText : 'Mockning savollarini PDF qilib yuklab olish (chop etish oynasida «Save as PDF» ni tanlang, «Microsoft Print to PDF» ni emas)'}
         className={`flex items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-extrabold transition-colors disabled:cursor-wait ${
-          state === 'error' ? 'border-red-300 bg-red-50 text-red-700' : 'border-violet-300 bg-white text-violet-700 hover:bg-violet-50'
+          state === 'error' ? 'border-red-300 bg-red-50 text-red-700' : 'border-orange-300 bg-white text-orange-700 hover:bg-orange-50'
         } ${className ?? ''}`}
       >
         {working ? <Loader2 size={11} className="animate-spin" /> : <FileDown size={11} />}
@@ -1077,27 +1088,24 @@ export function DownloadTestPdfButton({
         type="button"
         onClick={() => run()}
         disabled={working}
-        className="relative inline-flex min-w-[260px] items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#7c3aed,#6366f1)] px-6 py-3 text-[15px] font-extrabold text-white shadow-[0_8px_22px_rgba(99,102,241,.38)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait disabled:hover:translate-y-0"
+        className="relative inline-flex min-w-[260px] items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#fb923c,#ea580c)] px-6 py-3 text-[15px] font-extrabold text-white shadow-[0_8px_22px_rgba(234,88,12,.38)] transition-transform hover:-translate-y-0.5 disabled:cursor-wait disabled:hover:translate-y-0"
       >
         <span className="relative inline-flex items-center gap-2.5">
           {working ? <Loader2 className="size-5 animate-spin" /> : <FileDown className="size-5" />}
           {state === 'loading' ? 'Savollar yuklanmoqda…' : state === 'busy' ? `PDF tayyorlanmoqda… ${pct}%` : state === 'done' ? 'Yana yuklab olish (PDF)' : label ?? 'Testni yuklab olish (PDF)'}
         </span>
       </button>
-      {phone && (
+      {phone ? (
         <p className="mx-auto mt-2 max-w-[340px] text-[11.5px] font-medium leading-relaxed text-[#64748b]">
-          Chop etish oynasi chiqmasa yoki ishlamasa —{' '}
-          <button type="button" onClick={() => run('file')} disabled={working} className="font-bold text-violet-700 underline underline-offset-2">
-            to‘g‘ridan-to‘g‘ri yuklab olish
-          </button>{' '}
-          (rasm ko‘rinishida, sekinroq).
+          PDF fayl tayyorlanib, telefoningizning «Yuklamalar» (Downloads) papkasiga saqlanadi. Bir daqiqagacha vaqt ketishi mumkin.
         </p>
-      )}
-      {(state === 'idle' || state === 'done' || state === 'busy') && (
-        <p className="mx-auto mt-2 max-w-[340px] text-[11.5px] font-medium leading-relaxed text-[#64748b]">
-          Chop etish oynasida <b className="text-[#0f172a]">Printer / Destination</b> qismidan <b className="text-green-700">«Save as PDF»</b> (PDF sifatida saqlash) ni tanlang.{' '}
-          <b className="text-red-600">«Microsoft Print to PDF» ni tanlamang</b> — u sahifalarni xira rasmga aylantirib qo‘yadi.
-        </p>
+      ) : (
+        (state === 'idle' || state === 'done' || state === 'busy') && (
+          <p className="mx-auto mt-2 max-w-[340px] text-[11.5px] font-medium leading-relaxed text-[#64748b]">
+            Chop etish oynasida <b className="text-[#0f172a]">Printer / Destination</b> qismidan <b className="text-green-700">«Save as PDF»</b> (PDF sifatida saqlash) ni tanlang.{' '}
+            <b className="text-red-600">«Microsoft Print to PDF» ni tanlamang</b> — u sahifalarni xira rasmga aylantirib qo‘yadi.
+          </p>
+        )
       )}
       {state === 'error' && (
         <p className="mt-2 flex items-center justify-center gap-1 text-xs font-semibold text-red-600">

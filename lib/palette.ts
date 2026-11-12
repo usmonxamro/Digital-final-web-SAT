@@ -35,3 +35,20 @@ export function setMode(m: Mode) {
   }
   window.dispatchEvent(new Event(PALETTE_EVENT))
 }
+
+/** Exam-interface accent (separate from the site palette): the default teal, or the orange used on /daraja. */
+export type ExamAccent = 'teal' | 'orange'
+export function currentExamAccent(): ExamAccent {
+  return typeof document !== 'undefined' && document.documentElement.getAttribute('data-ex-accent') === 'orange' ? 'orange' : 'teal'
+}
+export function setExamAccent(a: ExamAccent) {
+  const html = document.documentElement
+  if (a === 'orange') html.setAttribute('data-ex-accent', 'orange')
+  else html.removeAttribute('data-ex-accent')
+  try {
+    if (a === 'orange') localStorage.setItem('ex-accent', 'orange')
+    else localStorage.removeItem('ex-accent')
+  } catch {
+    /* private mode */
+  }
+}

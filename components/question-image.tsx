@@ -203,7 +203,7 @@ export function QuestionImage({
               e.preventDefault()
               e.stopPropagation()
             }}
-            className="absolute -bottom-1.5 -right-1.5 size-4 cursor-nwse-resize rounded-sm border-2 border-white bg-[#0e7c75] shadow"
+            className="absolute -bottom-1.5 -right-1.5 size-4 cursor-nwse-resize rounded-sm border-2 border-white bg-[var(--ex-a,#0e7c75)] shadow"
           />
         )}
       </div>
@@ -228,7 +228,7 @@ export function QuestionImage({
             <Minus className="size-3.5" />
           </ZoomBtn>
           {(changed || editable) && (
-            <span className="rounded-full bg-white/95 px-1.5 py-0.5 text-[10.5px] font-bold text-[#0b4f4a] shadow-sm ring-1 ring-[#c7d6d4]">
+            <span className="rounded-full bg-white/95 px-1.5 py-0.5 text-[10.5px] font-bold text-[var(--ex-d,#0b4f4a)] shadow-sm ring-1 ring-[var(--ex-line,#c7d6d4)]">
               {pct}%
             </span>
           )}
@@ -254,7 +254,7 @@ function ZoomBtn({ label, onClick, children }: { label: string; onClick: () => v
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="flex size-6 items-center justify-center rounded-full bg-white/95 text-[#0b4f4a] shadow-sm ring-1 ring-[#c7d6d4] hover:bg-[#e3f4f1]"
+      className="flex size-6 items-center justify-center rounded-full bg-white/95 text-[var(--ex-d,#0b4f4a)] shadow-sm ring-1 ring-[var(--ex-line,#c7d6d4)] hover:bg-[var(--ex-tint2,#e3f4f1)]"
     >
       {children}
     </button>

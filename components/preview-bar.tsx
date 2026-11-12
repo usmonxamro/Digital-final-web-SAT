@@ -33,7 +33,7 @@ type Props = {
  */
 export function PreviewBar(p: Props) {
   return (
-    <div className="shrink-0 border-b border-[#0b4f4a] bg-[#0b4f4a] text-white">
+    <div className="shrink-0 border-b border-[var(--ex-d,#0b4f4a)] bg-[var(--ex-d,#0b4f4a)] text-white">
       <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 sm:px-5">
         <button
           type="button"
@@ -71,7 +71,7 @@ export function PreviewBar(p: Props) {
         {p.answer && (
           <span
             className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-extrabold ${
-              p.answer.missing ? 'bg-[#dc2626] text-white' : 'bg-white text-[#0b4f4a]'
+              p.answer.missing ? 'bg-[#dc2626] text-white' : 'bg-white text-[var(--ex-d,#0b4f4a)]'
             }`}
             title="To'g'ri javob (faqat admin ko'radi)"
           >
@@ -90,7 +90,7 @@ export function PreviewBar(p: Props) {
           disabled={!p.canEdit}
           title={p.canEdit ? '' : "Bu savolni tahrirlab bo'lmaydi (bazada emas)"}
           className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-bold transition-colors disabled:opacity-40 ${
-            p.editMode ? 'bg-white text-[#0b4f4a]' : 'border border-white/40 text-white hover:bg-white/10'
+            p.editMode ? 'bg-white text-[var(--ex-d,#0b4f4a)]' : 'border border-white/40 text-white hover:bg-white/10'
           }`}
         >
           <LayoutTemplate className="size-3.5" />
