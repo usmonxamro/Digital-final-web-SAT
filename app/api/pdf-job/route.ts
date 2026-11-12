@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'node:crypto'
 import { supabaseAdmin } from '@/lib/supabase'
 import { assemblePdfItems } from '@/lib/mock-pdf-items'
+import { cleanVocab } from '@/lib/question-vocab'
 import type { Question } from '@/lib/test-data'
 
 /**
@@ -47,6 +48,7 @@ export async function GET(req: NextRequest) {
             image: row.image ?? undefined,
             choices: row.choices ?? undefined,
             layout: row.layout ?? undefined,
+            vocab: cleanVocab(row.vocab).length ? cleanVocab(row.vocab) : undefined,
             moduleNumber: row.module_number === 1 || row.module_number === 2 ? row.module_number : undefined,
           }),
         )

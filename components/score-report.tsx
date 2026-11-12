@@ -1,5 +1,7 @@
 'use client'
 
+import { useMockVocab } from '@/lib/use-mock-vocab'
+import type { VocabEntry } from '@/lib/question-vocab'
 import { useState } from 'react'
 import Link from 'next/link'
 import { Check, X, Minus, ChevronDown, Award, ArrowLeft, Home, Play } from 'lucide-react'
@@ -77,7 +79,24 @@ function correctLabel(question: Question) {
   return question.correct ?? ''
 }
 
-function QuestionDetail({ item }: { item: ReviewItem }) {
+function VocabBlock({ words }: { words: VocabEntry[] }) {
+  if (words.length === 0) return null
+  return (
+    <div className="mt-3 rounded-lg border border-orange-200 bg-orange-50/70 p-3">
+      <p className="mb-2 text-xs font-extrabold uppercase tracking-wide text-orange-700">Lug‘at</p>
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
+        {words.map((v) => (
+          <div key={v.w} className="flex gap-2">
+            <dt className="font-bold text-[#0f172a]">{v.w}</dt>
+            <dd className="text-[#475569]">— {v.uz}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
+}
+
+function QuestionDetail({ item, vocab }: { item: ReviewItem; vocab?: VocabEntry[] }) {
   const q = item.question
   return (
     <div className="border-t border-[#e2e8f0] bg-[#f8fafc] p-4 sm:p-5">
@@ -140,6 +159,7 @@ function QuestionDetail({ item }: { item: ReviewItem }) {
       {q.explanation && (
         <p className="whitespace-pre-line mt-3 rounded-lg bg-white p-3 text-sm text-[#334155]"><MixedText text={q.explanation} /></p>
       )}
+      <VocabBlock words={vocab ?? []} />
     </div>
   )
 }
@@ -161,6 +181,8 @@ export function ScoreReport({
 }: ScoreReportProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [showCertificate, setShowCertificate] = useState(false)
+  // vocabulary: one small request, made only once the student opens a question (never during the exam)
+  const vocabMap = useMockVocab(testTitle, openIndex !== null)
 
   return (
     <div className="min-h-dvh bg-[#f8fafc] px-4 py-10 sm:px-8">
@@ -278,7 +300,7 @@ export function ScoreReport({
                     <ReportQuestionButton testLabel={testTitle} moduleLabel={item.moduleLabel} qNumber={item.index + 1} question={item.question} />
                   </span>
                   </div>
-                  {isOpen && <QuestionDetail item={item} />}
+                  {isOpen && <QuestionDetail item={item} vocab={item.question.id ? vocabMap[item.question.id] : undefined} />}
                 </div>
               )
             })}

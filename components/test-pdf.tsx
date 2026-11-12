@@ -8,6 +8,7 @@ import { AlertTriangle, Check, FileDown, Loader2, Lock } from 'lucide-react'
 import { ChoiceContent } from '@/components/choice-content'
 import { QuestionImage } from '@/components/question-image'
 import { QuestionStimulus } from '@/components/question-stimulus'
+import { fetchMockVocab } from '@/lib/use-mock-vocab'
 import { SITE_DOMAIN, SITE_URL, TG_PERSONAL } from '@/lib/contact'
 import type { Question } from '@/lib/test-data'
 import { ExamWatermark, WATERMARK_FONT_CSS } from '@/components/exam-watermark'
@@ -414,6 +415,19 @@ function QuestionBody({ item }: { item: PdfItem }) {
               <ChoiceContent choice={c} scale={q.layout?.choiceImg?.[c.id]?.scale} plain />
             </div>
           ))}
+        </div>
+      )}
+
+      {q.vocab && q.vocab.length > 0 && (
+        <div style={{ marginTop: 22, border: '1.5px solid #fdba74', borderRadius: 12, background: '#fff7ed', padding: '12px 16px' }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1.4, textTransform: 'uppercase', color: '#c2410c', marginBottom: 8 }}>Lug‘at</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 28, rowGap: 5, fontSize: 14.5, lineHeight: 1.4 }}>
+            {q.vocab.map((v) => (
+              <div key={v.w}>
+                <b style={{ color: '#111' }}>{v.w}</b> <span style={{ color: '#475569' }}>— {v.uz}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -1033,7 +1047,11 @@ export function DownloadTestPdfButton({
         setOverlay('off')
         return
       }
-      const list = items ?? (await loadItems!())
+      let list = items ?? (await loadItems!())
+      if (testLabel && list.some((it) => !it.question.vocab)) {
+        const vmap = await fetchMockVocab(testLabel)
+        list = list.map((it) => (it.question.id && vmap[it.question.id] && !it.question.vocab ? { ...it, question: { ...it.question, vocab: vmap[it.question.id] } } : it))
+      }
       if (list.length === 0) {
         setErrText('Bu mockda savol topilmadi.')
         setState('error')

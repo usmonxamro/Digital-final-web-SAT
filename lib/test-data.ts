@@ -49,6 +49,8 @@ export type Question = {
   /** Optional visual arrangement of prompt paragraphs / tables / figure /
    *  equations, set in the admin's exam preview. See lib/question-layout.ts. */
   layout?: QuestionLayout | null
+  /** Hard words of this question (never sent during the exam: fetched afterwards from /api/mock-vocab, or built into the PDF). */
+  vocab?: import('@/lib/question-vocab').VocabEntry[]
 }
 
 export type TestModule = {
