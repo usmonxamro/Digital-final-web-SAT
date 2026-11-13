@@ -29,6 +29,7 @@ import type { MockAttemptRow, MockStat } from '@/app/api/admin/mock-stats/route'
 import type { MockFolder } from '@/app/api/admin/folders/route'
 import { PublishActions } from '@/components/admin/publish-actions'
 import { DownloadTestPdfButton } from '@/components/test-pdf'
+import { VocabImport } from '@/components/admin/vocab-import'
 import { loadMockPdfItems } from '@/lib/mock-pdf-items'
 import { mockShareUrl } from '@/lib/safe-next'
 import { activeCourseGroups, groupBySlug, groupsOfTask } from '@/lib/course-groups'
@@ -720,6 +721,7 @@ export function MocksPanel({ visible = true }: { visible?: boolean }) {
                   <div className="space-y-4 border-t border-line bg-bg-deep/30 px-4 py-4">
                     <PublishActions testLabel={t.label} onChange={load} />
                     <VideoField testLabel={t.label} onSaved={load} />
+                    <VocabImport testLabel={t.label} />
                     <AttemptsTable label={t.label} />
                     <RenameMock
                       testLabel={t.label}
