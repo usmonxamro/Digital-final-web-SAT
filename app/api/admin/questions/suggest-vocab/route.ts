@@ -29,15 +29,24 @@ export async function POST(req: NextRequest) {
       .eq('test_label', label)
       .order('created_at', { ascending: true })
       .order('id', { ascending: true }),
-    supabase.from('vocab_words').select('en, uz').eq('subject', 'math').eq('active', true).limit(5000),
+    supabase.from('vocab_words').select('en, uz, q_picked, q_skipped, q_hidden').eq('subject', 'math').eq('active', true).limit(5000),
   ])
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   const rows = [...(qs ?? [])].sort((a, b) => (a.module_number ?? 1) - (b.module_number ?? 1))
   if (rows.length === 0) return NextResponse.json({ error: `«${label}» mockida bu bo'limda savol yo'q.` }, { status: 404 })
 
-  const sugg = suggestForMock(rows, (words ?? []) as { en: string; uz: string }[])
+  let dict = (words ?? []) as { en: string; uz: string; q_picked?: number; q_skipped?: number; q_hidden?: boolean }[]
+  let learning = true
+  if (!words) {
+    // v115 columns not created yet → plain list, no learning
+    learning = false
+    const { data: plain } = await supabase.from('vocab_words').select('en, uz').eq('subject', 'math').eq('active', true).limit(5000)
+    dict = (plain ?? []) as typeof dict
+  }
+  const sugg = suggestForMock(rows, dict.map((w) => ({ en: w.en, uz: w.uz, picked: w.q_picked, skipped: w.q_skipped, hidden: w.q_hidden })))
   return NextResponse.json({
-    dictionary: (words ?? []).length,
+    dictionary: dict.length,
+    learning,
     questions: rows.map((r, i) => ({
       id: String(r.id),
       n: i + 1,

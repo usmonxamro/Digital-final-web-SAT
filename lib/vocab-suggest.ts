@@ -12,8 +12,8 @@ import { plainText, stem, STOP } from '@/lib/vocab-scan'
  *  4. Words that are not in the dictionary but look like real vocabulary are returned as `unknown` (the admin may add them by hand).
  */
 
-export type DictWord = { en: string; uz: string }
-export type Suggestion = { w: string; uz: string; rec: boolean; common: boolean }
+export type DictWord = { en: string; uz: string; picked?: number; skipped?: number; hidden?: boolean }
+export type Suggestion = { w: string; uz: string; rec: boolean; common: boolean; learned?: 'liked' | 'rejected' }
 export type QuestionSuggestions = { suggestions: Suggestion[]; unknown: string[] }
 export type QuestionText = { passage?: string | null; prompt?: string | null; choices?: unknown }
 
@@ -40,18 +40,19 @@ function variants(en: string): string[] {
   return out
 }
 
-type Phrase = { en: string; uz: string; stems: string[]; trivial: boolean }
+type Phrase = { en: string; uz: string; stems: string[]; trivial: boolean; picked: number; skipped: number }
 
 export function buildIndex(words: DictWord[]): Map<string, Phrase[]> {
   const idx = new Map<string, Phrase[]>()
   for (const w of words) {
+    if (w.hidden) continue // the admin said: never suggest this one under a question
     for (const v of variants(w.en)) {
       const toks = tokens(v)
       if (toks.length === 0) continue
       const stems = toks.map(stem)
       const trivial = toks.every((t) => TRIVIAL.has(t) || t.length < 3) || (toks.length === 1 && TRIVIAL.has(toks[0]))
       const list = idx.get(stems[0]) ?? []
-      list.push({ en: v.trim(), uz: w.uz.trim(), stems, trivial })
+      list.push({ en: v.trim(), uz: w.uz.trim(), stems, trivial, picked: w.picked ?? 0, skipped: w.skipped ?? 0 })
       idx.set(stems[0], list)
     }
   }
@@ -65,7 +66,7 @@ export function questionText(q: QuestionText): string {
   return plainText(`${q.passage ?? ''} ${q.prompt ?? ''} ${ch}`)
 }
 
-type Found = { key: string; en: string; uz: string; trivial: boolean; len: number }
+type Found = { key: string; en: string; uz: string; trivial: boolean; len: number; picked: number; skipped: number }
 
 function scan(text: string, idx: Map<string, Phrase[]>): { found: Found[]; unknownRaw: string[] } {
   const raw = text.match(/[A-Za-z][A-Za-z'-]*/g) ?? []
@@ -83,7 +84,7 @@ function scan(text: string, idx: Map<string, Phrase[]>): { found: Found[]; unkno
       const key = p.stems.join(' ')
       if (!seen.has(key)) {
         seen.add(key)
-        found.push({ key, en: p.en, uz: p.uz, trivial: p.trivial, len: p.stems.length })
+        found.push({ key, en: p.en, uz: p.uz, trivial: p.trivial, len: p.stems.length, picked: p.picked, skipped: p.skipped })
       }
       for (let k = 0; k < p.stems.length; k++) covered[i + k] = true
       i += p.stems.length - 1
@@ -122,11 +123,14 @@ export function suggestForMock(questions: QuestionText[], words: DictWord[], opt
   return scans.map((s) => {
     const rows: (Suggestion & { score: number })[] = s.found.filter((f) => !f.trivial).map((f) => {
       const c = df.get(f.key) ?? 1
-      const common = isCommon(c)
-      const rec = !common
-      // phrases first, then longer / rarer words
-      const score = (rec ? 1000 : 0) + f.len * 100 + Math.min(f.en.length, 30) - c
-      return { w: f.en, uz: f.uz, rec, common, score }
+      // what the admin taught us: removed again and again → stop ticking it; added by hand again and again → always tick it
+      const rejected = f.skipped >= 3 && f.skipped >= 2 * f.picked
+      const liked = f.picked >= 3 && f.picked >= 2 * f.skipped
+      const common = isCommon(c) && !liked
+      const rec = !common && !rejected
+      const score = (rec ? 1000 : 0) + f.len * 100 + Math.min(f.en.length, 30) - c + (liked ? 500 : 0)
+      const learned: Suggestion['learned'] = rejected ? 'rejected' : liked ? 'liked' : undefined
+      return { w: f.en, uz: f.uz, rec, common, score, ...(learned ? { learned } : {}) }
     })
     rows.sort((a, b) => b.score - a.score)
     let recLeft = maxRec
