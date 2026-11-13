@@ -29,8 +29,23 @@ export async function POST(req: NextRequest) {
     if (error) failed.push(id)
     else saved++
   }
+  // words typed by hand are also added to the site's word list, so the next mock suggests them automatically
+  let addedToDictionary = 0
+  const dict: unknown = body?.dictionary
+  if (Array.isArray(dict) && dict.length) {
+    const wanted = cleanVocab(dict, 200)
+    if (wanted.length) {
+      const { data: have } = await supabase.from('vocab_words').select('en').eq('subject', 'math').limit(5000)
+      const haveSet = new Set((have ?? []).map((r) => String(r.en).toLowerCase()))
+      const rows = wanted.filter((v) => !haveSet.has(v.w.toLowerCase())).map((v) => ({ subject: 'math', en: v.w, uz: v.uz, cat: 'Umumiy', source: 'admin' }))
+      if (rows.length) {
+        const { error } = await supabase.from('vocab_words').insert(rows)
+        if (!error) addedToDictionary = rows.length
+      }
+    }
+  }
   if (saved === 0 && failed.length) return NextResponse.json({ error: "Saqlanmadi (v114 SQL ishga tushirilganmi?).", failed }, { status: 500 })
-  return NextResponse.json({ saved, failed })
+  return NextResponse.json({ saved, failed, addedToDictionary })
 }
 
 export async function GET(req: NextRequest) {

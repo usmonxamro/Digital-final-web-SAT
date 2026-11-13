@@ -9,7 +9,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  * Yangi mock nashr qilinganda avtomatik, shuningdek admin paneldagi tugma orqali ishga tushadi.
  */
 
-const STOP = new Set(
+export const STOP = new Set(
   `the and for are that this with from have has had was were will would could should can not but you your they them their there then than what which where when who whom whose how why
 into onto over under out off all any each every some such many much more most less least other another also only just very too both either neither one two three four five six seven eight nine ten
 its his her him she our ours who does did done been being get got gets let may might must shall per via yes about above after again against before below between during here once same own those these through until while

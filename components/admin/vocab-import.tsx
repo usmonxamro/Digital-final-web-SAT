@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { BookA, Loader2, Upload } from 'lucide-react'
+import { VocabSuggest } from '@/components/admin/vocab-suggest'
 
 type Result = {
   questions: number
@@ -97,6 +98,7 @@ export function VocabImport({ testLabel }: { testLabel: string }) {
           {done && <p className="font-bold text-green-700">Saqlandi: {res.saved} ta savol{res.failed && res.failed.length ? `, xato: ${res.failed.join(', ')}` : ''}.</p>}
         </div>
       )}
+      <VocabSuggest testLabel={testLabel} />
     </div>
   )
 }
