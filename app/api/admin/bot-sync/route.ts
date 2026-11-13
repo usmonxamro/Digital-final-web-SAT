@@ -8,6 +8,7 @@ import { fetchAll } from '@/lib/db-paginate'
 import { assemblePdfItems } from '@/lib/mock-pdf-items'
 import { pushMockToBot } from '@/lib/bot-publish'
 import type { Question } from '@/lib/test-data'
+import { runKeyAudit } from '@/lib/key-audit'
 
 export type BotTestRow = {
   code: string
@@ -18,6 +19,15 @@ export type BotTestRow = {
   attempts: number
   students: number
   suggestion: string | null
+  /** 'site' = the site created this code when the mock was published; 'bot' = made in the bot itself. */
+  origin: 'site' | 'bot'
+  createdAt: string | null
+  /** Last time a student sent answers for this test (ISO), or null. */
+  lastAttemptAt: string | null
+  /** The linked site mock is open to students (null when not linked). */
+  published: boolean | null
+  /** Telegram groups this test was given to. */
+  groups: string[]
 }
 export type SuspectRow = {
   botCode: string
@@ -76,7 +86,7 @@ function suggestLabel(name: string | null, code: string, labels: string[]): stri
 async function overview(supabase: SupabaseClient): Promise<BotSyncOverview | { missing: true }> {
   const { data: tests, error } = await supabase
     .from('bot_tests')
-    .select('code, name, kind, question_count, test_label')
+    .select('code, name, kind, question_count, test_label, origin, created_at')
     .order('created_at', { ascending: false })
   if (error) {
     if (isMissingTable(error)) return { missing: true }
@@ -91,16 +101,31 @@ async function overview(supabase: SupabaseClient): Promise<BotSyncOverview | { m
     .map((c) => ({ label: c.test_label as string, subject: (c.subject as string) ?? 'full', published: c.published !== false }))
   const labels = mocks.map((m) => m.label)
 
-  const { data: att } = await fetchAll<{ bot_code: string | null; tg_id: number | null }>((from, to) =>
-    supabase.from('attempt_log').select('bot_code, tg_id').eq('source', 'bot').not('bot_code', 'is', null).range(from, to),
+  const { data: att } = await fetchAll<{ bot_code: string | null; tg_id: number | null; submitted_at: string | null }>((from, to) =>
+    supabase.from('attempt_log').select('bot_code, tg_id, submitted_at').eq('source', 'bot').not('bot_code', 'is', null).order('id').range(from, to),
   )
-  const per = new Map<string, { n: number; users: Set<number> }>()
+  const per = new Map<string, { n: number; users: Set<number>; last: string | null }>()
   for (const a of att) {
     if (!a.bot_code) continue
-    const e = per.get(a.bot_code) ?? { n: 0, users: new Set<number>() }
+    const e = per.get(a.bot_code) ?? { n: 0, users: new Set<number>(), last: null }
     e.n++
     if (a.tg_id != null) e.users.add(a.tg_id)
+    if (a.submitted_at && (!e.last || a.submitted_at > e.last)) e.last = a.submitted_at
     per.set(a.bot_code, e)
+  }
+  const publishedOf = new Map((cfgs ?? []).map((c) => [c.test_label as string, c.published !== false]))
+  const groupsOf = new Map<string, string[]>()
+  {
+    const [{ data: asg }, { data: tg }] = await Promise.all([
+      supabase.from('group_mock_assignments').select('bot_code, chat_id'),
+      supabase.from('tg_groups').select('chat_id, title'),
+    ])
+    const title = new Map((tg ?? []).map((g) => [String(g.chat_id), (g.title as string | null) ?? String(g.chat_id)]))
+    for (const a of asg ?? []) {
+      const list = groupsOf.get(a.bot_code as string) ?? []
+      list.push(title.get(String(a.chat_id)) ?? String(a.chat_id))
+      groupsOf.set(a.bot_code as string, list)
+    }
   }
 
   const rows: BotTestRow[] = (tests ?? []).map((t) => ({
@@ -112,6 +137,11 @@ async function overview(supabase: SupabaseClient): Promise<BotSyncOverview | { m
     attempts: per.get(t.code)?.n ?? 0,
     students: per.get(t.code)?.users.size ?? 0,
     suggestion: t.test_label ? null : suggestLabel(t.name, t.code, labels),
+    origin: t.origin === 'site' ? 'site' : 'bot',
+    createdAt: (t.created_at as string | null) ?? null,
+    lastAttemptAt: per.get(t.code)?.last ?? null,
+    published: t.test_label ? (publishedOf.get(t.test_label) ?? null) : null,
+    groups: groupsOf.get(t.code) ?? [],
   }))
   const labelOf = new Map(rows.map((r) => [r.code, r.testLabel]))
 
@@ -251,6 +281,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         tests: (data ?? []).map((t) => ({ code: t.code, name: t.name, kind: t.kind, questionCount: t.question_count ?? 0, testLabel: t.test_label ?? null })),
       })
+    }
+    if (req.nextUrl.searchParams.get('audit')) {
+      // "Kalit auditi": every question whose key looks wrong (bot + site answers), with the reason.
+      return NextResponse.json(await runKeyAudit(supabaseAdmin()))
     }
     const out = await overview(supabaseAdmin())
     if ('missing' in out) {

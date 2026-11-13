@@ -20,6 +20,7 @@ import {
   Pencil,
   RefreshCw,
   Search,
+  Send,
   Trash2,
   Users,
   X,
@@ -86,7 +87,7 @@ function applyBulk(t: MockTestSummary, add: Lists, remove: Lists, set: BulkSet):
  * A mock can be in SEVERAL bo'lims at once (adding never removes it from another one). Drag a mock
  * onto a bo'lim, use the buttons to the right of its name, or tick many mocks and use the bar on top.
  */
-export function MocksPanel({ visible = true }: { visible?: boolean }) {
+export function MocksPanel({ visible = true, onEdit }: { visible?: boolean; onEdit?: (t: MockTestSummary) => void }) {
   useCourseGroups()
   const [tests, setTests] = useState<MockTestSummary[] | null>(null)
   const [stats, setStats] = useState<Record<string, MockStat>>({})
@@ -319,7 +320,7 @@ export function MocksPanel({ visible = true }: { visible?: boolean }) {
       (t) =>
         inTab(t, tab) &&
         (filter === 'all' || (filter === 'draft' ? !t.published : t.published)) &&
-        t.label.toLowerCase().includes(query.trim().toLowerCase()),
+        (t.label.toLowerCase().includes(query.trim().toLowerCase()) || (t.botCodes ?? []).some((c) => c === query.trim().replace(/^#/, ''))),
     )
     const byName = (a: MockTestSummary, b: MockTestSummary) => a.label.localeCompare(b.label, undefined, { numeric: true })
     if (sort === 'name') return [...list].sort(byName)
@@ -506,7 +507,7 @@ export function MocksPanel({ visible = true }: { visible?: boolean }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Qidirish..."
+            placeholder="Nom yoki bot kodi..."
             className="w-full rounded-lg border border-line py-1.5 pl-8 pr-3 text-[12.5px] focus:border-green focus:outline-none"
           />
         </div>
@@ -653,6 +654,24 @@ export function MocksPanel({ visible = true }: { visible?: boolean }) {
                             VAZIFA{t.recommendedMinutes ? ` · ${t.recommendedMinutes} daq` : ''}
                           </span>
                         )}
+                        {(t.botCodes ?? []).map((c) => (
+                          <span
+                            key={c}
+                            className="flex items-center gap-1 rounded-full bg-sky-100 px-2 py-px font-mono text-[10.5px] font-extrabold text-sky-800"
+                            title="Bu mockning Telegram botdagi kodi (bosib nusxalash)"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigator.clipboard?.writeText(c).catch(() => {})
+                            }}
+                          >
+                            <Send size={10} /> {c}
+                          </span>
+                        ))}
+                        {t.subject !== 'english' && (t.botCodes ?? []).length === 0 && (
+                          <span className="rounded-full bg-slate-100 px-1.5 py-px text-[9.5px] font-extrabold text-slate-500" title="Bu mock botga qo'shilmagan (Bot ↔ Sayt bo'limidan qo'shing)">
+                            BOTDA YO‘Q
+                          </span>
+                        )}
                         {t.hasVideo && (
                           <span className="flex items-center gap-0.5 rounded-full bg-orange-100 px-1.5 py-px text-[9.5px] font-extrabold text-orange-800">
                             <MonitorPlay size={10} /> VIDEO
@@ -663,6 +682,16 @@ export function MocksPanel({ visible = true }: { visible?: boolean }) {
                         {t.subject === 'full' ? 'Full' : t.subject === 'math' ? 'Math' : 'English'} · R&W {t.readingCount} · Math {t.mathCount}
                       </div>
                     </button>
+                    {onEdit && (
+                      <button
+                        type="button"
+                        onClick={() => onEdit(t)}
+                        title="Savollar va javoblarni tahrirlash"
+                        className="flex shrink-0 items-center gap-1.5 rounded-lg border border-green bg-green-mist px-2.5 py-1.5 text-[12px] font-bold text-green-deep hover:bg-white"
+                      >
+                        <Pencil size={13} /> Tahrirlash
+                      </button>
+                    )}
                     <button type="button" onClick={toggle} className="flex items-center gap-4">
                       <Stat icon={<BarChart3 size={13} />} label="yechilgan" value={s?.attempts ?? 0} />
                       <Stat icon={<Users size={13} />} label="o'quvchi" value={s?.users ?? 0} />

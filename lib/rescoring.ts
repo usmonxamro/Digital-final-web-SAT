@@ -91,6 +91,20 @@ export async function rescoreAttemptsForQuestion(
         .eq('id', attempt.id)
       if (!updateError) {
         rescored++
+        // Keep the shared log (attempt_log: analytics, mistake pool, key audit) in step with the re-scored attempt.
+        try {
+          await supabase
+            .from('attempt_log')
+            .update({
+              correct: rw.correct + math.correct,
+              score_text: String(composite),
+              wrong_qids: nextReview.filter((e) => e && e.correct === false && e.questionId).map((e) => e.questionId as string),
+            })
+            .eq('web_attempt_id', attempt.id)
+            .eq('source', 'web')
+        } catch {
+          /* best-effort */
+        }
         changes.push({
           attemptId: attempt.id as string,
           userId: (attempt as { user_id?: string }).user_id ?? '',

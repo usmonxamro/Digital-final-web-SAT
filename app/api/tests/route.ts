@@ -44,6 +44,8 @@ export type MockTestSummary = {
   sortOrder: number | null
   /** When the mock's settings row was created (ISO) — admin list "newest first"; null for old rows. */
   createdAt: string | null
+  /** The code(s) this mock has in the Telegram bot — admin list only. */
+  botCodes?: string[]
 }
 
 export async function GET(req: NextRequest) {
@@ -101,6 +103,16 @@ export async function GET(req: NextRequest) {
       for (const r of [...(att ?? []), ...(st ?? [])]) doneLabels.add(r.test_label as string)
     }
 
+    // Admin: the code each mock has in the Telegram bot (the site-made code first).
+    const botCodes = new Map<string, string[]>()
+    if (includeDrafts) {
+      const { data: bt } = await supabase.from('bot_tests').select('code, test_label, origin').not('test_label', 'is', null)
+      for (const b of (bt ?? []).sort((x, y) => (y.origin === 'site' ? 1 : 0) - (x.origin === 'site' ? 1 : 0))) {
+        const l = b.test_label as string
+        botCodes.set(l, [...(botCodes.get(l) ?? []), b.code as string])
+      }
+    }
+
     const tests: MockTestSummary[] = Array.from(byLabel.entries())
       .map(([label, counts]) => {
         const config = configByLabel.get(label)
@@ -124,6 +136,7 @@ export async function GET(req: NextRequest) {
           folderIds: includeDrafts ? (config?.folderIds ?? []) : [],
           sortOrder: config?.sortOrder ?? null,
           createdAt: includeDrafts ? (config?.createdAt ?? null) : null,
+          ...(includeDrafts ? { botCodes: botCodes.get(label) ?? [] } : {}),
         }
       })
       .filter((t) => includeDrafts || t.published)

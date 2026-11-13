@@ -1,11 +1,15 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, CheckCircle2, Link2, Link2Off, Loader2, RefreshCw } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, ChevronDown, Link2, Link2Off, Loader2, Pencil, RefreshCw, Search } from 'lucide-react'
+import { KeyAudit } from '@/components/admin/key-audit'
 import type { BotSyncOverview, BotTestRow, KeyPreview } from '@/app/api/admin/bot-sync/route'
 
 type View = 'tests' | 'toBot' | 'suspects' | 'groups'
-type Filter = 'all' | 'unlinked' | 'linked'
+type Filter = 'all' | 'unlinked' | 'linked' | 'suggest'
+type SortBy = 'new' | 'active' | 'attempts' | 'name'
+
+const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('uz-UZ', { timeZone: 'Asia/Tashkent', day: '2-digit', month: '2-digit', year: '2-digit' }) : null)
 
 const btn = 'px-3 py-1.5 rounded-lg text-[12.5px] font-bold border border-line hover:bg-slate-50 disabled:opacity-50'
 const btnPrimary = 'px-3 py-1.5 rounded-lg text-[12.5px] font-bold bg-green text-white hover:brightness-110 disabled:opacity-50'
@@ -15,12 +19,15 @@ const btnPrimary = 'px-3 py-1.5 rounded-lg text-[12.5px] font-bold bg-green text
  * which of them are already a site mock, and one-click linking (the bot's answer key is copied onto the
  * site mock's questions and re-scores the attempts if a key changed). Also the suspicious keys and group progress.
  */
-export function BotSyncPanel() {
+export function BotSyncPanel({ onEdit }: { onEdit?: (label: string) => void }) {
   const [data, setData] = useState<BotSyncOverview | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<View>('tests')
   const [filter, setFilter] = useState<Filter>('unlinked')
   const [loading, setLoading] = useState(false)
+  const [q, setQ] = useState('')
+  const [sortBy, setSortBy] = useState<SortBy>('new')
+  const [auditCount, setAuditCount] = useState<number | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -41,6 +48,24 @@ export function BotSyncPanel() {
   }, [load])
 
   const unlinkedCount = data?.tests.filter((t) => !t.testLabel).length ?? 0
+  const suggestCount = data?.tests.filter((t) => !t.testLabel && t.suggestion).length ?? 0
+  const shownTests = useMemo(() => {
+    const needle = q.trim().toLowerCase().replace(/^#/, '')
+    const list = (data?.tests ?? []).filter((t) => {
+      if (filter === 'unlinked' && t.testLabel) return false
+      if (filter === 'linked' && !t.testLabel) return false
+      if (filter === 'suggest' && (t.testLabel || !t.suggestion)) return false
+      if (!needle) return true
+      return t.code === needle || t.code.includes(needle) || (t.name ?? '').toLowerCase().includes(needle) || (t.testLabel ?? '').toLowerCase().includes(needle) || t.groups.some((g) => g.toLowerCase().includes(needle))
+    })
+    const by: Record<SortBy, (a: BotTestRow, b: BotTestRow) => number> = {
+      new: (a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''),
+      active: (a, b) => (b.lastAttemptAt ?? '').localeCompare(a.lastAttemptAt ?? ''),
+      attempts: (a, b) => b.attempts - a.attempts,
+      name: (a, b) => (a.name ?? a.code).localeCompare(b.name ?? b.code, undefined, { numeric: true }),
+    }
+    return [...list].sort(by[sortBy])
+  }, [data, q, filter, sortBy])
 
   return (
     <div>
@@ -49,7 +74,7 @@ export function BotSyncPanel() {
           [
             ['tests', `Bot testlari${data ? ` (${data.tests.length})` : ''}`],
             ['toBot', `Saytda bor, botda yo'q${data ? ` (${data.siteOnly.length})` : ''}`],
-            ['suspects', `Shubhali kalitlar${data ? ` (${data.suspects.length})` : ''}`],
+            ['suspects', `Xato ehtimoli bor savollar${auditCount != null ? ` (${auditCount})` : data ? ` (${data.suspects.length}+)` : ''}`],
             ['groups', 'Guruhlar'],
           ] as [View, string][]
         ).map(([v, label]) => (
@@ -76,21 +101,37 @@ export function BotSyncPanel() {
               [
                 ['unlinked', `Saytda yo'q (${unlinkedCount})`],
                 ['linked', `Saytga ulangan (${data.tests.length - unlinkedCount})`],
-                ['all', 'Hammasi'],
+                ['suggest', `Saytda o'xshashi bor (${suggestCount})`],
+                ['all', `Hammasi (${data.tests.length})`],
               ] as [Filter, string][]
             ).map(([f, label]) => (
               <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1 rounded-lg font-bold ${filter === f ? 'bg-slate-100 text-ink' : 'text-ink-faint hover:text-ink'}`}>
                 {label}
               </button>
             ))}
+            <div className="relative ml-auto min-w-[200px] flex-1 sm:max-w-[280px]">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Nom, bot kodi yoki guruh..."
+                className="w-full rounded-lg border border-line py-1.5 pl-8 pr-3 text-[12.5px] focus:border-green focus:outline-none"
+              />
+            </div>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortBy)} className="rounded-lg border border-line bg-white px-2 py-1.5 text-[12.5px] font-bold">
+              <option value="new">Yangi qo&apos;shilgan</option>
+              <option value="active">Oxirgi yechilgan</option>
+              <option value="attempts">Ko&apos;p yechilgan</option>
+              <option value="name">Nomi bo&apos;yicha</option>
+            </select>
           </div>
+          <p className="mb-2 text-[12px] text-ink-faint">{shownTests.length} ta test ko&apos;rsatilmoqda</p>
           <div className="space-y-2">
-            {data.tests
-              .filter((t) => (filter === 'all' ? true : filter === 'unlinked' ? !t.testLabel : !!t.testLabel))
-              .map((t) => (
-                <TestRow key={t.code} t={t} mocks={data.mocks} onChanged={load} />
-              ))}
+            {shownTests.map((t) => (
+              <TestRow key={t.code} t={t} mocks={data.mocks} onChanged={load} onEdit={onEdit} />
+            ))}
             {data.tests.length === 0 && <p className="text-ink-faint text-[13px]">Botdan hali test kelmagan.</p>}
+            {data.tests.length > 0 && shownTests.length === 0 && <p className="text-ink-faint text-[13px]">Hech narsa topilmadi.</p>}
           </div>
         </>
       )}
@@ -106,42 +147,7 @@ export function BotSyncPanel() {
         </div>
       )}
 
-      {data && view === 'suspects' && (
-        <div>
-          <p className="text-[12.5px] text-ink-faint mb-3">
-            Ko'p o'quvchi bir xil javob bergan-u, kalitga deyarli hech kim mos kelmagan savollar. Kalit botda saqlanadi: to'g'rilash uchun botdagi
-            admin panelda kalitni o'zgartiring (sayt ulangan bo'lsa, keyingi sinxronda o'zi yangilanadi va "Bot testlari"dan qayta solishtirasiz).
-          </p>
-          <div className="overflow-x-auto rounded-xl border border-line">
-            <table className="w-full text-[12.5px]">
-              <thead className="bg-slate-50 text-ink-faint text-left">
-                <tr>
-                  <th className="p-2">Test</th><th className="p-2">Savol</th><th className="p-2">Kalit</th>
-                  <th className="p-2">Eng ko'p javob</th><th className="p-2">To'g'ri %</th><th className="p-2">Urinish</th><th className="p-2">Holat</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.suspects.map((s) => (
-                  <tr key={`${s.botCode}-${s.qNo}`} className="border-t border-line">
-                    <td className="p-2 font-semibold">{s.mockName ?? s.botCode}{s.testLabel ? <span className="text-ink-faint font-normal"> → {s.testLabel}</span> : null}</td>
-                    <td className="p-2">{s.qNo}</td>
-                    <td className="p-2 font-bold">{s.keyAnswer ?? '—'}</td>
-                    <td className="p-2">{s.topWrongAnswer ?? '—'} <span className="text-ink-faint">({s.topWrongPct}%)</span></td>
-                    <td className="p-2">{s.correctPct}%</td>
-                    <td className="p-2">{s.attempts}</td>
-                    <td className="p-2">
-                      <span className={`font-bold ${s.flag.startsWith('1') ? 'text-red-600' : 'text-amber-600'}`}>{s.flag.slice(2)}</span>
-                    </td>
-                  </tr>
-                ))}
-                {data.suspects.length === 0 && (
-                  <tr><td colSpan={7} className="p-4 text-center text-ink-faint">Shubhali kalit topilmadi.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {view === 'suspects' && <KeyAudit onEdit={onEdit} onCount={setAuditCount} />}
 
       {data && view === 'groups' && (
         <div className="grid sm:grid-cols-2 gap-3">
@@ -162,7 +168,7 @@ export function BotSyncPanel() {
   )
 }
 
-function TestRow({ t, mocks, onChanged }: { t: BotTestRow; mocks: BotSyncOverview['mocks']; onChanged: () => void }) {
+function TestRow({ t, mocks, onChanged, onEdit }: { t: BotTestRow; mocks: BotSyncOverview['mocks']; onChanged: () => void; onEdit?: (label: string) => void }) {
   const [open, setOpen] = useState(false)
   const [label, setLabel] = useState(t.testLabel ?? t.suggestion ?? '')
   const [preview, setPreview] = useState<KeyPreview | null>(null)
@@ -235,13 +241,41 @@ function TestRow({ t, mocks, onChanged }: { t: BotTestRow; mocks: BotSyncOvervie
 
   return (
     <div className="rounded-xl border border-line">
-      <button onClick={() => setOpen((o) => !o)} className="w-full text-left p-3 flex flex-wrap items-center gap-x-4 gap-y-1">
-        <span className="font-bold text-[14px]">{t.name ?? t.code}</span>
-        <span className="text-[12px] text-ink-faint">kod: {t.code} · {t.questionCount} ta savol · {t.attempts} urinish · {t.students} o'quvchi</span>
-        <span className={`ml-auto text-[12px] font-bold flex items-center gap-1 ${t.testLabel ? 'text-emerald-600' : 'text-amber-600'}`}>
-          {t.testLabel ? <><Link2 size={13} /> {t.testLabel}</> : <><Link2Off size={13} /> Saytda yo'q</>}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 p-3">
+        <button onClick={() => setOpen((o) => !o)} className="min-w-0 flex-1 basis-[260px] text-left">
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className="font-bold text-[14px]">{t.name ?? t.code}</span>
+            <span className="rounded-full bg-sky-100 px-2 py-px font-mono text-[11px] font-extrabold text-sky-800">kod: {t.code}</span>
+            <span className={`rounded-full px-2 py-px text-[10.5px] font-extrabold ${t.origin === 'site' ? 'bg-violet-100 text-violet-800' : 'bg-slate-100 text-slate-600'}`} title={t.origin === 'site' ? 'Sayt nashr qilganda botga yuborgan' : "Botning o'zida yaratilgan"}>
+              {t.origin === 'site' ? 'saytdan yuborilgan' : 'botda yaratilgan'}
+            </span>
+            {t.published === false && <span className="rounded-full bg-amber-400 px-1.5 py-px text-[9.5px] font-extrabold text-amber-950">SAYTDA QORALAMA</span>}
+          </span>
+          <span className="mt-0.5 block text-[12px] text-ink-faint">
+            {t.questionCount} ta savol · {t.attempts} urinish · {t.students} o&apos;quvchi
+            {day(t.createdAt) ? ` · qo'shilgan ${day(t.createdAt)}` : ''}
+            {day(t.lastAttemptAt) ? ` · oxirgi yechilgan ${day(t.lastAttemptAt)}` : ' · hali yechilmagan'}
+            {t.groups.length > 0 ? ` · guruhlar: ${t.groups.join(', ')}` : ''}
+          </span>
+        </button>
+        <span className={`text-[12px] font-bold flex items-center gap-1 ${t.testLabel ? 'text-emerald-600' : t.suggestion ? 'text-sky-700' : 'text-amber-600'}`}>
+          {t.testLabel ? (
+            <><Link2 size={13} /> Saytda: {t.testLabel}</>
+          ) : t.suggestion ? (
+            <><Link2Off size={13} /> Ulanmagan · o&apos;xshashi: {t.suggestion}</>
+          ) : (
+            <><Link2Off size={13} /> Saytda yo&apos;q</>
+          )}
         </span>
-      </button>
+        {t.testLabel && onEdit && (
+          <button onClick={() => onEdit(t.testLabel!)} className="flex items-center gap-1.5 rounded-lg border border-green bg-green-mist px-2.5 py-1.5 text-[12px] font-bold text-green-deep hover:bg-white">
+            <Pencil size={12} /> Tahrirlash
+          </button>
+        )}
+        <button onClick={() => setOpen((o) => !o)} className={`${btn} flex items-center gap-1`}>
+          {t.testLabel ? 'Kalitlar' : 'Ulash'} <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
 
       {open && (
         <div className="border-t border-line p-3 space-y-3">

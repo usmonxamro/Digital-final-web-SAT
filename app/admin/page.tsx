@@ -994,6 +994,7 @@ function TestEditorModal({ test, onClose, onChanged }: { test: MockTestSummary; 
           <div className="min-w-0">
             <div className="text-[11px] font-extrabold uppercase tracking-wide text-ink-faint">Testni tahrirlash</div>
             <h2 className="truncate text-[19px] font-extrabold text-ink">{test.label}</h2>
+            <BotCodeChips codes={test.botCodes} subject={test.subject} />
           </div>
           <button
             onClick={requestClose}
@@ -1061,6 +1062,32 @@ function TestEditorModal({ test, onClose, onChanged }: { test: MockTestSummary; 
   )
 }
 
+/** The code(s) a mock has in the Telegram bot, as small blue chips (click = copy). */
+function BotCodeChips({ codes, subject }: { codes?: string[]; subject?: string }) {
+  if (!codes || codes.length === 0) {
+    if (subject === 'english') return null
+    return <span className="mt-1 inline-block rounded-full bg-slate-100 px-2 py-px text-[10.5px] font-extrabold text-slate-500">botda yo&apos;q</span>
+  }
+  return (
+    <span className="mt-1 inline-flex flex-wrap items-center gap-1">
+      {codes.map((c) => (
+        <button
+          key={c}
+          type="button"
+          title="Telegram botdagi kodi (bosib nusxalash)"
+          onClick={(e) => {
+            e.stopPropagation()
+            navigator.clipboard?.writeText(c).catch(() => {})
+          }}
+          className="rounded-full bg-sky-100 px-2 py-px font-mono text-[11px] font-extrabold text-sky-800 hover:bg-sky-200"
+        >
+          bot kodi: {c}
+        </button>
+      ))}
+    </span>
+  )
+}
+
 function EditTestBrowser() {
   const [tests, setTests] = useState<MockTestSummary[]>([])
   const [query, setQuery] = useState('')
@@ -1076,7 +1103,10 @@ function EditTestBrowser() {
   useEffect(refreshTests, [])
 
   const filtered = useMemo(
-    () => tests.filter((t) => t.label.toLowerCase().includes(query.trim().toLowerCase())),
+    () => {
+      const q = query.trim().toLowerCase().replace(/^#/, '')
+      return tests.filter((t) => t.label.toLowerCase().includes(q) || (t.botCodes ?? []).some((c) => c === q))
+    },
     [tests, query],
   )
 
@@ -1087,7 +1117,7 @@ function EditTestBrowser() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Mock nomi bo'yicha qidirish..."
+          placeholder="Mock nomi yoki bot kodi bo'yicha qidirish..."
           className="w-full pl-9 pr-3 py-2.5 rounded-[9px] border border-line text-[13.5px] focus:outline-none focus:border-green"
         />
       </div>
@@ -1116,6 +1146,7 @@ function EditTestBrowser() {
                       ? `Math ${t.mathCount} ta (${t.mathLayout === 'sequential' ? 'ketma-ket' : '2 modulli'})`
                       : `R&W ${t.readingCount} ta`}
                 </div>
+                <BotCodeChips codes={t.botCodes} subject={t.subject} />
               </div>
               <button
                 onClick={() => setEditing(t)}
@@ -1582,6 +1613,20 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
   const [tab, setTab] = useState<Tab>('mocks')
   const [navOpen, setNavOpen] = useState(false)
   const [newMockType, setNewMockType] = useState<NewMockType>(null)
+  // The mock editor can be opened from any section (Mocklar row, Bot ↔ Sayt…) without visiting "Testni tahrirlash".
+  const [editTarget, setEditTarget] = useState<MockTestSummary | null>(null)
+  const [editMsg, setEditMsg] = useState<string | null>(null)
+  async function openEditorByLabel(label: string) {
+    setEditMsg(null)
+    try {
+      const d = await fetch('/api/tests?all=1').then((r) => r.json())
+      const t = ((d.tests ?? []) as MockTestSummary[]).find((x) => x.label === label)
+      if (t) setEditTarget(t)
+      else setEditMsg(`"${label}" mocki topilmadi.`)
+    } catch {
+      setEditMsg("Server bilan bog'lanib bo'lmadi.")
+    }
+  }
   // Reopen the section the admin was in (#mocks, #botsync …) after a reload.
   useEffect(() => {
     const h = window.location.hash.slice(1) as Tab
@@ -1684,7 +1729,7 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
         {/* Visited tabs stay mounted (just hidden): switching back is instant — no reload, nothing lost. */}
         <KeepAlive active={tab === 'mocks'}>
           <div className="bg-white border border-line rounded-2xl p-5">
-            <MocksPanel visible={tab === 'mocks'} />
+            <MocksPanel visible={tab === 'mocks'} onEdit={setEditTarget} />
           </div>
         </KeepAlive>
 
@@ -1767,7 +1812,7 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
 
         {tab === 'botsync' && (
           <div className="bg-white border border-line rounded-2xl p-5">
-            <BotSyncPanel />
+            <BotSyncPanel onEdit={openEditorByLabel} />
           </div>
         )}
 
@@ -1778,6 +1823,8 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
         </KeepAlive>
 
         {tab === 'bank' && <BankTab />}
+        {editMsg && <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-[13px] text-red-700">{editMsg}</div>}
+        {editTarget && <TestEditorModal key={`page-${editTarget.label}`} test={editTarget} onClose={() => setEditTarget(null)} onChanged={() => {}} />}
         </div>
       </div>
     </div>
