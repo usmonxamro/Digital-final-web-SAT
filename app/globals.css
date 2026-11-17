@@ -443,6 +443,8 @@ html[data-sp-theme='dark'] .admin-root .adm-btn-primary{background:linear-gradie
 @media (prefers-reduced-motion:reduce){.gridkp-sheet,.gridkp-sheet.gridkp-open{transition:none}}
 
 /* ---------- «Mock tuzish» konstruktori: savollar lentasi + mock paneli ---------- */
+/* Konstruktor kengroq joy oladi — ikki ustun savol + mock paneli bemalol sig‘sin. */
+.adm-content:has(.mbx-wide){max-width:1560px}
 /* Admin tepa paneli ostida yopishib turishi uchun */
 .admin-root{--mbx-top:66px}
 @media (max-width:860px){.admin-root{--mbx-top:56px}}

@@ -188,9 +188,9 @@ function Builder() {
   )
 
   return (
-    <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(340px,380px)] xl:items-start">
+    <div className="mbx-wide grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(340px,390px)]">
       <Feed placed={placed} onAdd={add} onRemove={remove} onAuto={autoAdd} single={single} />
-      <div className="hidden xl:block">{panel(false)}</div>
+      <div className="relative hidden h-full xl:block">{panel(false)}</div>
 
       {/* Kichik ekranlarda — pastdagi "Mock" tugmasi va chiqib keladigan panel */}
       <button type="button" onClick={() => setDrawer(true)} className="mbx-fab xl:hidden">
