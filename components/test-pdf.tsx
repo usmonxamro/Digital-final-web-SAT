@@ -975,6 +975,9 @@ export function PdfLockedNote({ className }: { className?: string }) {
  * Instant path: the teacher's PDF job already built this mock's vector PDF and stored it. Returns true when the
  * download was started (the signed link carries Content-Disposition: attachment, so the page itself stays put).
  */
+/** Set to true to bring back the stored PDF (test_configs.pdf_path) shortcut. */
+const USE_READY_PDF = false
+
 async function downloadReadyPdf(label: string): Promise<boolean> {
   try {
     const res = await fetch(`/api/mock-pdf?label=${encodeURIComponent(label)}`, { cache: 'no-store' })
@@ -1042,15 +1045,17 @@ export function DownloadTestPdfButton({
     setState(loadItems ? 'loading' : 'busy')
     if (!compact) setOverlay('busy')
     try {
-      if (testLabel && (await downloadReadyPdf(testLabel))) {
+      // The ready-made (GitHub PDF job) file is frozen for now: the browser always builds the PDF itself,
+      // with the mock's CURRENT vocabulary (fetched fresh, never from the one-hour cache).
+      if (USE_READY_PDF && testLabel && (await downloadReadyPdf(testLabel))) {
         setState('done')
         setOverlay('off')
         return
       }
       let list = items ?? (await loadItems!())
-      if (testLabel && list.some((it) => !it.question.vocab)) {
-        const vmap = await fetchMockVocab(testLabel)
-        list = list.map((it) => (it.question.id && vmap[it.question.id] && !it.question.vocab ? { ...it, question: { ...it.question, vocab: vmap[it.question.id] } } : it))
+      if (testLabel) {
+        const vmap = await fetchMockVocab(testLabel, true)
+        list = list.map((it) => (it.question.id && vmap[it.question.id] ? { ...it, question: { ...it.question, vocab: vmap[it.question.id] } } : it))
       }
       if (list.length === 0) {
         setErrText('Bu mockda savol topilmadi.')

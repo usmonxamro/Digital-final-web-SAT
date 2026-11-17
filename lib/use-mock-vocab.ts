@@ -8,10 +8,10 @@ export type VocabMap = Record<string, VocabEntry[]>
 const cache = new Map<string, Promise<VocabMap>>()
 
 /** One tiny request per mock (shared by the review screen and the PDF button); never part of the exam payload. */
-export function fetchMockVocab(label: string): Promise<VocabMap> {
-  let p = cache.get(label)
+export function fetchMockVocab(label: string, fresh = false): Promise<VocabMap> {
+  let p = fresh ? undefined : cache.get(label)
   if (!p) {
-    p = fetch(`/api/mock-vocab?label=${encodeURIComponent(label)}`)
+    p = fetch(`/api/mock-vocab?label=${encodeURIComponent(label)}`, fresh ? { cache: 'no-store' } : undefined)
       .then((r) => (r.ok ? r.json() : { vocab: {} }))
       .then((d) => (d?.vocab ?? {}) as VocabMap)
       .catch(() => ({}) as VocabMap)

@@ -58,6 +58,6 @@ export async function loadMockPdfItems(label: string): Promise<PdfItem[]> {
   }
   const items = await assemblePdfItems(cfgRes?.config ?? null, get)
   // vocabulary is not part of /api/questions: add it from its own (admin-readable) endpoint
-  const vmap = await fetch(`/api/mock-vocab?label=${enc}`).then((r) => r.json()).then((d) => (d?.vocab ?? {}) as Record<string, NonNullable<Question['vocab']>>).catch(() => ({}) as Record<string, NonNullable<Question['vocab']>>)
+  const vmap = await fetch(`/api/mock-vocab?label=${enc}`, { cache: 'no-store' }).then((r) => r.json()).then((d) => (d?.vocab ?? {}) as Record<string, NonNullable<Question['vocab']>>).catch(() => ({}) as Record<string, NonNullable<Question['vocab']>>)
   return items.map((it) => (it.question.id && vmap[it.question.id] ? { ...it, question: { ...it.question, vocab: vmap[it.question.id] } } : it))
 }
