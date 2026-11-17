@@ -441,3 +441,66 @@ html[data-sp-theme='dark'] .admin-root .adm-btn-primary{background:linear-gradie
 .gridkp-sheet{transform:translateY(105%);visibility:hidden;transition:transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s linear .24s;will-change:transform;touch-action:manipulation}
 .gridkp-sheet.gridkp-open{transform:none;visibility:visible;transition:transform .26s cubic-bezier(.2,.8,.2,1),visibility 0s}
 @media (prefers-reduced-motion:reduce){.gridkp-sheet,.gridkp-sheet.gridkp-open{transition:none}}
+
+/* ---------- «Mock tuzish» konstruktori: savollar lentasi + mock paneli ---------- */
+/* Admin tepa paneli ostida yopishib turishi uchun */
+.admin-root{--mbx-top:66px}
+@media (max-width:860px){.admin-root{--mbx-top:56px}}
+/* Segmentli tanlagich (iOS uslubida) */
+.mbx-seg{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:999px;background:var(--bg-deep);border:1px solid var(--line)}
+.mbx-seg>button{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:800;line-height:1.1;color:var(--ink-soft);white-space:nowrap;cursor:pointer;transition:background .2s,color .2s,box-shadow .2s}
+.mbx-seg>button:hover{color:var(--ink)}
+.mbx-seg>button[data-on='1']{background:#fff;color:var(--green-deep);box-shadow:0 1px 2px rgba(16,36,28,.12),0 1px 6px -2px rgba(16,36,28,.18)}
+html[data-sp-theme='dark'] .admin-root .mbx-seg>button[data-on='1']{background:#1b2420}
+
+/* Tepadagi yopishib turuvchi filtr paneli */
+.mbx-bar{position:sticky;top:var(--mbx-top,66px);z-index:28;margin:0 -2px;padding:10px 12px;border:1px solid var(--line);border-radius:18px;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:saturate(1.5) blur(14px);-webkit-backdrop-filter:saturate(1.5) blur(14px)}
+
+/* Savol kartasi */
+.mbx-card{border:1px solid var(--line);border-radius:20px;background:#fff;overflow:hidden;transition:box-shadow .25s cubic-bezier(.2,.7,.3,1),border-color .25s,transform .25s}
+.mbx-card:hover{border-color:color-mix(in srgb,var(--green) 32%,var(--line));box-shadow:0 14px 34px -22px rgba(16,36,28,.45)}
+.mbx-card.is-picked{border-color:var(--green);box-shadow:0 0 0 1.5px var(--green) inset,0 14px 34px -24px rgba(21,122,82,.5)}
+html[data-sp-theme='dark'] .admin-root .mbx-card{background:#121916}
+@media (prefers-reduced-motion:reduce){.mbx-card{transition:none}}
+
+.mbx-miss{display:inline-flex;align-items:baseline;gap:4px;border-radius:999px;background:#fef2f2;padding:2px 8px;color:#b91c1c;font-size:10.5px;font-weight:800}
+.mbx-miss b{font-size:12.5px;font-variant-numeric:tabular-nums}
+.mbx-miss i{font-style:normal;opacity:.72}
+html[data-sp-theme='dark'] .admin-root .mbx-miss{background:#2a1515;color:#fca5a5}
+.mbx-chip{border-radius:999px;background:var(--bg-deep);padding:2px 8px;font-size:10px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px}
+.mbx-key{border-radius:999px;border:1.5px solid #16a34a;padding:1px 8px;font-size:10.5px;font-weight:800;color:var(--green-deep);background:color-mix(in srgb,#16a34a 10%,transparent)}
+.mbx-in{display:inline-flex;align-items:center;gap:3px;border-radius:999px;background:var(--green);padding:2px 8px;font-size:10.5px;font-weight:800;color:#fff}
+.mbx-used{display:inline-flex;align-items:center;gap:3px;border-radius:999px;background:#fff7ed;padding:1px 7px;font-size:10px;font-weight:800;color:#9a5b17}
+html[data-sp-theme='dark'] .admin-root .mbx-used{background:#2a2113;color:#e0b071}
+.mbx-label{margin-bottom:5px;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-faint)}
+
+/* Qo'shish tugmalari */
+.mbx-add{display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 13px;border-radius:999px;border:1px solid transparent;background:var(--green);color:#fff;font-size:11.5px;font-weight:800;cursor:pointer;transition:filter .18s,transform .12s}
+.mbx-add:hover{filter:brightness(1.1)}
+.mbx-add:active{transform:scale(.97)}
+.mbx-add.is-ghost{background:transparent;border-color:var(--line);color:var(--ink-soft)}
+.mbx-add.is-ghost:hover{border-color:var(--green);color:var(--green-deep);filter:none}
+.mbx-add.is-off{background:transparent;border-color:var(--line);color:var(--ink-soft)}
+.mbx-add.is-off:hover{border-color:#ef4444;color:#dc2626;filter:none}
+
+/* Chizilmaguncha turadigan joy */
+.mbx-skeleton{border-radius:14px;background:linear-gradient(100deg,var(--bg-deep) 30%,color-mix(in srgb,var(--bg-deep) 55%,#fff) 50%,var(--bg-deep) 70%);background-size:220% 100%;animation:mbx-shimmer 1.4s linear infinite}
+@keyframes mbx-shimmer{from{background-position:120% 0}to{background-position:-120% 0}}
+@media (prefers-reduced-motion:reduce){.mbx-skeleton{animation:none}}
+
+/* O'ngdagi mock paneli */
+.mbx-panel{position:sticky;top:calc(var(--mbx-top,66px) + 10px);display:flex;flex-direction:column;max-height:calc(100vh - var(--mbx-top,66px) - 22px);border:1px solid var(--line);border-radius:20px;background:#fff;overflow:hidden;box-shadow:0 18px 44px -34px rgba(16,36,28,.5)}
+html[data-sp-theme='dark'] .admin-root .mbx-panel{background:#121916}
+.mbx-panel.is-floating{position:static;max-height:100%;height:100%;border-radius:0}
+.mbx-drawer{position:absolute;inset:0 0 0 auto;width:min(92vw,400px);height:100%;animation:mbx-slide .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes mbx-slide{from{transform:translateX(100%)}to{transform:none}}
+.mbx-drop{min-height:92px;border:1.5px dashed var(--line);border-radius:14px;padding:8px;background:color-mix(in srgb,var(--bg-deep) 55%,transparent);transition:border-color .18s,background .18s}
+.mbx-drop.is-over{border-color:var(--green);background:var(--green-mist)}
+.mbx-mini{display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:11px;background:#fff;padding:5px 6px;transition:border-color .16s}
+.mbx-mini:hover{border-color:color-mix(in srgb,var(--green) 40%,var(--line))}
+html[data-sp-theme='dark'] .admin-root .mbx-mini{background:#161e1a}
+.mbx-create{display:inline-flex;width:100%;align-items:center;justify-content:center;gap:6px;border-radius:14px;background:var(--green);padding:11px 14px;font-size:13px;font-weight:800;color:#fff;cursor:pointer;transition:filter .18s}
+.mbx-create:hover:not(:disabled){filter:brightness(1.1)}
+.mbx-create:disabled{opacity:.4;cursor:default}
+.mbx-fab{position:fixed;right:16px;bottom:16px;z-index:50;display:inline-flex;align-items:center;gap:7px;border-radius:999px;background:var(--green);padding:11px 17px;font-size:12.5px;font-weight:800;color:#fff;box-shadow:0 10px 26px -10px rgba(21,122,82,.75)}
+.mbx-fab b{border-radius:999px;background:rgba(255,255,255,.22);padding:1px 7px}

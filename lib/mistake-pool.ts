@@ -16,6 +16,8 @@ export type PoolItem = {
   labels: string[]
   students: number
   twins: Twin[]
+  /** Review mocks that already contain a copy of this family — "bu savolni avval ishlatganman". */
+  usedIn: { label: string; at: string | null }[]
 }
 
 type Att = {
@@ -151,6 +153,25 @@ export async function buildMistakePool(
   const twins = new Map<string, Twin[]>()
   let twinsMissing = false
   const fams = top.map(([f]) => f)
+
+  // Which mocks already reuse this family (copies carry family_id; originals do not) — so the admin can
+  // tell at a glance "bu savolni avvalgi takrorlash mockida ishlatganman" and still pick it again.
+  const usedIn = new Map<string, { label: string; at: string | null }[]>()
+  for (let i = 0; i < fams.length; i += 200) {
+    const { data, error: uErr } = await sb
+      .from('questions')
+      .select('family_id, test_label, created_at')
+      .in('family_id', fams.slice(i, i + 200))
+    if (uErr) break // v112 SQL not run yet — no family columns, so nothing is "reused".
+    for (const r of data ?? []) {
+      const f = r.family_id as string
+      const label = (r.test_label as string) ?? ''
+      if (!f || !label) continue
+      const arr = usedIn.get(f) ?? []
+      if (!arr.some((x) => x.label === label)) arr.push({ label, at: (r.created_at as string) ?? null })
+      usedIn.set(f, arr)
+    }
+  }
   for (let i = 0; i < fams.length; i += 200) {
     const { data, error: tErr } = await sb.from('question_twins').select('*').in('family_id', fams.slice(i, i + 200)).order('variant')
     if (tErr) {
@@ -178,6 +199,7 @@ export async function buildMistakePool(
       labels: [...a.labels],
       students: a.who.size,
       twins: twins.get(f) ?? [],
+      usedIn: (usedIn.get(f) ?? []).sort((x, y) => (y.at ?? '').localeCompare(x.at ?? '')),
     })
   }
   return { items, attempts: atts.length, twinsMissing }
