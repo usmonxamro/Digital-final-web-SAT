@@ -1,0 +1,1122 @@
+[
+ {
+  "sourceId": "f3df1518-2fe5-4fd0-8c6f-4c6e7b36e48d",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "The price of an item increased by $p$% from $\\char36$45 to $\\char36$48. What is the value of $p$?",
+  "correctValue": "20/3",
+  "explanation": "$p=\\dfrac{48-45}{45}\\cdot100=\\dfrac{20}{3}$."
+ },
+ {
+  "sourceId": "3d494dc2-70e4-4ddd-af1e-4779a4f52ef8",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "For the given function $f$, the value of $f(x)$ increases by $p$% for every increase of $x$ by 6. What is the value of $p$?",
+  "equations": [
+   "f(x)=(41)(1.35)^{\\frac{x}{6}}"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "6"
+   },
+   {
+    "id": "B",
+    "text": "35"
+   },
+   {
+    "id": "C",
+    "text": "41"
+   },
+   {
+    "id": "D",
+    "text": "135"
+   }
+  ],
+  "correct": "B",
+  "explanation": "Every increase of $x$ by 6 multiplies $f$ by $1.35$, so $f$ increases by $35\\%$."
+ },
+ {
+  "sourceId": "7e81679e-a1b9-4d1b-bb4d-5b810ac47b9c",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "Line $j$ is defined by $3x+7y=42$. Line $k$ is parallel to line $j$ in the $xy$-plane. An equation of line $k$ is $15x+ry=20$, where $r$ is a constant. If line $k$ passes through the point $(0,b)$, what is the value of $b$?",
+  "correctValue": "4/7",
+  "explanation": "Parallel lines: $15=5\\cdot3$, so $r=5\\cdot7=35$. At $x=0$: $35b=20$, so $b=\\dfrac{4}{7}$."
+ },
+ {
+  "sourceId": "a8e8e960-ca58-440b-b5da-170f93fe9bc7",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The product of a positive number $x$ and the number that is 5 less than twice $x$ is 322. What is the value of $x$?",
+  "correctValue": "14",
+  "explanation": "$x(2x-5)=322\\Rightarrow 2x^2-5x-322=0\\Rightarrow(x-14)(2x+23)=0$. Since $x>0$, $x=14$."
+ },
+ {
+  "sourceId": "d3ddeb64-5eb1-41ea-b245-bdad13e9994e",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "$x$ | $g(x)$\n$-14$ | 2\n$-6$ | 0\n10 | 4\n\nThe table shows three values of $x$ and their corresponding values of $g(x)$, where $g(x)=\\frac{f(x)}{x+2}$ and $f$ is a linear function. What is the $y$-intercept of the graph of $y=f(x)$ in the $xy$-plane?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "(0,-18)"
+   },
+   {
+    "id": "B",
+    "tex": "(0,6)"
+   },
+   {
+    "id": "C",
+    "tex": "(0,18)"
+   },
+   {
+    "id": "D",
+    "tex": "(0,36)"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$f(x)=g(x)(x+2)$: $f(-14)=-24$, $f(-6)=0$, $f(10)=48$. Slope $=\\dfrac{0-(-24)}{-6-(-14)}=3$, so $f(x)=3(x+6)$ and $f(0)=18$."
+ },
+ {
+  "sourceId": "facb30e1-e3ba-4329-b9d2-27250358b4e7",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "At the beginning of the year, Imani has $\\char36$240 in her account. Each month this year, she will deposit between $\\char36$25 and $\\char36$55 into the account. Which inequality represents all possibilities for the total amount of money $x$, in dollars, in Imani's account after 8 months of deposits this year?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "x\\le 440"
+   },
+   {
+    "id": "B",
+    "tex": "x\\ge 680"
+   },
+   {
+    "id": "C",
+    "tex": "240\\le x\\le 640"
+   },
+   {
+    "id": "D",
+    "tex": "440\\le x\\le 680"
+   }
+  ],
+  "correct": "D",
+  "explanation": "Minimum: $240+8(25)=440$. Maximum: $240+8(55)=680$. So $440\\le x\\le680$."
+ },
+ {
+  "sourceId": "c18e3b87-e3cd-4f61-810c-077e7ecf7b6d",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "What is the $x$-intercept of the graph of $y=\\frac{52-x}{ax+b}$ in the $xy$-plane, where $a$ and $b$ are positive constants?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "\\left(0,\\frac{52}{b}\\right)"
+   },
+   {
+    "id": "B",
+    "tex": "\\left(-\\frac{b}{a},0\\right)"
+   },
+   {
+    "id": "C",
+    "tex": "(52,0)"
+   },
+   {
+    "id": "D",
+    "tex": "(0,-52)"
+   }
+  ],
+  "correct": "C",
+  "explanation": "Set $y=0$: $52-x=0$, so $x=52$. The intercept is $(52,0)$."
+ },
+ {
+  "sourceId": "1319cc22-cf0a-42a0-ab10-6547805851c3",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "The ratio $x$ to $y$ is equivalent to the ratio 5 to 9. If $x=13t$, what is the value of $y$ in terms of $t$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "\\frac{5}{117}t"
+   },
+   {
+    "id": "B",
+    "tex": "\\frac{117}{5}t"
+   },
+   {
+    "id": "C",
+    "tex": "\\frac{65}{9}t"
+   },
+   {
+    "id": "D",
+    "tex": "\\frac{9}{65}t"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$\\dfrac{x}{y}=\\dfrac{5}{9}\\Rightarrow y=\\dfrac{9x}{5}=\\dfrac{9(13t)}{5}=\\dfrac{117}{5}t$."
+ },
+ {
+  "sourceId": "a9702b2c-8d68-4978-b0c9-9d2218d81b03",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "A car dealership has only sedans, SUVs, and minivans for sale. On Monday, 25% of the vehicles for sale were sedans and 40% were SUVs. If there were 30 sedans for sale at the dealership on Monday, how many minivans were for sale?",
+  "correctValue": "42",
+  "explanation": "Total $=30\\div0.25=120$. Minivans are $100\\%-25\\%-40\\%=35\\%$, so $0.35(120)=42$."
+ },
+ {
+  "sourceId": "27821e8a-dcd9-4bbd-b10f-59e3df0dffd9",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "The table shows the distribution of two types of trees at two different sites.\n | Site A | Site B | Total\nRed maple | 27 | 18 | 45\nChestnut oak | 33 | 22 | 55\nTotal | 60 | 40 | 100\nIf a tree represented in the table is selected at random, what is the probability of selecting a tree from site A, given that the tree is a red maple? (Express your answer as a decimal or fraction, not as a percent.)",
+  "correctValue": "0.6",
+  "explanation": "$\\dfrac{27}{45}=0.6$."
+ },
+ {
+  "sourceId": "afbb76f4-4712-43ad-845c-c9e055934752",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "A beaker containing a liquid is placed on a table. The function $g(t)=310+(372-310)(2.72)^{-0.087t}$ gives the approximate temperature, in kelvins, of the liquid $t$ minutes after the beaker was placed on the table. According to this function, what was the approximate temperature, in kelvins, of the liquid when the beaker was placed on the table?",
+  "correctValue": "372",
+  "explanation": "At $t=0$: $g(0)=310+62(1)=372$."
+ },
+ {
+  "sourceId": "6773a51c-7c7e-4708-b9fd-ba74733728d2",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Algebra",
+  "prompt": "A cable company charges new customers a onetime installation fee and a monthly service fee for cable service. The equation $y=45x+135$ gives the total amount $y$, in dollars, the cable company charges new customers for $x$ months of cable service. What is the amount, in dollars, of the onetime installation fee the cable company charges new customers?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "180"
+   },
+   {
+    "id": "B",
+    "text": "90"
+   },
+   {
+    "id": "C",
+    "text": "135"
+   },
+   {
+    "id": "D",
+    "text": "0"
+   }
+  ],
+  "correct": "C",
+  "explanation": "The fee is the value of $y$ when $x=0$: $135$."
+ },
+ {
+  "sourceId": "fdc2bc0d-3fef-4a23-849c-aa28fe69d25e",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by the given equation, where $a$, $b$, and $c$ are distinct constants. When $a<x<b$, the value of $f(x)$ is positive. The graph of $y=f(x)$ in the $xy$-plane contains the point $(r,s)$, where $r$ and $s$ are constants. If $s=6$, which of the following could be true?\nI. $r<a$\nII. $b<r<c$\nIII. $r>c$",
+  "equations": [
+   "f(x)=2(x-a)(x-b)(x-c)"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "I only"
+   },
+   {
+    "id": "B",
+    "text": "III only"
+   },
+   {
+    "id": "C",
+    "text": "I and III only"
+   },
+   {
+    "id": "D",
+    "text": "II and III only"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$f>0$ on $(a,b)$ means $a<b<c$, and $f>0$ for $x>c$ (leading coefficient positive). For $x<a$ and $b<x<c$, $f<0$. So $f(r)=6>0$ allows only $r>c$ (or $a<r<b$): III only."
+ },
+ {
+  "sourceId": "1d6acffc-db23-4778-8631-f34f78f0a8a3",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Advanced Math",
+  "prompt": "The $y$-intercept of the graph of $y=x^2+87$ in the $xy$-plane is $(0,y)$. What is the value of $y$?",
+  "correctValue": "87",
+  "explanation": "At $x=0$: $y=87$."
+ },
+ {
+  "sourceId": "bd090a04-8786-4102-b44e-25db62cade8a",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The function $f(x)=\\frac{1}{2}(x-4)^2+3$ gives a toy car's height above the ground, $f(x)$, in inches, $x$ seconds after it started moving on an elevated track, where $0\\le x\\le 9$. Which of the following is the best interpretation of the vertex of the graph of $y=f(x)$ in the $xy$-plane?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "The toy car's minimum height was 3 inches above the ground."
+   },
+   {
+    "id": "B",
+    "text": "The toy car's minimum height was 4 inches above the ground."
+   },
+   {
+    "id": "C",
+    "text": "The toy car's height was 3 inches above the ground when it started moving."
+   },
+   {
+    "id": "D",
+    "text": "The toy car's height was 4 inches above the ground when it started moving."
+   }
+  ],
+  "correct": "A",
+  "explanation": "The vertex is $(4,3)$ and the parabola opens up, so the minimum height is 3 inches (reached at 4 seconds)."
+ },
+ {
+  "sourceId": "b407cb08-925f-4a94-b76a-b6e064623965",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given equation, $k$ is a constant. The equation has exactly one real solution. What is the minimum possible value of $4k$?",
+  "equations": [
+   "\\sqrt{k-x}=17-x"
+  ],
+  "correctValue": "67",
+  "explanation": "Square: $(17-x)^2=k-x\\Rightarrow x^2-33x+289-k=0$. One solution: discriminant $1089-4(289-k)=0\\Rightarrow k=\\dfrac{67}{4}$ (root $x=16.5\\le17$ is valid). Minimum $4k=67$."
+ },
+ {
+  "sourceId": "23a094c2-56a0-4e23-936b-fbd403b80c04",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "A solution to the given system of equations is $(x,y)$. What is a possible value of $x$?",
+  "equations": [
+   "\\begin{cases}x+21=y\\\\(x+21)^2=y\\end{cases}"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "21"
+   },
+   {
+    "id": "B",
+    "text": "2"
+   },
+   {
+    "id": "C",
+    "text": "0"
+   },
+   {
+    "id": "D",
+    "text": "-21"
+   }
+  ],
+  "correct": "D",
+  "explanation": "$y=y^2\\Rightarrow y=0$ or $1$, so $x+21=0$ or $1$: $x=-21$ or $-20$. Only $-21$ is listed."
+ },
+ {
+  "sourceId": "0162c3f4-4704-4e52-88e5-26e027058912",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "In the given system of equations, $a$ is a constant. The graphs of the equations in the given system intersect at exactly one point $(x,y)$ in the $xy$-plane. What is the value of $x$?",
+  "equations": [
+   "\\begin{cases}y=x^2-7x+12\\\\y=x+a\\end{cases}"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "-4"
+   },
+   {
+    "id": "B",
+    "tex": "8"
+   },
+   {
+    "id": "C",
+    "tex": "4"
+   },
+   {
+    "id": "D",
+    "tex": "-8"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$x^2-7x+12=x+a\\Rightarrow x^2-8x+12-a=0$. One solution means a double root at $x=\\dfrac{8}{2}=4$."
+ },
+ {
+  "sourceId": "281fa67f-e8f8-447c-80c8-6ca3eee2a3eb",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "A quadratic function models the height, in feet, of an object above the ground in terms of the time, in seconds, after the object was launched. According to the model, the object was launched from a height of 50 feet and reached its maximum height of 650 feet 5 seconds after it was launched. Based on the model, what was the height, in feet, of the object 9 seconds after it was launched?",
+  "correctValue": "266",
+  "explanation": "$f(t)=a(t-5)^2+650$, $f(0)=50\\Rightarrow25a=-600$, $a=-24$. $f(9)=-24(16)+650=266$."
+ },
+ {
+  "sourceId": "28b999ca-2052-45d3-9bde-f26ee847afaa",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "What is the value of $x$?",
+  "equations": [
+   "(4x-3)^2-14(4x-3)+49=0"
+  ],
+  "correctValue": "5/2",
+  "explanation": "Perfect square: $(4x-3-7)^2=0\\Rightarrow4x=10$, $x=\\dfrac{5}{2}$."
+ },
+ {
+  "sourceId": "29fbd977-657a-408d-9bee-99dfb8c678ab",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "For the quadratic function $f$, the table shows three values of $x$ and their corresponding values of $f(x)$. Which equation defines $f$?\n$x$ | $f(x)$\n$-1$ | 6\n0 | 7\n1 | 14",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "f(x)=3x^2-4x+7"
+   },
+   {
+    "id": "B",
+    "tex": "f(x)=3x^2+4x+7"
+   },
+   {
+    "id": "C",
+    "tex": "f(x)=x^2+7x+7"
+   },
+   {
+    "id": "D",
+    "tex": "f(x)=3x^2+x+7"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$f(0)=7\\Rightarrow c=7$. $a+b+7=14$ and $a-b+7=6$ give $a=3$, $b=4$."
+ },
+ {
+  "sourceId": "a043cae6-62c7-449b-a187-6a1052289e6a",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given system of equations, $a$ is a positive integer constant. The system has no real solutions. What is the least possible value of $a$?",
+  "equations": [
+   "\\begin{cases}y=-2\\\\y=x^2+10x+a\\end{cases}"
+  ],
+  "correctValue": "24",
+  "explanation": "$x^2+10x+a+2=0$ has no real solution when $100-4(a+2)<0\\Rightarrow a>23$. Least integer: $24$."
+ },
+ {
+  "sourceId": "9615df07-ce1c-4ac5-ae09-3ef303100eba",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The function $g$ is defined by $g(x)=(x+12)(t-x)$, where $t$ is a constant. In the $xy$-plane, the graph of $y=g(x)$ passes through the point $(18,0)$. What is the value of $g(0)$?",
+  "correctValue": "216",
+  "explanation": "$g(18)=0$ with $x+12=30\\ne0$, so $t=18$. $g(0)=12\\cdot18=216$."
+ },
+ {
+  "sourceId": "3b3b88a3-03a9-4b00-b29d-e93f41e7ec9f",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by $f(x)=6x^2-17x+9$. What is the value of $f(0)$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "6"
+   },
+   {
+    "id": "B",
+    "tex": "0"
+   },
+   {
+    "id": "C",
+    "tex": "9"
+   },
+   {
+    "id": "D",
+    "tex": "-17"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$f(0)=9$."
+ },
+ {
+  "sourceId": "84083129-6072-4c6a-a5ee-aeacb1791c1f",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given equation, $r$ and $s$ are positive constants. The product of the solutions to the given equation is $krs$, where $k$ is a constant. What is the value of $k$?",
+  "equations": [
+   "15x^2+(15s+r)x+rs=0"
+  ],
+  "correctValue": "1/15",
+  "explanation": "Product of roots $=\\dfrac{rs}{15}$, so $k=\\dfrac{1}{15}$."
+ },
+ {
+  "sourceId": "7b9ec012-a193-47c6-86ae-871f825c4924",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given equation, $k$ is an integer constant. If the equation has no real solution, what is the least possible value of $k$?",
+  "equations": [
+   "x(kx-18)=-7"
+  ],
+  "correctValue": "12",
+  "explanation": "$kx^2-18x+7=0$. No real solution: $324-28k<0\\Rightarrow k>\\dfrac{81}{7}\\approx11.57$. Least integer: $12$."
+ },
+ {
+  "sourceId": "743f7f4f-9218-48d4-9623-d7d739f3a609",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given equation, $b$ is a positive integer. The equation has no real solution. What is the largest possible value of $b$?",
+  "equations": [
+   "-5x^2+bx-20=0"
+  ],
+  "correctValue": "19",
+  "explanation": "Discriminant $b^2-4(-5)(-20)=b^2-400<0\\Rightarrow b<20$. Largest integer: $19$."
+ },
+ {
+  "sourceId": "4dccd6ce-e65b-480a-8277-eb430e894581",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "What is the greatest solution to the given equation?",
+  "equations": [
+   "3x^2+2x-8=0"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "-2"
+   },
+   {
+    "id": "B",
+    "tex": "\\dfrac{4}{3}"
+   },
+   {
+    "id": "C",
+    "tex": "-\\dfrac{4}{3}"
+   },
+   {
+    "id": "D",
+    "tex": "1"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$(3x-4)(x+2)=0\\Rightarrow x=\\dfrac{4}{3}$ or $x=-2$. Greatest: $\\dfrac{4}{3}$."
+ },
+ {
+  "sourceId": "5b596bef-789c-4f47-a156-cd5d93ed8c8c",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ models the depth below sea level, in meters, of a certain dolphin $x$ minutes after the dolphin dives into the water. What is the best interpretation of $f(5)=200$ in this context?",
+  "equations": [
+   "f(x)=-4x^2+60x"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "Approximately 5 minutes after diving into the water, the dolphin returns to sea level."
+   },
+   {
+    "id": "B",
+    "text": "200 minutes after the dolphin dives into the water, its estimated depth is 5 meters below sea level."
+   },
+   {
+    "id": "C",
+    "text": "5 minutes after the dolphin dives into the water, its estimated depth is 200 meters below sea level."
+   },
+   {
+    "id": "D",
+    "text": "The dolphin reaches an estimated maximum depth of 200 meters below sea level."
+   }
+  ],
+  "correct": "C",
+  "explanation": "$x$ is minutes and $f(x)$ is depth in meters, so $f(5)=200$ means 5 minutes after diving the depth is 200 meters."
+ },
+ {
+  "sourceId": "04242dfa-b586-4192-8945-5f36d44be511",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Advanced Math",
+  "prompt": "How many distinct real solutions does the given equation have?",
+  "equations": [
+   "(x+9)^2=25"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "Exactly one"
+   },
+   {
+    "id": "B",
+    "text": "Zero"
+   },
+   {
+    "id": "C",
+    "text": "Exactly two"
+   },
+   {
+    "id": "D",
+    "text": "Infinitely many"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$x+9=\\pm5\\Rightarrow x=-4$ or $x=-14$: exactly two."
+ },
+ {
+  "sourceId": "fd530212-646c-45a8-81ab-892446b7bc45",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given equation, $c$ is a constant. If the equation has exactly one solution, what is the value of $c$?",
+  "equations": [
+   "\\frac{1}{cx}=\\frac{x}{64}+\\frac{1}{c}"
+  ],
+  "correctValue": "-16",
+  "explanation": "Multiply by $64cx$: $64=cx^2+64x\\Rightarrow cx^2+64x-64=0$. One solution: $64^2+4c(64)=0\\Rightarrow c=-16$."
+ },
+ {
+  "sourceId": "051a55f7-e3d7-432e-8a78-71baaf250da5",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Advanced Math",
+  "prompt": "An object is kicked from a platform. The equation $h=-4.9t^2+7t+15$ represents this situation, where $h$ is the height of the object above the ground, in meters, $t$ seconds after it is kicked. Which number represents the height, in meters, from which the object was kicked?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "7"
+   },
+   {
+    "id": "B",
+    "text": "15"
+   },
+   {
+    "id": "C",
+    "text": "4.9"
+   },
+   {
+    "id": "D",
+    "text": "0"
+   }
+  ],
+  "correct": "B",
+  "explanation": "At $t=0$, $h=15$."
+ },
+ {
+  "sourceId": "f4f0c3bc-5328-4a07-aaec-76404b2b70c7",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "In the given system of equations, $a$ is a constant. The graphs of the equations in the given system intersect at exactly one point $(x,y)$ in the $xy$-plane. What is the value of $x$?",
+  "equations": [
+   "\\begin{cases}y=2x^2-19x+30\\\\y=x+a\\end{cases}"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "3"
+   },
+   {
+    "id": "B",
+    "text": "5"
+   },
+   {
+    "id": "C",
+    "text": "7"
+   },
+   {
+    "id": "D",
+    "text": "9"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$2x^2-20x+30-a=0$ has a double root at $x=\\dfrac{20}{4}=5$."
+ },
+ {
+  "sourceId": "0ed6fd35-b18e-4e5f-8e74-907207ed865b",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by $f(x)=ax^2+bx+c$, where $a$, $b$, and $c$ are constants. The graph of $y=f(x)$ in the $xy$-plane passes through the points $(7,0)$ and $(-4,0)$. If $a$ is an integer greater than 1, which of the following could be the value of $a+b$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "4"
+   },
+   {
+    "id": "B",
+    "text": "-2"
+   },
+   {
+    "id": "C",
+    "text": "-4"
+   },
+   {
+    "id": "D",
+    "text": "6"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$f(x)=a(x-7)(x+4)=a(x^2-3x-28)$, so $b=-3a$ and $a+b=-2a$. For $a=2$: $-4$."
+ },
+ {
+  "sourceId": "0fe9dbd6-e88f-47d3-a5f7-6caae7cfdaee",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "If $(x+7)^2=58$, what is the value of $x^2+14x$?",
+  "correctValue": "9",
+  "explanation": "$x^2+14x+49=58\\Rightarrow x^2+14x=9$."
+ },
+ {
+  "sourceId": "f0fb53e9-4717-4570-9bd7-16f8a94c941e",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "If $4x^2-12x-28=0$, what is the value of $x^2-3x$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "0"
+   },
+   {
+    "id": "B",
+    "text": "3"
+   },
+   {
+    "id": "C",
+    "text": "7"
+   },
+   {
+    "id": "D",
+    "text": "28"
+   }
+  ],
+  "correct": "C",
+  "explanation": "Divide by 4: $x^2-3x-7=0$, so $x^2-3x=7$."
+ },
+ {
+  "sourceId": "14539105-f39f-4922-bbb6-661e3bab6cbd",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The equation $y=-4(x-6.5)^2+7200$ gives the estimated height above the ground, $y$, in meters, of a plane, where $x$ is the number of seconds since it started a parabolic maneuver. If this equation is graphed in the $xy$-plane, which of the following is the best interpretation of the vertex of the graph?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "The plane reached an estimated maximum height of 7200 meters 4 seconds after it started the parabolic maneuver."
+   },
+   {
+    "id": "B",
+    "text": "The plane reached an estimated maximum height of 6.5 meters 7200 seconds after it started the parabolic maneuver."
+   },
+   {
+    "id": "C",
+    "text": "The plane reached an estimated maximum height of 7200 meters 6.5 seconds after it started the parabolic maneuver."
+   },
+   {
+    "id": "D",
+    "text": "The plane reached an estimated maximum height of 4 meters 7200 seconds after it started the parabolic maneuver."
+   }
+  ],
+  "correct": "C",
+  "explanation": "Vertex $(6.5,7200)$ with $a<0$: maximum height 7200 meters at 6.5 seconds."
+ },
+ {
+  "sourceId": "e77a8bc9-d367-4756-bc9b-030b0b7c4600",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The functions $f$ and $g$ are given. In function $g$, $r$ is a constant. If $f(x)\\cdot g(x)=2x^3-2x+120$, what is the value of $r$?",
+  "equations": [
+   "f(x)=x+4",
+   "g(x)=2x^2-rx+30"
+  ],
+  "correctValue": "8",
+  "explanation": "$(x+4)(2x^2-rx+30)=2x^3+(8-r)x^2+(30-4r)x+120$. Matching $x^2$: $8-r=0$, $r=8$ (check: $30-32=-2$ ✓)."
+ },
+ {
+  "sourceId": "189df124-7094-4d69-b428-2348dd520d93",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by $f(x)=3x^2$. What is the value of $f(9)$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "27"
+   },
+   {
+    "id": "B",
+    "text": "54"
+   },
+   {
+    "id": "C",
+    "text": "243"
+   },
+   {
+    "id": "D",
+    "text": "81"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$f(9)=3\\cdot81=243$."
+ },
+ {
+  "sourceId": "18df647e-f3a9-4f1d-996d-2ea73aaba38a",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "An object is launched into the air from ground level. According to a quadratic model, 2.5 seconds after the object is launched, it reaches its maximum height of 100 feet above ground level. Which equation represents this quadratic model, where $f(t)$ is the object's height, in feet above ground level, $t$ seconds after it was launched?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "f(t)=-16(t+2.5)^2+100"
+   },
+   {
+    "id": "B",
+    "tex": "f(t)=-16(t-2.5)^2+100"
+   },
+   {
+    "id": "C",
+    "tex": "f(t)=16(t+2.5)^2+100"
+   },
+   {
+    "id": "D",
+    "tex": "f(t)=(t-2.5)^2+100"
+   }
+  ],
+  "correct": "B",
+  "explanation": "Vertex form with vertex $(2.5,100)$ and $a<0$; $f(0)=-16(6.25)+100=0$ ✓ (ground level)."
+ },
+ {
+  "sourceId": "d8b09c9f-c337-43c0-bc32-a78177904043",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "What is the minimum value of the given function?",
+  "equations": [
+   "p(x)=2x^2+16x+5"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "-59"
+   },
+   {
+    "id": "B",
+    "tex": "-5"
+   },
+   {
+    "id": "C",
+    "tex": "-27"
+   },
+   {
+    "id": "D",
+    "tex": "5"
+   }
+  ],
+  "correct": "C",
+  "explanation": "Vertex at $x=-4$: $p(-4)=32-64+5=-27$."
+ },
+ {
+  "sourceId": "cd04756d-c760-4179-93b7-59d0292d196a",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "In the equation $3x^2+18x+c=0$, $c$ is a constant. If the equation has exactly one real solution, what is the value of $c$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "0"
+   },
+   {
+    "id": "B",
+    "text": "3"
+   },
+   {
+    "id": "C",
+    "text": "27"
+   },
+   {
+    "id": "D",
+    "text": "54"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$18^2-4(3)c=0\\Rightarrow c=27$."
+ },
+ {
+  "sourceId": "cc78bff3-30f8-4f4b-996c-43be5be93fd8",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Advanced Math",
+  "prompt": "What is the minimum value of the given function?",
+  "equations": [
+   "f(x)=(x-3)^2+4"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "3"
+   },
+   {
+    "id": "B",
+    "text": "4"
+   },
+   {
+    "id": "C",
+    "text": "7"
+   },
+   {
+    "id": "D",
+    "text": "-3"
+   }
+  ],
+  "correct": "B",
+  "explanation": "Vertex form: minimum value is $4$."
+ },
+ {
+  "sourceId": "67f0423a-6d29-42d7-a243-ad9b62630786",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by $f(x)=6x^2$. What is the value of $f(11)$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "66"
+   },
+   {
+    "id": "B",
+    "text": "132"
+   },
+   {
+    "id": "C",
+    "text": "726"
+   },
+   {
+    "id": "D",
+    "text": "121"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$f(11)=6\\cdot121=726$."
+ },
+ {
+  "sourceId": "25afd50f-4641-4d30-bca5-36da4e60360a",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "A boat rental company charges $\\char36$80 for the first 3 hours of renting a boat and $\\char36$26 for each additional half hour, plus a fuel charge. Which equation represents this situation, where $y$ is the total cost, in dollars, of renting a boat for $x$ hours, $f$ is the fuel charge, in dollars, and $x\\ge3$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "y=80+26(x-3)+f"
+   },
+   {
+    "id": "B",
+    "tex": "y=80+52x+f"
+   },
+   {
+    "id": "C",
+    "tex": "y=80+26(2x-3)+f"
+   },
+   {
+    "id": "D",
+    "tex": "y=80+52(x-3)+f"
+   }
+  ],
+  "correct": "D",
+  "explanation": "Each additional hour costs $2(26)=52$ and there are $x-3$ additional hours: $y=80+52(x-3)+f$."
+ },
+ {
+  "sourceId": "e32f9e52-ff0e-415f-abf0-021b93a61e0b",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given equation, $r$ is a constant. The equation has exactly one real solution. What is the value of $r$?",
+  "equations": [
+   "5x^2+21=40x+r"
+  ],
+  "correctValue": "-59",
+  "explanation": "$5x^2-40x+21-r=0$; one solution: $1600-20(21-r)=0\\Rightarrow r=-59$."
+ },
+ {
+  "sourceId": "91aaa8bd-bd0f-42f5-870b-1c24e824a775",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "Container P holds $k$ liters of water. Container Q holds 60% of the amount of water in container P, and container R holds 130% of the amount of water in container Q. The positive difference between the amount of water in container R and the amount of water in container P is 17.6 liters. What is the value of $k$?",
+  "correctValue": "80",
+  "explanation": "$R=1.3(0.6k)=0.78k$; $|k-0.78k|=0.22k=17.6\\Rightarrow k=80$."
+ },
+ {
+  "sourceId": "aac999be-8ff2-487c-8362-c312c892c49b",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "A laboratory culture of bacteria doubles in size every 4 hours. The function $P(t)=200(2)^{t/4}$ gives the approximate number of bacteria in the culture $t$ hours after the culture was started. Which statement is the best interpretation of $P(5\\cdot4)=6{,}400$ in this context?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "The culture contains approximately 6,400 bacteria 5 hours after it was started."
+   },
+   {
+    "id": "B",
+    "text": "The culture contains approximately 5 times 6,400 bacteria 20 hours after it was started."
+   },
+   {
+    "id": "C",
+    "text": "The culture contains approximately 6,400 bacteria 5 four-hour periods after it was started."
+   },
+   {
+    "id": "D",
+    "text": "The number of bacteria in the culture increases by approximately 6,400 every 4 hours."
+   }
+  ],
+  "correct": "C",
+  "explanation": "$t=5\\cdot4=20$ hours, i.e. 5 four-hour periods, and $P=6{,}400$ bacteria."
+ },
+ {
+  "sourceId": "3d7e5cfa-b93f-43ca-a8b1-88b4dbdb36c8",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by $f(x)=(x-3)(x-5)(x+4)$. In the $xy$-plane, the graph of $y=h(x)$ is the result of translating the graph of $y=f(x)$ up 9 units. What is the $y$-coordinate of the $y$-intercept of the graph of $y=h(x)$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "60"
+   },
+   {
+    "id": "B",
+    "text": "69"
+   },
+   {
+    "id": "C",
+    "text": "9"
+   },
+   {
+    "id": "D",
+    "text": "0"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$f(0)=(-3)(-5)(4)=60$; $h(0)=60+9=69$."
+ },
+ {
+  "sourceId": "92986d51-5744-4a4d-859f-09c82cce97b9",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "A bag contains 20 cards, each labeled with a different whole number from 1 through 20. If one card is selected at random, what is the probability that the number on the card is a multiple of 3 or a multiple of 5?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "\\dfrac{3}{10}"
+   },
+   {
+    "id": "B",
+    "tex": "\\dfrac{2}{5}"
+   },
+   {
+    "id": "C",
+    "tex": "\\dfrac{9}{20}"
+   },
+   {
+    "id": "D",
+    "tex": "\\dfrac{1}{2}"
+   }
+  ],
+  "correct": "C",
+  "explanation": "Multiples of 3: 6; of 5: 4; of both (15): 1. Total $6+4-1=9$, probability $\\dfrac{9}{20}$."
+ },
+ {
+  "sourceId": "a93076ab-87d7-4b98-b855-9f4023ac9192",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "The mass of object A is 350% of the mass of object B, and the mass of object A is 0.07% of the mass of object C. If the mass of object C is $p$% of the mass of object B, what is the value of $\\dfrac{p}{1{,}000}$?",
+  "correctValue": "500",
+  "explanation": "$A=3.5B=0.0007C\\Rightarrow C=5000B$, so $p=500{,}000$ and $\\dfrac{p}{1000}=500$."
+ },
+ {
+  "sourceId": "b615b67c-8371-4461-978f-348515bc997b",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "When a scientist began observing a sample of an isotope, the mass of the sample was 960,000 milligrams. The mass of the sample decreases by half approximately every 4 days. Which of the following is closest to the mass, in milligrams, of the sample 28 days after the scientist began observing the sample?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "30,000"
+   },
+   {
+    "id": "B",
+    "text": "34,286"
+   },
+   {
+    "id": "C",
+    "text": "7,500"
+   },
+   {
+    "id": "D",
+    "text": "137,143"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$28\\div4=7$ half-lives: $960{,}000\\cdot(1/2)^7=7{,}500$."
+ },
+ {
+  "sourceId": "bc510c8f-757f-47a8-95d9-1887e118e7ea",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "A number $p$ is 140% greater than a positive number $q$. A number $r$ is 25% less than $p$. A number $s$ is 20% greater than $r$. The number $s$ is how many times the number $q$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "1.62"
+   },
+   {
+    "id": "B",
+    "text": "2.16"
+   },
+   {
+    "id": "C",
+    "text": "2.52"
+   },
+   {
+    "id": "D",
+    "text": "3.12"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$p=2.4q$, $r=0.75p=1.8q$, $s=1.2r=2.16q$."
+ },
+ {
+  "sourceId": "9f02f3d5-a220-4307-a6b4-22841db6c432",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "A circle has a circumference of $38\\pi$ centimeters. What is the diameter, in centimeters, of the circle?",
+  "correctValue": "38",
+  "explanation": "$C=\\pi d\\Rightarrow d=38$."
+ }
+]

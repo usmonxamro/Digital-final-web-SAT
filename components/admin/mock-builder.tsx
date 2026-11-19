@@ -230,6 +230,7 @@ function Feed({
   const [onlyTwins, setOnlyTwins] = useState(false)
   const [usedMode, setUsedMode] = useState<UsedMode>('new')
   const [view, setView] = useState<ViewMode>('smart')
+  const [sort, setSort] = useState<'recent' | 'misses'>('recent')
   const [data, setData] = useState<{ items: PoolItem[]; groups: { chatId: number; title: string }[]; attempts: number; twinsMissing?: boolean } | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -270,15 +271,20 @@ function Feed({
     return { new: fresh, used: base.length - fresh, all: base.length }
   }, [base])
 
-  const items = useMemo(
-    () => base.filter((it) => (usedMode === 'all' ? true : usedMode === 'used' ? !!it.usedIn?.length : !it.usedIn?.length)),
-    [base, usedMode],
-  )
+  // Eng oxirgi xato qilingan savollar tepada (standart); ikkinchi variant — eng ko‘p xato qilinganlar.
+  const items = useMemo(() => {
+    const list = base.filter((it) => (usedMode === 'all' ? true : usedMode === 'used' ? !!it.usedIn?.length : !it.usedIn?.length))
+    return [...list].sort((a, b) =>
+      sort === 'recent'
+        ? (b.lastAt ?? '').localeCompare(a.lastAt ?? '') || (b.misses ?? 0) - (a.misses ?? 0)
+        : (b.misses ?? 0) - (a.misses ?? 0) || (b.lastAt ?? '').localeCompare(a.lastAt ?? ''),
+    )
+  }, [base, usedMode, sort])
 
   const domains = useMemo(() => [...new Set((data?.items ?? []).map((it) => it.question.domain).filter(Boolean) as string[])].sort(), [data])
 
   // Filtr o‘zgarsa — lentani boshidan ko‘rsatamiz.
-  useEffect(() => setLimit(16), [q, domain, onlyTwins, usedMode, chat, days, min])
+  useEffect(() => setLimit(16), [q, domain, onlyTwins, usedMode, sort, chat, days, min])
 
   const sentinel = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -357,6 +363,10 @@ function Feed({
                 Kamida {n} xato
               </option>
             ))}
+          </select>
+          <select value={sort} onChange={(e) => setSort(e.target.value as 'recent' | 'misses')} className="adm-input !h-8 !w-auto text-[12px]" title="Tartib">
+            <option value="recent">Eng oxirgi xatolar tepada</option>
+            <option value="misses">Eng ko‘p xato tepada</option>
           </select>
           <select value={domain} onChange={(e) => setDomain(e.target.value)} className="adm-input !h-8 !w-auto max-w-[190px] text-[12px]">
             <option value="">Barcha mavzular</option>
