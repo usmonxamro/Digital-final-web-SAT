@@ -1,0 +1,1014 @@
+[
+ {
+  "sourceId": "effbd5c3-28d9-40b4-afb7-2332e43cb338",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Algebra",
+  "prompt": "The function $f$ is defined by the equation $f(x)=640x$. What is the value of $f(12)$?",
+  "correctValue": "7680",
+  "explanation": "$f(12)=640\\cdot12=7680$."
+ },
+ {
+  "sourceId": "f13e47ce-24b8-4561-823d-d02f10d4c0e6",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "The measure of angle $S$ is $\\frac{5\\pi}{12}$ radians. The measure of angle $T$ is 3 times the measure of angle $S$. Which expression represents the measure, in degrees, of angle $T$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "\\frac{5}{12}\\times 90\\times 3"
+   },
+   {
+    "id": "B",
+    "tex": "\\frac{5}{12}\\times 180\\times 3"
+   },
+   {
+    "id": "C",
+    "tex": "\\frac{5}{12\\pi}\\times 180\\times 3"
+   },
+   {
+    "id": "D",
+    "tex": "\\frac{5}{12}\\times 180"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$\\pi$ radians $=180^\\circ$, so $S=\\frac{5}{12}\\cdot180^\\circ$ and $T=3S=\\frac{5}{12}\\times180\\times3$."
+ },
+ {
+  "sourceId": "0ffd13af-8635-4d22-8300-dabeccc8c7d5",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "How many solutions does the equation $2(7x-14)=3(4x-5)$ have?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "Exactly one"
+   },
+   {
+    "id": "B",
+    "text": "Exactly two"
+   },
+   {
+    "id": "C",
+    "text": "Infinitely many"
+   },
+   {
+    "id": "D",
+    "text": "Zero"
+   }
+  ],
+  "correct": "A",
+  "explanation": "$14x-28=12x-15\\Rightarrow2x=13$, so exactly one solution."
+ },
+ {
+  "sourceId": "91964819-641f-4129-9a70-75ba810e3529",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "What is the sum of the solutions to the given equation?",
+  "equations": [
+   "2x^{2}-3x+10=3x(x-2)"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "3"
+   },
+   {
+    "id": "B",
+    "text": "10"
+   },
+   {
+    "id": "C",
+    "text": "6"
+   },
+   {
+    "id": "D",
+    "text": "-3"
+   }
+  ],
+  "correct": "A",
+  "explanation": "$2x^2-3x+10=3x^2-6x\\Rightarrow x^2-3x-10=0$, so the roots are $5$ and $-2$; their sum is $3$."
+ },
+ {
+  "sourceId": "d870f4b1-8420-4461-822e-7343771c0545",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "A right triangle has legs with lengths of $18$ centimeters and $30$ centimeters. If the length of this triangle's hypotenuse, in centimeters, can be written in the form $k\\sqrt{d}$, where $k$ and $d$ are integers, what is the value of $d$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "17"
+   },
+   {
+    "id": "B",
+    "text": "51"
+   },
+   {
+    "id": "C",
+    "text": "34"
+   },
+   {
+    "id": "D",
+    "text": "68"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$18^2+30^2=1224=36\\cdot34$, so the hypotenuse is $6\\sqrt{34}$ and $d=34$."
+ },
+ {
+  "sourceId": "72cc72ab-8717-46ce-991e-2223a4425721",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "The table shows the distribution of people in a certain city by age group.\nAge group | Proportion\nLess than $18$ years old | 31%\n$18$–$40$ years old | 26%\n$41$–$65$ years old | 25%\nGreater than $65$ years old | 18%\nIf a person in this city is selected at random, which of the following is closest to the probability of selecting a person who is greater than $65$ years old, given that the person is at least $18$ years old?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "0.18"
+   },
+   {
+    "id": "B",
+    "text": "0.26"
+   },
+   {
+    "id": "C",
+    "text": "0.31"
+   },
+   {
+    "id": "D",
+    "text": "0.69"
+   }
+  ],
+  "correct": "B",
+  "explanation": "At least 18: $26+25+18=69\\%$. $\\dfrac{18}{69}\\approx0.26$."
+ },
+ {
+  "sourceId": "ef4d80f4-4ff5-48c9-81f5-a6bf900bd12c",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Algebra",
+  "prompt": "A plumbing company charges its customers $\\char36$98 for the first hour of a plumbing service call and $\\char36$35 for each additional hour, plus the cost of plumbing parts. Which equation represents the total cost $y$, in dollars, for an $x$-hour plumbing service call where the cost of parts was $z$ and $x\\ge 1$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "y=35x+z"
+   },
+   {
+    "id": "B",
+    "tex": "y=35x+z+63"
+   },
+   {
+    "id": "C",
+    "tex": "y=98x+z"
+   },
+   {
+    "id": "D",
+    "tex": "y=98x+35z+63"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$y=98+35(x-1)+z=35x+z+63$."
+ },
+ {
+  "sourceId": "04a971a3-bac0-4005-a165-7df30441afe8",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Algebra",
+  "prompt": "If $5(x - 6) = 38(x - 6) + 9$, what is the value of $x - 6$?",
+  "correctValue": "-3/11",
+  "explanation": "Let $u=x-6$: $5u=38u+9\\Rightarrow-33u=9\\Rightarrow u=-\\dfrac{3}{11}$."
+ },
+ {
+  "sourceId": "7aed5e43-6012-4b09-83bd-0884dc6b9db0",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by $f(x)=-2x^2+5$. What is the value of $f(-3)$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "-1"
+   },
+   {
+    "id": "B",
+    "tex": "-13"
+   },
+   {
+    "id": "C",
+    "text": "13"
+   },
+   {
+    "id": "D",
+    "text": "23"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$f(-3)=-2(9)+5=-13$."
+ },
+ {
+  "sourceId": "6d85efbc-cd89-4a78-87a8-1816acc14d8a",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Advanced Math",
+  "prompt": "What is the minimum value of the given function?",
+  "equations": [
+   "f(x)=(x-5)^2+7"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "-5"
+   },
+   {
+    "id": "B",
+    "text": "5"
+   },
+   {
+    "id": "C",
+    "text": "7"
+   },
+   {
+    "id": "D",
+    "text": "12"
+   }
+  ],
+  "correct": "C",
+  "explanation": "A square is at least $0$, so the minimum of $f$ is $7$."
+ },
+ {
+  "sourceId": "5266c850-5d9f-4a27-b9ff-3ced4bdecc66",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Advanced Math",
+  "prompt": "What is the sum of the solutions to the given equation?",
+  "equations": [
+   "x^2-9x-22=0"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "-22"
+   },
+   {
+    "id": "B",
+    "tex": "-9"
+   },
+   {
+    "id": "C",
+    "text": "9"
+   },
+   {
+    "id": "D",
+    "text": "22"
+   }
+  ],
+  "correct": "C",
+  "explanation": "Sum of roots $=-\\dfrac{-9}{1}=9$ (roots $11$ and $-2$)."
+ },
+ {
+  "sourceId": "1bfe811d-7742-42b4-aaaa-50b6ba6ac905",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "If $4x^2-24x-20=0$, what is the value of $x^2-6x$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "5"
+   },
+   {
+    "id": "B",
+    "text": "20"
+   },
+   {
+    "id": "C",
+    "text": "6"
+   },
+   {
+    "id": "D",
+    "text": "0"
+   }
+  ],
+  "correct": "A",
+  "explanation": "Divide by 4: $x^2-6x-5=0\\Rightarrow x^2-6x=5$."
+ },
+ {
+  "sourceId": "b6fac978-8547-4a08-8bf6-de68b8ddd0d9",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Advanced Math",
+  "prompt": "Which quadratic equation has exactly one distinct real solution?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "x^2-12=0"
+   },
+   {
+    "id": "B",
+    "tex": "x^2-6x=0"
+   },
+   {
+    "id": "C",
+    "tex": "x^2-6x+20=0"
+   },
+   {
+    "id": "D",
+    "tex": "x^2-6x+9=0"
+   }
+  ],
+  "correct": "D",
+  "explanation": "$x^2-6x+9=(x-3)^2$ has the single solution $x=3$ (discriminant $0$)."
+ },
+ {
+  "sourceId": "b08d6055-1204-4d4b-9ab2-790a0f4325c2",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Advanced Math",
+  "prompt": "What is the $y$-intercept of the graph of $y=5x^2-2x+9$ in the $xy$-plane?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "(0,5)"
+   },
+   {
+    "id": "B",
+    "tex": "(0,9)"
+   },
+   {
+    "id": "C",
+    "tex": "(9,0)"
+   },
+   {
+    "id": "D",
+    "tex": "(0,-2)"
+   }
+  ],
+  "correct": "B",
+  "explanation": "At $x=0$, $y=9$."
+ },
+ {
+  "sourceId": "ad605edf-03a2-4575-9fe8-004bfbe2bc6c",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The given equation relates the variables $x$ and $y$. For what value of $x$ does the value of $y$ reach its minimum?",
+  "equations": [
+   "y=x^2-18x+30"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "-18"
+   },
+   {
+    "id": "B",
+    "text": "9"
+   },
+   {
+    "id": "C",
+    "text": "18"
+   },
+   {
+    "id": "D",
+    "text": "30"
+   }
+  ],
+  "correct": "B",
+  "explanation": "The vertex is at $x=-\\dfrac{-18}{2}=9$."
+ },
+ {
+  "sourceId": "bc923184-11ae-4cb7-a181-08ddc6a73de0",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Algebra",
+  "prompt": "The function $f$ is defined by $f(x)=8x-11$. For what value of $x$ does $f(x)=349$?",
+  "correctValue": "45",
+  "explanation": "$8x-11=349\\Rightarrow8x=360\\Rightarrow x=45$."
+ },
+ {
+  "sourceId": "f3d67ae4-a0a8-4944-a904-1be4f0608e85",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "An angle has a measure of $\\dfrac{5\\pi}{12}$ radians. What is the measure, in degrees, of an angle that is supplementary to this angle?",
+  "correctValue": "105",
+  "explanation": "$\\frac{5\\pi}{12}=75^\\circ$, so the supplement is $180-75=105^\\circ$."
+ },
+ {
+  "sourceId": "773c23c1-2e69-4edb-bf7f-45c279b93d0a",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "A coach recorded the number of laps completed by each runner in two training groups during a practice session. The lists give the number of laps completed by each runner in each group.\n\nGroup R: 6, 12, 17, 22, 28, 35\n\nGroup S: 12, 17, 22, 28, 35\n\nWhich statement correctly compares the median number of laps for group R and the median number of laps for group S?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "There is not enough information to compare the median number of laps for group R and the median number of laps for group S."
+   },
+   {
+    "id": "B",
+    "text": "The median number of laps for group R is equal to the median number of laps for group S."
+   },
+   {
+    "id": "C",
+    "text": "The median number of laps for group R is greater than the median number of laps for group S."
+   },
+   {
+    "id": "D",
+    "text": "The median number of laps for group R is less than the median number of laps for group S."
+   }
+  ],
+  "correct": "D",
+  "explanation": "Median of R $=\\dfrac{17+22}{2}=19.5$; median of S $=22$. So R's median is less."
+ },
+ {
+  "sourceId": "22239e74-da93-4a35-9455-c950f3094083",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The graph of the polynomial function $f$ in the $xy$-plane, where $y=f(x)$, passes through the point $(4,-7)$. The function $g$ is defined by $g(x)=f(x-3)+5$. Which of the following points must lie on the graph of $y=g(x)$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "(7,-2)"
+   },
+   {
+    "id": "B",
+    "tex": "(1,-2)"
+   },
+   {
+    "id": "C",
+    "tex": "(7,-12)"
+   },
+   {
+    "id": "D",
+    "tex": "(1,-12)"
+   }
+  ],
+  "correct": "A",
+  "explanation": "$g(7)=f(4)+5=-7+5=-2$, so $(7,-2)$ is on the graph."
+ },
+ {
+  "sourceId": "fd0b1496-1a79-477e-95e6-ce5d42a1162b",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "Line $k$ is defined by $6x-8y=19$. Line $j$ is perpendicular to line $k$ in the $xy$-plane. What is the slope of line $j$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "\\dfrac{3}{4}"
+   },
+   {
+    "id": "B",
+    "tex": "\\dfrac{4}{3}"
+   },
+   {
+    "id": "C",
+    "tex": "-\\dfrac{4}{3}"
+   },
+   {
+    "id": "D",
+    "tex": "-\\dfrac{3}{4}"
+   }
+  ],
+  "correct": "C",
+  "explanation": "Slope of $k$ is $\\frac{6}{8}=\\frac34$; the perpendicular slope is $-\\frac43$."
+ },
+ {
+  "sourceId": "9c059023-6a3a-41a0-b6d3-dc6ac4219a7a",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Algebra",
+  "prompt": "In the given system of equations, $p$ is a constant. If the system has no solution, what is the value of $p$?",
+  "equations": [
+   "\\frac{3}{2}y-\\frac{1}{6}x=\\frac{1}{3}-\\frac{3}{2}y",
+   "\\frac{1}{2}x+\\frac{5}{2}=py+\\frac{9}{2}"
+  ],
+  "correctValue": "9",
+  "explanation": "First: $3y-\\frac16x=\\frac13\\Rightarrow\\frac12x-9y=-1$. Second: $\\frac12x-py=2$. Parallel (no solution) when $p=9$ since $-1\\ne2$."
+ },
+ {
+  "sourceId": "bf275bc5-7853-4c69-a5c7-ba08ec9e0465",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "The graph of $x^{2}+x+y^{2}+y=\\frac{287}{2}$ in the $xy$-plane is a circle. What is the length of the circle's radius?",
+  "correctValue": "12",
+  "explanation": "Complete squares: $(x+\\frac12)^2+(y+\\frac12)^2=\\frac{287}{2}+\\frac12=144$, so $r=12$."
+ },
+ {
+  "sourceId": "c8f01c27-dfde-4367-beaf-03d0cb5ba7e5",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "In right triangle $ABC$, side $BC$ has a length of $\\sqrt{779}$. The hypotenuse, side $AB$, has a length of $30$. What is the value of $\\sin B$?",
+  "correctValue": "11/30",
+  "explanation": "$AC^2=30^2-779=121$, $AC=11$. $\\sin B=\\dfrac{AC}{AB}=\\dfrac{11}{30}$."
+ },
+ {
+  "sourceId": "1c92f81b-90cf-401f-a29d-31cefaafedf6",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given equation, $q$ is an integer constant. The given equation has no real solutions. What is the largest possible value of $q$?",
+  "equations": [
+   "r^{2}+qr=6r-73"
+  ],
+  "correctValue": "23",
+  "explanation": "$r^2+(q-6)r+73=0$ has no real solution when $(q-6)^2<292$, i.e. $q-6\\le17$. Largest $q=23$."
+ },
+ {
+  "sourceId": "aa7cbd1f-cd50-4074-8cdb-3c8acd033ef7",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The function $g$ is defined by $g(x)=f(x+4)$. What is the minimum value of $g(x)$?",
+  "equations": [
+   "f(x)=2x^{2}+24x+75"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "-6"
+   },
+   {
+    "id": "B",
+    "tex": "-3"
+   },
+   {
+    "id": "C",
+    "text": "3"
+   },
+   {
+    "id": "D",
+    "text": "6"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$f$ has its minimum at $x=-6$: $f(-6)=72-144+75=3$. A horizontal shift does not change the minimum."
+ },
+ {
+  "sourceId": "d7446f97-56fb-4497-8dbf-4a52f044d454",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by $f(x)=64(0.35)^{x}$. For any positive integer $n$, the value of $f(n)$ is p% less than the value of $f(n-1)$. What is the value of $p$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "35"
+   },
+   {
+    "id": "B",
+    "text": "64"
+   },
+   {
+    "id": "C",
+    "text": "65"
+   },
+   {
+    "id": "D",
+    "text": "74"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$f(n)=0.35f(n-1)$, a decrease of $100-35=65\\%$."
+ },
+ {
+  "sourceId": "dd0bb71c-7e72-4f74-8751-ad23b91cdf86",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "The daily precipitation total at a weather station is recorded by a weather instrument each day. The daily precipitation total recorded on Monday was $23.00$ millimeters. The daily precipitation total recorded on Tuesday was a 168.00% increase from the daily precipitation total recorded on Monday. What was the daily precipitation total, in millimeters, recorded on Tuesday?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "8.58"
+   },
+   {
+    "id": "B",
+    "text": "15.64"
+   },
+   {
+    "id": "C",
+    "text": "38.64"
+   },
+   {
+    "id": "D",
+    "text": "61.64"
+   }
+  ],
+  "correct": "D",
+  "explanation": "$23\\times(1+1.68)=23\\times2.68=61.64$."
+ },
+ {
+  "sourceId": "4ca1ca46-6ceb-4371-8eb6-cc9f876282f4",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "In a collection of items, 15% are red, 20% are green, 40% are blue, and 25% are yellow. If there are $30$ green items, how many blue items are in the collection?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "12"
+   },
+   {
+    "id": "B",
+    "text": "45"
+   },
+   {
+    "id": "C",
+    "text": "60"
+   },
+   {
+    "id": "D",
+    "text": "120"
+   }
+  ],
+  "correct": "C",
+  "explanation": "Total $=30\\div0.20=150$; blue $=0.40\\cdot150=60$."
+ },
+ {
+  "sourceId": "f262adfa-b43c-4e93-9fb7-c9921720fa20",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Algebra",
+  "prompt": "In the given system of equations, $a$ and $b$ are constants. The graphs of these equations in the $xy$-plane intersect at the point $(x,4)$. What is the value of $b$?",
+  "equations": [
+   "ax-by=70",
+   "2ax-9y=48"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "-14"
+   },
+   {
+    "id": "B",
+    "tex": "-7"
+   },
+   {
+    "id": "C",
+    "text": "7"
+   },
+   {
+    "id": "D",
+    "text": "12"
+   }
+  ],
+  "correct": "B",
+  "explanation": "Second equation with $y=4$: $2ax-36=48\\Rightarrow ax=42$. First: $42-4b=70\\Rightarrow b=-7$."
+ },
+ {
+  "sourceId": "5114eab7-c6ec-4867-b6c4-3bf35a319ab3",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The number of bacteria in a growth medium is expected to increase by 130% every $3$ hours during a period of observation. The number of bacteria in the growth medium was estimated to be $4{,}000$ when the period of observation began. Which function $P$ gives the expected number of bacteria in this growth medium $t$ hours after the period of observation began?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "P(t)=4{,}000(1.30)^{\\frac{t}{3}}"
+   },
+   {
+    "id": "B",
+    "tex": "P(t)=4{,}000(1.30)^{3t}"
+   },
+   {
+    "id": "C",
+    "tex": "P(t)=4{,}000(2.30)^{\\frac{t}{3}}"
+   },
+   {
+    "id": "D",
+    "tex": "P(t)=4{,}000(2.30)^{3t}"
+   }
+  ],
+  "correct": "C",
+  "explanation": "Increasing by $130\\%$ multiplies by $2.30$ every $3$ hours: $P(t)=4000(2.30)^{t/3}$."
+ },
+ {
+  "sourceId": "0831cd3c-33ea-451f-a5e0-dd3759a3fca3",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Algebra",
+  "prompt": "One gallon of paint will cover $250$ square feet of a surface. A room has a total wall area of $w$ square feet. Which equation represents the total amount of paint $P$, in gallons, needed to paint the walls of the room three times?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "P=\\frac{w}{750}"
+   },
+   {
+    "id": "B",
+    "tex": "P=\\frac{3w}{250}"
+   },
+   {
+    "id": "C",
+    "tex": "P=\\frac{w}{250}"
+   },
+   {
+    "id": "D",
+    "tex": "P=750w"
+   }
+  ],
+  "correct": "B",
+  "explanation": "One coat needs $\\frac{w}{250}$ gallons; three coats need $P=\\frac{3w}{250}$."
+ },
+ {
+  "sourceId": "b37cd240-ae58-48db-974c-aed44a3be8f0",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "The combined original price for a mirror and a vase is $\\char36$80. After a 20% discount to the mirror and a 40% discount to the vase are applied, the combined sale price for the two items is $\\char36$56. Which system of equations gives the original price $m$, in dollars, of the mirror and the original price $v$, in dollars, of the vase?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "\\begin{array}{l} m+v=80 \\\\ 0.6m+0.8v=56 \\end{array}"
+   },
+   {
+    "id": "B",
+    "tex": "\\begin{array}{l} m+v=80 \\\\ 0.2m+0.4v=56 \\end{array}"
+   },
+   {
+    "id": "C",
+    "tex": "\\begin{array}{l} m+v=80 \\\\ 0.8m+0.6v=56 \\end{array}"
+   },
+   {
+    "id": "D",
+    "tex": "\\begin{array}{l} m+v=80 \\\\ 0.4m+0.2v=56 \\end{array}"
+   }
+  ],
+  "correct": "C",
+  "explanation": "After discounts the mirror costs $0.80m$ and the vase $0.60v$: $0.8m+0.6v=56$."
+ },
+ {
+  "sourceId": "b5640dc8-53a1-4553-a694-a64fd434d790",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "For a school competition, each student in the sixth, seventh, and eighth grades is assigned to either the red team or the green team. The table shows the distribution of grade and team for the students in the school.\n | Red team | Green team | Total\nSixth grade | 51 | 45 | 96\nSeventh grade | 44 | 33 | 77\nEighth grade | 40 | 42 | 82\nTotal | 135 | 120 | 255\nA student from the competition will be selected at random. What is the probability of selecting a student who is in the sixth or seventh grade, given that the student is on the green team? (Express your answer as a decimal or fraction, not as a percent.)",
+  "correctValue": "13/20",
+  "explanation": "Green team: $120$ students; sixth or seventh: $45+33=78$. $\\dfrac{78}{120}=\\dfrac{13}{20}$."
+ },
+ {
+  "sourceId": "eee7e048-cc42-42af-a715-cd64b847e3a5",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "The edge length, in inches, of cube Y is $\\frac{5}{62}$ the edge length, in inches, of cube X. The surface area, in square inches, of cube Y is $n$ times the surface area, in square inches, of cube X. What is the value of $n$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "\\frac{25}{3{,}844}"
+   },
+   {
+    "id": "B",
+    "tex": "\\frac{125}{238{,}328}"
+   },
+   {
+    "id": "C",
+    "tex": "\\frac{5}{62}"
+   },
+   {
+    "id": "D",
+    "tex": "\\frac{25}{62}"
+   }
+  ],
+  "correct": "A",
+  "explanation": "Surface area scales with the square of the edge: $n=\\left(\\frac{5}{62}\\right)^2=\\frac{25}{3844}$."
+ },
+ {
+  "sourceId": "96262887-1578-4424-82c9-3325c25b32a6",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by $f(x)=ab^{\\frac{x}{n}}$, where $a$, $b$, and $n$ are constants, and $b$ and $n$ are integers. If $f(4)=5$ and $f(7)=320$, what is the value of $f(9)$?",
+  "correctValue": "5120",
+  "explanation": "$\\frac{f(7)}{f(4)}=b^{3/n}=64$. Then $b^{5/n}=64^{5/3}=1024$, so $f(9)=5\\cdot1024=5120$."
+ },
+ {
+  "sourceId": "c6e47f80-789b-4670-b14f-f555b439f003",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "The perimeter of an equilateral triangle is 864 centimeters. The three vertices of the triangle lie on a circle. The radius of the circle is $w\\sqrt{3}$ centimeters. What is the value of $w$?",
+  "correctValue": "96",
+  "explanation": "Side $=288$; circumradius $=\\dfrac{288}{\\sqrt3}=96\\sqrt3$, so $w=96$."
+ },
+ {
+  "sourceId": "9adf272b-03e5-4c36-9dda-f7954580e93e",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given system of equations, $a$ is a positive integer constant. The system has no real solutions. What is the least possible value of $a$?",
+  "equations": [
+   "y=-1.5",
+   "y=x^{2}+6x+a"
+  ],
+  "correctValue": "8",
+  "explanation": "$x^2+6x+a+1.5=0$ has no real root when $36-4(a+1.5)<0\\Rightarrow a>7.5$. Least integer $a=8$."
+ },
+ {
+  "sourceId": "1b320505-f5a3-4e30-a8a5-95e2614c6ed7",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "A school is ordering tablet computers for its students. The tablets cost $\\char36$185 each, and 6% tax is added to the total cost of the order. If the school can spend no more than 61,000 dollars on the tablets, including tax, what is the maximum number of tablets that the school can order?",
+  "correctValue": "311",
+  "explanation": "$185\\cdot1.06\\,n\\le61000\\Rightarrow196.1n\\le61000\\Rightarrow n\\le311.07$, so $311$."
+ },
+ {
+  "sourceId": "bfa38fa0-a983-4f1d-b248-8bb328dbb8cc",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "A square map has a side length of 45 inches, and 1 inch on the map represents an actual distance of 14 miles. A smaller version of the same map is printed as a square with the side length 70% shorter than the side length of the previous map. On the smaller map, which of the following is closest to the actual distance, in miles, represented by 1 inch?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "4.20"
+   },
+   {
+    "id": "B",
+    "text": "9.80"
+   },
+   {
+    "id": "C",
+    "text": "31.50"
+   },
+   {
+    "id": "D",
+    "text": "46.67"
+   }
+  ],
+  "correct": "D",
+  "explanation": "Actual side $=45\\cdot14=630$ miles. New side $=0.3\\cdot45=13.5$ in. $630\\div13.5\\approx46.67$."
+ },
+ {
+  "sourceId": "9cff4ae9-f1a2-436e-b234-e2856bbb2ada",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given system of equations, $c$ is a constant. The system has two distinct real solutions. Which of the following could be the value of $c$?",
+  "equations": [
+   "y=x-c",
+   "y=-5(x-9)^{2}"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "5"
+   },
+   {
+    "id": "B",
+    "text": "8"
+   },
+   {
+    "id": "C",
+    "tex": "\\frac{179}{20}"
+   },
+   {
+    "id": "D",
+    "text": "13"
+   }
+  ],
+  "correct": "D",
+  "explanation": "$5(x-9)^2+x-c=0\\Rightarrow5x^2-89x+405-c=0$. Two real roots need $7921-20(405-c)>0\\Rightarrow c>\\frac{179}{20}=8.95$. Only $13$ works."
+ },
+ {
+  "sourceId": "80468a94-b76c-430d-b7ba-1ee5fcd2108a",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "The expression $0.42x$ represents the result of decreasing a positive quantity $x$ by what percent?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "4.2%"
+   },
+   {
+    "id": "B",
+    "text": "42%"
+   },
+   {
+    "id": "C",
+    "text": "5.8%"
+   },
+   {
+    "id": "D",
+    "text": "58%"
+   }
+  ],
+  "correct": "D",
+  "explanation": "$0.42x=(1-0.58)x$, a decrease of $58\\%$."
+ },
+ {
+  "sourceId": "b445d28d-dde8-4c9f-b177-afef2a7969e7",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "In triangle $ABC$, the measure of angle $A$ is $64^\\circ$ and $AC=25$. In triangle $PQR$, the measure of angle $P$ is $64^\\circ$ and $PR=100$. Which additional piece of information is sufficient to prove that triangle $ABC$ is similar to triangle $PQR$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "$AB=40$ and $PQ=40$."
+   },
+   {
+    "id": "B",
+    "text": "$AB=40$ and $QR=160$."
+   },
+   {
+    "id": "C",
+    "text": "The measures of angle $B$ and angle $R$ are $41^\\circ$ and $75^\\circ$, respectively."
+   },
+   {
+    "id": "D",
+    "text": "The measures of angle $B$ and angle $Q$ are $64^\\circ$ and $41^\\circ$, respectively."
+   }
+  ],
+  "correct": "C",
+  "explanation": "Angle $C=180-64-41=75^\\circ=R$, and $A=P$, so AA similarity holds. The other options do not give two matching angles or a valid ratio."
+ },
+ {
+  "sourceId": "90880487-bf46-4571-ab80-14135820b953",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "$876$ is $1{,}200\\%$ of the sum of the positive numbers $b$ and $c$, and $b$ is $46\\%$ of $c$. What is the value of $b$?",
+  "correctValue": "23",
+  "explanation": "$b+c=876\\div12=73$ and $b=0.46c\\Rightarrow1.46c=73$, $c=50$, $b=23$."
+ },
+ {
+  "sourceId": "69048077-e85c-4f20-bce5-b84147989d22",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Algebra",
+  "prompt": "In the given system of equations, $t$ is a constant. If the system has no solution, what is the value of $t$?",
+  "equations": [
+   "\\begin{cases} 12x+10y=4y+7 \\\\ ty=\\dfrac{1}{5}+4x \\end{cases}"
+  ],
+  "correctValue": "-2",
+  "explanation": "First: $12x+6y=7$. Second: $4x-ty=-\\frac15\\Rightarrow12x-3ty=-\\frac35$. Parallel when $-3t=6$, $t=-2$ (constants differ)."
+ },
+ {
+  "sourceId": "11b1cf2b-e665-4a5c-a213-7f92126cdd8d",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "A car dealership has only sedans, SUVs, and minivans for sale. On Monday, 20% of the vehicles for sale were sedans and 45% were SUVs. If there were 24 sedans for sale at the dealership on Monday, how many minivans were for sale?",
+  "correctValue": "42",
+  "explanation": "Total $=24\\div0.20=120$; minivans are $35\\%$: $0.35\\cdot120=42$."
+ },
+ {
+  "sourceId": "ebd79b05-fc64-459a-96e5-070ff8f958f3",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Algebra",
+  "prompt": "A store sells two different-sized bottles of a certain shampoo. The store's sales of this shampoo totaled 1042.04 dollars last month. The equation $5.39x+7.19y=1042.04$ represents this situation, where $x$ is the number of smaller bottles sold and $y$ is the number of larger bottles sold. According to the equation, what is the price, in dollars, of each smaller bottle?",
+  "correctValue": "5.39",
+  "explanation": "The coefficient of $x$ is the price of one smaller bottle: $5.39$."
+ },
+ {
+  "sourceId": "2a44ba98-a0de-497c-b32b-57f3228b26df",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "The base of a right rectangular pyramid has a length of 24 centimeters and a width of 9 centimeters. The height of this pyramid is 7 centimeters. What is the volume, in cubic centimeters, of this pyramid?",
+  "correctValue": "504",
+  "explanation": "$V=\\frac13(24)(9)(7)=504$."
+ },
+ {
+  "sourceId": "d836a24c-2b9d-4e2a-a591-3151652502ab",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "What is the sum of the solutions to the given equation?",
+  "equations": [
+   "3|x-4|-5=19"
+  ],
+  "correctValue": "8",
+  "explanation": "$|x-4|=8\\Rightarrow x=12$ or $x=-4$; sum $=8$."
+ },
+ {
+  "sourceId": "7fe20d59-29bb-40c6-bf12-41fa3c2781fc",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "A beaker containing a liquid is placed on a table. The function $g(t)=287+(341-287)(2.72)^{-0.093t}$ gives the approximate temperature, in kelvins, of the liquid $t$ minutes after the beaker was placed on the table. According to this function, what was the approximate temperature, in kelvins, of the liquid when the beaker was placed on the table?",
+  "correctValue": "341",
+  "explanation": "At $t=0$: $g(0)=287+54=341$."
+ },
+ {
+  "sourceId": "b5778f6f-158d-4643-b460-ffb9d7a71dcf",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "If $3+\\frac{(1-x)}{3}=-\\frac{3(1-x)}{4}$, what is the value of $1-x$ ?",
+  "correctValue": "-36/13",
+  "explanation": "Let $u=1-x$: $3+\\frac u3=-\\frac{3u}{4}\\Rightarrow\\frac{13u}{12}=-3\\Rightarrow u=-\\frac{36}{13}$."
+ }
+]
