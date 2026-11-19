@@ -85,7 +85,14 @@ function loadDraft(): Draft {
  * o‘ng tarafdagi panel — tuzilayotgan mock, DRAFT bo‘lib saqlanadi.
  */
 export function MockBuilderPanel() {
-  const [tab, setTab] = useState<'build' | 'twins'>('build')
+  const [tab, setTab] = useState<'build' | 'twins' | 'suspect'>('build')
+  const [open, setOpen] = useState<number | null>(null)
+  useEffect(() => {
+    fetch('/api/admin/suspect?status=open', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => setOpen(typeof d?.counts?.open === 'number' ? d.counts.open : null))
+      .catch(() => {})
+  }, [tab])
   return (
     <div className="min-w-0">
       <div className="mbx-seg mb-4">
@@ -93,14 +100,17 @@ export function MockBuilderPanel() {
           [
             ['build', 'Konstruktor'],
             ['twins', 'Twinlar (egizak savollar)'],
+            ['suspect', 'Shubhali savollar'],
           ] as const
         ).map(([k, l]) => (
           <button key={k} type="button" data-on={tab === k ? '1' : '0'} onClick={() => setTab(k)}>
+            {k === 'suspect' && <AlertTriangle size={12} className="mr-1 inline align-[-2px] text-amber-600" />}
             {l}
+            {k === 'suspect' && open ? <span className="ml-1.5 rounded-full bg-amber-500 px-1.5 text-[10px] font-extrabold text-white">{open}</span> : null}
           </button>
         ))}
       </div>
-      {tab === 'build' ? <Builder /> : <TwinsManager />}
+      {tab === 'build' ? <Builder /> : tab === 'twins' ? <TwinsManager /> : <SuspectManager />}
     </div>
   )
 }
@@ -1226,3 +1236,185 @@ VAZIFA: har bir savol uchun bitta twin yoz — xuddi shu savol, faqat SONLARI bo
 6. FORMAT — kirishdagi bilan bir xil admin JSON: "sourceId" (o'zgartirmasdan ko'chir), "type", "difficulty", "domain", "prompt", "equations" (bo'lsa), "choices" (mcq), "correct"/"correctValue", "explanation", kerak bo'lsa "needsFigure". "no" va "id" yozma.
 7. Gap ichidagi formula $...$ ichida; JSON ichida har bir backslash ikkita (\\\\dfrac). Variant faqat formula bo'lsa "tex", aks holda "text".
 8. Javobing FAQAT toza JSON array — izohsiz, \`\`\` belgilarisiz. Savollar soni = kirishdagi savollar soni, tartib saqlanadi.`
+
+/* ------------------------------------------------------------------ suspect */
+
+type SuspectItem = {
+  id: string
+  family: string
+  questionId: string | null
+  kind: 'key' | 'text' | string
+  reason: string
+  suggested: string | null
+  status: 'open' | 'fixed' | 'ok' | string
+  createdAt: string
+  resolvedAt: string | null
+  twins: number
+  testLabel: string | null
+  question: PoolQ | null
+}
+
+/**
+ * «Shubhali savollar»: kaliti yoki matni shubhali savollar bir joyda. Ularga twin yaratilmaydi — avval siz
+ * kalitni tekshirasiz (to‘g‘ri bo‘lsa «Tekshirildi», xato bo‘lsa kalitni o‘zgartirib «Tuzatildi»), keyin savol
+ * oddiy twin navbatiga qaytadi.
+ */
+function SuspectManager() {
+  const [status, setStatus] = useState<'open' | 'done'>('open')
+  const [items, setItems] = useState<SuspectItem[] | null>(null)
+  const [counts, setCounts] = useState({ open: 0, done: 0 })
+  const [err, setErr] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const load = useCallback(() => {
+    setLoading(true)
+    setErr(null)
+    fetch(`/api/admin/suspect?status=${status}`, { cache: 'no-store' })
+      .then(async (r) => {
+        const d = await r.json()
+        if (!r.ok || d.error) throw new Error(d.error ?? 'Xatolik')
+        setItems(d.items ?? [])
+        setCounts(d.counts ?? { open: 0, done: 0 })
+      })
+      .catch((e) => setErr(e instanceof Error ? e.message : 'Xatolik'))
+      .finally(() => setLoading(false))
+  }, [status])
+  useEffect(() => load(), [load])
+
+  return (
+    <section className="min-w-0">
+      <div className="mbx-bar">
+        <div className="flex flex-wrap items-center gap-2">
+          <AlertTriangle size={16} className="shrink-0 text-amber-600" />
+          <h3 className="shrink-0 text-[14px] font-extrabold text-ink">Shubhali savollar</h3>
+          <span className="text-[11.5px] text-ink-faint">Kaliti yoki matni shubhali savollar — twin yaratishdan oldin shu yerda tekshiriladi</span>
+          <div className="mbx-seg ml-auto">
+            {(
+              [
+                ['open', 'Ochiq', counts.open],
+                ['done', 'Yopilgan', counts.done],
+              ] as const
+            ).map(([k, l, n]) => (
+              <button key={k} type="button" data-on={status === k ? '1' : '0'} onClick={() => setStatus(k)}>
+                {l} <span className="opacity-55 tabular-nums">{n}</span>
+              </button>
+            ))}
+          </div>
+          <button type="button" className="adm-btn !h-8 !px-2.5" onClick={load} title="Yangilash" disabled={loading}>
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+          </button>
+        </div>
+      </div>
+      {err && <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-[12.5px] text-red-700">{err}</p>}
+      {items && items.length === 0 && !err && (
+        <p className="mt-4 rounded-xl border border-line bg-white p-4 text-[13px] text-ink-soft">
+          {status === 'open' ? 'Hozircha shubhali savol yo‘q.' : 'Yopilgan savollar yo‘q.'}
+        </p>
+      )}
+      <div className="mt-3 grid gap-3">
+        {(items ?? []).map((it) => (
+          <SuspectCard key={it.id} item={it} onChanged={load} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function SuspectCard({ item, onChanged }: { item: SuspectItem; onChanged: () => void }) {
+  const q = item.question
+  const isMcq = q?.type !== 'gridin'
+  const [val, setVal] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const open = item.status === 'open'
+
+  async function setStatus(status: 'open' | 'fixed' | 'ok') {
+    setBusy(true)
+    const r = await fetch('/api/admin/suspect', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: item.id, status }) })
+    setBusy(false)
+    if (r.ok) onChanged()
+    else setMsg({ ok: false, text: 'Saqlab bo‘lmadi.' })
+  }
+
+  async function saveKey() {
+    if (!item.questionId || !q) return
+    const v = val.trim()
+    if (isMcq && !/^[ABCD]$/i.test(v)) return setMsg({ ok: false, text: 'A, B, C yoki D kiriting.' })
+    if (!isMcq && !v) return setMsg({ ok: false, text: 'Javobni kiriting.' })
+    if (!window.confirm(`Kalit "${isMcq ? v.toUpperCase() : v}" ga o‘zgartirilsinmi? Saytda shu mockni yechganlar natijasi qayta hisoblanadi.`)) return
+    setBusy(true)
+    setMsg(null)
+    try {
+      const res = await fetch('/api/admin/questions/batch-answers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: [isMcq ? { id: item.questionId, correct: v.toUpperCase() } : { id: item.questionId, correctValue: v }] }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) setMsg({ ok: false, text: d.error ?? 'Saqlab bo‘lmadi.' })
+      else {
+        await setStatus('fixed')
+        return
+      }
+    } catch {
+      setMsg({ ok: false, text: 'Server bilan bog‘lanib bo‘lmadi.' })
+    }
+    setBusy(false)
+  }
+
+  return (
+    <article className={`rounded-2xl border bg-white ${open ? 'border-amber-300' : 'border-line opacity-80'}`}>
+      <header className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line px-3.5 py-2.5 text-[11.5px]">
+        <span className={`rounded-md px-2 py-0.5 font-extrabold ${item.kind === 'text' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-800'}`}>
+          {item.kind === 'text' ? 'Matn buzilgan' : 'Kalit shubhali'}
+        </span>
+        {item.testLabel && <span className="font-bold text-ink-soft">{item.testLabel}</span>}
+        <span className="text-ink-faint">· {ago(item.createdAt)}</span>
+        {item.twins > 0 && <span className="text-ink-faint">· {item.twins} twin bor</span>}
+        {!open && <span className="ml-auto font-extrabold text-green-deep">{item.status === 'ok' ? 'Tekshirildi — to‘g‘ri' : 'Tuzatildi'}</span>}
+      </header>
+      <p className="border-b border-line bg-amber-50/50 px-3.5 py-2 text-[12.5px] leading-relaxed text-ink">{item.reason}</p>
+      <div className="px-3.5 py-3">
+        {q ? (
+          <>
+            <QuestionCard q={q} compact />
+            {keyOf(q) && <span className="mbx-key mt-2 inline-block">Hozirgi kalit: {keyOf(q)}</span>}
+          </>
+        ) : (
+          <p className="text-[12.5px] text-ink-soft">Savol bazadan topilmadi (o‘chirilgan bo‘lishi mumkin).</p>
+        )}
+      </div>
+      <footer className="flex flex-wrap items-center gap-2 border-t border-line px-3.5 py-2.5">
+        {open ? (
+          <>
+            {q && (
+              <>
+                <input
+                  value={val}
+                  onChange={(e) => setVal(e.target.value)}
+                  placeholder={isMcq ? 'To‘g‘ri variant (A–D)' : 'To‘g‘ri javob'}
+                  className="adm-input !h-8 !w-40 text-[12px]"
+                  maxLength={isMcq ? 1 : 24}
+                />
+                <button type="button" className="adm-btn !h-8 text-[11.5px]" disabled={busy || !val.trim()} onClick={saveKey}>
+                  Kalitni o‘zgartirish va yopish
+                </button>
+              </>
+            )}
+            <button type="button" className="adm-btn !h-8 text-[11.5px]" disabled={busy} onClick={() => setStatus('ok')} title="Kalit to‘g‘ri — savol twin navbatiga qaytadi">
+              <Check size={13} /> Tekshirildi, to‘g‘ri
+            </button>
+            <button type="button" className="adm-btn !h-8 text-[11.5px]" disabled={busy} onClick={() => setStatus('fixed')} title="Savolni boshqa joyda tuzatdim">
+              Tuzatildi
+            </button>
+          </>
+        ) : (
+          <button type="button" className="adm-btn !h-8 text-[11.5px]" disabled={busy} onClick={() => setStatus('open')}>
+            Qayta ochish
+          </button>
+        )}
+        {msg && <span className={`text-[11.5px] ${msg.ok ? 'text-green-deep' : 'text-red-600'}`}>{msg.text}</span>}
+      </footer>
+    </article>
+  )
+}

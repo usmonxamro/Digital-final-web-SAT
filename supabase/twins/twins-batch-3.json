@@ -1,0 +1,1101 @@
+[
+ {
+  "sourceId": "966cfdbf-de27-4b61-ba2e-4bcb590e427f",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The function $g$ is defined by the given equation, where $a$, $b$, and $c$ are integer constants. The zeros of the function are $-3$, $-5$, and $4$. What is the value of $a$?",
+  "equations": [
+   "g(x)=x^{3}+ax^{2}+bx+c"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "-60"
+   },
+   {
+    "id": "B",
+    "text": "-4"
+   },
+   {
+    "id": "C",
+    "text": "4"
+   },
+   {
+    "id": "D",
+    "text": "60"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$g(x)=(x+3)(x+5)(x-4)$; the $x^2$ coefficient is $3+5-4=4$, so $a=4$."
+ },
+ {
+  "sourceId": "02630974-f619-44ab-939c-aa62a0b36afc",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The model shown gives the predicted average Arctic sea ice area $f(x)$, in millions of square kilometers, for September of each year $x$, where $x$ represents a year and $1979\\le x\\le 2012$. Based on the model, what is the positive difference, in millions of square kilometers, between the predicted average Arctic sea ice area for September of the year 1995 and the predicted average Arctic sea ice area for September of the year 1996? (Round your answer to the nearest thousandth.)",
+  "equations": [
+   "f(x)=-0.00512x^{2}+20.3x-20{,}150"
+  ],
+  "correctValue": "0.134",
+  "explanation": "$f(1996)-f(1995)=-0.00512(1996^2-1995^2)+20.3=-0.00512(3991)+20.3=-0.13392$. Positive difference $\\approx0.134$."
+ },
+ {
+  "sourceId": "5d01ab1d-31a4-4008-8eec-bb17c3638c85",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "A landscaper will plant two types of shrubs, hydrangeas and winter hazels, in a park. There will be no more than 310 total shrubs planted, and the number of hydrangeas planted will be at most four times the number of winter hazels planted. Which of the following systems of inequalities best represents this situation, where $h$ is the number of hydrangeas that will be planted and $w$ is the number of winter hazels that will be planted?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "\\begin{array}{l} h+w\\ge 310 \\\\ h\\le 4w \\end{array}"
+   },
+   {
+    "id": "B",
+    "tex": "\\begin{array}{l} h+w\\le 310 \\\\ 4h\\ge w \\end{array}"
+   },
+   {
+    "id": "C",
+    "tex": "\\begin{array}{l} h+w\\le 310 \\\\ h\\le 4w \\end{array}"
+   },
+   {
+    "id": "D",
+    "tex": "\\begin{array}{l} h+w\\ge 310 \\\\ 4h\\ge w \\end{array}"
+   }
+  ],
+  "correct": "C",
+  "explanation": "'No more than 310 total' is $h+w\\le310$; 'at most four times' is $h\\le4w$."
+ },
+ {
+  "sourceId": "d2fd14d4-9e2a-48de-89d3-12f46332d51f",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given equation, $c$ is a constant. If the equation has exactly one solution, what is the value of $c$?",
+  "equations": [
+   "\\frac{1}{cx}=\\frac{x}{72}+\\frac{1}{c}"
+  ],
+  "correctValue": "-18",
+  "explanation": "Multiply by $72cx$: $72=cx^2+72x\\Rightarrow cx^2+72x-72=0$. One solution: $72^2+4c(72)=0\\Rightarrow c=-18$."
+ },
+ {
+  "sourceId": "63d3352e-6db5-4cee-a78b-62129b5d1748",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "Line $s$ in the $xy$-plane is defined by $4x+2y=0$. Line $t$ is perpendicular to line $s$ and passes through the points $(5,0)$ and $\\left(k,\\frac{3}{2}\\right)$. What is the value of $k$?",
+  "correctValue": "8",
+  "explanation": "Slope of $s$ is $-2$, so slope of $t$ is $\\frac12$. $\\dfrac{3/2}{k-5}=\\dfrac12\\Rightarrow k-5=3$, $k=8$."
+ },
+ {
+  "sourceId": "95bd97db-2a00-413d-bd3a-7cd0dbcc68dd",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by $f(x)=a^x-b$, where $a$ and $b$ are constants. In the $xy$-plane, the graph of $y=f(x)$ passes through the points $(c,4)$ and $(2c,76)$, where $c$ is a constant. Which of the following could be the value of $b$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "3"
+   },
+   {
+    "id": "B",
+    "text": "5"
+   },
+   {
+    "id": "C",
+    "text": "68"
+   },
+   {
+    "id": "D",
+    "text": "80"
+   }
+  ],
+  "correct": "B",
+  "explanation": "Let $u=a^c$: $u-b=4$ and $u^2-b=76$, so $u^2-u=72$, $u=9$ (or $-8$). Then $b=u-4=5$."
+ },
+ {
+  "sourceId": "49bec6c6-568e-40f1-babb-ba6229ef2999",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Algebra",
+  "prompt": "In the given equation, $c$ and $k$ are constants. The equation has exactly one solution. Which of the following statements must be true?",
+  "equations": [
+   "c(x-4)=-5(x+k)"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "The value of $k$ cannot be $-4$."
+   },
+   {
+    "id": "B",
+    "text": "The value of $c$ cannot be $-5$."
+   },
+   {
+    "id": "C",
+    "text": "The value of $c$ cannot be $-\\frac{5}{4}$"
+   },
+   {
+    "id": "D",
+    "text": "The value of $k$ cannot be $\\frac{4}{5}$"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$(c+5)x=4c-5k$ has exactly one solution iff $c+5\\ne0$, i.e. $c\\ne-5$."
+ },
+ {
+  "sourceId": "e3ecf917-5602-465b-b89e-51c89314f8b7",
+  "type": "gridin",
+  "difficulty": "Easy",
+  "domain": "Algebra",
+  "prompt": "In the given equation, $c$ is a constant. The equation has infinitely many solutions. What is the value of $c$?",
+  "equations": [
+   "4\\left(7x+9+\\frac{c}{4}\\right)=28x"
+  ],
+  "correctValue": "-36",
+  "explanation": "$28x+36+c=28x\\Rightarrow c=-36$."
+ },
+ {
+  "sourceId": "67162427-929f-4d4f-a2db-8899232e7f45",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Algebra",
+  "prompt": "Mia used fabric measuring 3 yards in length to make each costume for a school play. The relationship between the number of costumes that Mia made, $x$, and the total length of fabric that she purchased $y$, in yards, is represented by the equation $y-3x=8$. What is the best interpretation of 8 in this context?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "Mia made 8 costumes."
+   },
+   {
+    "id": "B",
+    "text": "Mia purchased a total of 8 yards of fabric."
+   },
+   {
+    "id": "C",
+    "text": "Mia used a total of 8 yards of fabric to make the costumes."
+   },
+   {
+    "id": "D",
+    "text": "Mia purchased 8 yards more fabric than she used to make the costumes."
+   }
+  ],
+  "correct": "D",
+  "explanation": "$y=3x+8$: $3x$ is the fabric used, so $8$ is the extra fabric purchased."
+ },
+ {
+  "sourceId": "3911cce8-9489-42c6-add7-9ef32daf9ea1",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "An object is launched into the air from ground level. According to a quadratic model, 1.5 seconds after the object is launched, it reaches its maximum height of 36 feet above ground level. Which equation represents this model, where $f(t)$ is the object's height, in feet, above ground level $t$ seconds after it was launched?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "f(t)=-16(t+1.5)^2+36"
+   },
+   {
+    "id": "B",
+    "tex": "f(t)=16(t-1.5)^2+36"
+   },
+   {
+    "id": "C",
+    "tex": "f(t)=-16(t-1.5)^2+36"
+   },
+   {
+    "id": "D",
+    "tex": "f(t)=(t-1.5)^2+36"
+   }
+  ],
+  "correct": "C",
+  "explanation": "Vertex $(1.5,36)$ with $a<0$; $f(0)=-16(2.25)+36=0$ ✓."
+ },
+ {
+  "sourceId": "79e4bff9-3283-4f8c-9a36-f8b9d5bf4a63",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "To make a bakery's signature chocolate muffins, a baker needs 3.5 ounces of chocolate for each muffin. How many pounds of chocolate are needed to make 64 signature chocolate muffins? (1 pound = 16 ounces)",
+  "choices": [
+   {
+    "id": "A",
+    "text": "56"
+   },
+   {
+    "id": "B",
+    "text": "14"
+   },
+   {
+    "id": "C",
+    "text": "224"
+   },
+   {
+    "id": "D",
+    "text": "3.5"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$3.5\\times64=224$ ounces $=224\\div16=14$ pounds."
+ },
+ {
+  "sourceId": "efc5f68f-3620-4980-bb59-e9ca3ae0c5a0",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The function $g$ is defined by $g(x)=(x+9)(t-x)$, where $t$ is a constant. In the $xy$-plane, the graph of $y=g(x)$ passes through the point $(14,0)$. What is the value of $g(0)$?",
+  "correctValue": "126",
+  "explanation": "$g(14)=0$ with $x+9=23\\ne0$, so $t=14$. $g(0)=9\\cdot14=126$."
+ },
+ {
+  "sourceId": "fd7049a8-671f-41cb-9ee4-13c09bc20258",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "In a set of three consecutive integers, where the integers are ordered from least to greatest, the first integer is represented by $x$. The sum of 5 and the third integer is less than the product of 9 and the second integer. Which inequality represents this situation?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "5+(x+1)<9(x+2)"
+   },
+   {
+    "id": "B",
+    "tex": "5+(x+2)>9(x+1)"
+   },
+   {
+    "id": "C",
+    "tex": "5+(x+2)<9(x+1)"
+   },
+   {
+    "id": "D",
+    "tex": "5+(x+1)>9(x+2)"
+   }
+  ],
+  "correct": "C",
+  "explanation": "Second integer $x+1$, third $x+2$: $5+(x+2)<9(x+1)$."
+ },
+ {
+  "sourceId": "ec6257e2-61e4-4895-ab70-ef160cb64ad0",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "$x$ | $y$\n1 | 0\n3 | 8\n5 | 0\nThe table shows three values of $x$ and their corresponding values of $y$, where $y=f(x)+6$ and $f$ is a quadratic function. What is the $y$-coordinate of the $y$-intercept of the graph of $y=f(x)$ in the $xy$-plane?",
+  "correctValue": "-16",
+  "explanation": "$y=a(x-1)(x-5)$ and $y(3)=8\\Rightarrow-4a=8$, $a=-2$. $y(0)=-2(5)=-10$, so $f(0)=y(0)-6=-16$."
+ },
+ {
+  "sourceId": "a6feb9a4-9cd2-4b38-af46-72c6f208910b",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Algebra",
+  "prompt": "Which of the following represents the $x$-intercept of the graph of $y=f(x)+4$ in the $xy$-plane, where $d$ is a constant?",
+  "equations": [
+   "f(x)=2d(15x+11)+9"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "(22d+13,0)"
+   },
+   {
+    "id": "B",
+    "tex": "\\left(4-\\frac{22d+9}{30d},0\\right)"
+   },
+   {
+    "id": "C",
+    "tex": "\\left(\\frac{-22d-13}{30d},0\\right)"
+   },
+   {
+    "id": "D",
+    "tex": "\\left(\\frac{-13}{30d+4},0\\right)"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$y=30dx+22d+13=0\\Rightarrow x=\\dfrac{-22d-13}{30d}$."
+ },
+ {
+  "sourceId": "2edcddea-0228-4fa3-a434-8561a9e9e48f",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "In the given system of equations, $w$ is a constant. The system has infinitely many solutions. What is the value of $w$?",
+  "equations": [
+   "36x+27y-150=-213",
+   "2wx+9y=-21"
+  ],
+  "correctValue": "6",
+  "explanation": "First: $36x+27y=-63$. Multiply the second by 3: $6wx+27y=-63$. Infinitely many solutions: $6w=36$, $w=6$."
+ },
+ {
+  "sourceId": "9fda73d6-dcbe-4e00-8056-dac6cc66f520",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "On January 1, 2005, the population of a town was 41,630 and on January 1, 2015, the population was 42,380. The equation $10x+41{,}630=42{,}380$ describes this situation. Which of the following is the best interpretation of $x$ in this context?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "The total increase in population between 2005 and 2015"
+   },
+   {
+    "id": "B",
+    "text": "The average increase per year of the population between 2005 and 2015"
+   },
+   {
+    "id": "C",
+    "text": "The percentage by which the population of the town increased each year between 2005 and 2015"
+   },
+   {
+    "id": "D",
+    "text": "The projected population of the town 10 years after 2015"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$x=75$ is the yearly amount added over 10 years: the average increase per year."
+ },
+ {
+  "sourceId": "332bfe44-f3ef-4c00-8969-917a6dd6c4d5",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The expression $9x^2+bx-28$, where $b$ is a constant, can be rewritten as $(hx+k)(x+j)$, where $h$, $k$, and $j$ are integer constants. Which of the following must be an integer?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "\\frac{b}{h}"
+   },
+   {
+    "id": "B",
+    "tex": "\\frac{b}{k}"
+   },
+   {
+    "id": "C",
+    "tex": "\\frac{28}{h}"
+   },
+   {
+    "id": "D",
+    "tex": "\\frac{28}{k}"
+   }
+  ],
+  "correct": "D",
+  "explanation": "$kj=-28$ with $j$ an integer, so $\\dfrac{28}{k}=-j$ is an integer."
+ },
+ {
+  "sourceId": "82e018e9-d2c6-459d-8cbf-4ad1fb6d9145",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The expression $6x^4+23x^2+20$ can be rewritten as $(3x^2+a)(2x^2+b)$, where $a$ and $b$ are positive integers, or as $(3x^2+c)(2x^2+d)$, where $c$ and $d$ are positive noninteger constants. What is the value of $a+c$?",
+  "correctValue": "11.5",
+  "explanation": "$ab=20$, $3b+2a=23$: $a=4,b=5$. Also $3d+2c=23$, $cd=20$: $2c^2-23c+60=0$, $c=4$ or $7.5$; noninteger $c=7.5$. $a+c=11.5$."
+ },
+ {
+  "sourceId": "2817dcc0-5be9-48ca-8466-335c6f791d7d",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "Number of cars | Maximum number of passengers and crew\n3 | 100\n5 | 164\n8 | 260\nThe table shows the linear relationship between the number of cars, $c$, on a commuter train and the maximum number of passengers and crew, $p$, that the train can carry. Which equation represents the linear relationship between $c$ and $p$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "32c-p=4"
+   },
+   {
+    "id": "B",
+    "tex": "32p-c=-4"
+   },
+   {
+    "id": "C",
+    "tex": "32c-p=-4"
+   },
+   {
+    "id": "D",
+    "tex": "32p-c=4"
+   }
+  ],
+  "correct": "C",
+  "explanation": "Slope $=\\dfrac{164-100}{2}=32$, so $p=32c+4$, i.e. $32c-p=-4$."
+ },
+ {
+  "sourceId": "fd62f895-bc68-4c4d-9c3a-9059f3c9798e",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "An object has a mass of $456$ grams and a volume of $24$ cubic centimeters. What is the density, in grams per cubic centimeter, of the object?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "480"
+   },
+   {
+    "id": "B",
+    "text": "10,944"
+   },
+   {
+    "id": "C",
+    "text": "19"
+   },
+   {
+    "id": "D",
+    "text": "432"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$456\\div24=19$."
+ },
+ {
+  "sourceId": "601862f4-2f67-4b23-9029-dec9e26870d0",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "In triangle $FGH$ and triangle $KLM$, the measures of angles $G$ and $L$ are each $40^\\circ$. The lengths of $\\overline{GH}$ and $\\overline{LM}$ are each $26$ centimeters, and $\\frac{GH}{GF}=\\frac{LM}{LK}$. Which additional piece of information would be necessary to prove that triangle $FGH$ is congruent to triangle $KLM$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "The lengths of $\\overline{FG}$ and $\\overline{KM}$ are each $13$ centimeters."
+   },
+   {
+    "id": "B",
+    "text": "The measures of angles $H$ and $M$ are each $50^\\circ$."
+   },
+   {
+    "id": "C",
+    "text": "The measures of angles $F$ and $K$ are each $90^\\circ$."
+   },
+   {
+    "id": "D",
+    "text": "No additional information is necessary."
+   }
+  ],
+  "correct": "D",
+  "explanation": "$GH=LM$ and the equal ratio gives $GF=LK$; with $\\angle G=\\angle L$ this is SAS, so no more information is needed."
+ },
+ {
+  "sourceId": "ec19a951-8856-44f3-9623-86d6921acfde",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "In the $xy$-plane, which of the following does NOT contain any points that are part of the solution set to $5x-4y>20$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "The region where $x<0$ and $y<0$"
+   },
+   {
+    "id": "B",
+    "text": "The region where $x>0$ and $y<0$"
+   },
+   {
+    "id": "C",
+    "text": "The region where $x<0$ and $y>0$"
+   },
+   {
+    "id": "D",
+    "text": "The $x$-axis"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$y<\\dfrac{5x-20}{4}$. For $x<0$ the bound is negative, so $y>0$ is impossible."
+ },
+ {
+  "sourceId": "52d5563f-8903-4953-8d3c-50ea30a4f57b",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "The table shows four values of $x$ and their corresponding values of $y$.\n$x$ | $y$\n$-10$ | 50\n$-4$ | 32\n4 | 8\n10 | $-10$\nThere is a linear relationship between $x$ and $y$. Which of the following equations represents this relationship?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "15x+5y=20"
+   },
+   {
+    "id": "B",
+    "tex": "15x+5y=100"
+   },
+   {
+    "id": "C",
+    "tex": "5x+15y=20"
+   },
+   {
+    "id": "D",
+    "tex": "5x+15y=100"
+   }
+  ],
+  "correct": "B",
+  "explanation": "Slope $=-3$, $y=-3x+20$, so $3x+y=20$, i.e. $15x+5y=100$."
+ },
+ {
+  "sourceId": "45bce13e-a610-44dc-af29-c4d3b313b284",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "How many times does the graph of the given equation in the $xy$-plane cross the $x$-axis, where $a$, $b$, and $c$ are positive constants such that $a>4$ and $b>c$?",
+  "equations": [
+   "y=5\\left(\\frac{a}{4}\\right)^{x+c}-b"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "Zero"
+   },
+   {
+    "id": "B",
+    "text": "One"
+   },
+   {
+    "id": "C",
+    "text": "Two"
+   },
+   {
+    "id": "D",
+    "text": "Three"
+   }
+  ],
+  "correct": "B",
+  "explanation": "Since $\\frac a4>1$ the graph is an increasing exponential shifted down by $b>0$, so it crosses the $x$-axis exactly once."
+ },
+ {
+  "sourceId": "1533d04e-d3a4-4860-9a2b-ac1a75a64467",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by $f(x)=a^{x}-b$, where $a$ and $b$ are constants. In the $xy$-plane, the graph of $y=f(x)$ passes through the points $(c,2)$ and $(2c,58)$, where $c$ is a constant. Which of the following could be the value of $b$?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "6"
+   },
+   {
+    "id": "B",
+    "text": "9"
+   },
+   {
+    "id": "C",
+    "text": "56"
+   },
+   {
+    "id": "D",
+    "text": "64"
+   }
+  ],
+  "correct": "A",
+  "explanation": "$u=a^c$: $u-b=2$, $u^2-b=58\\Rightarrow u^2-u=56$, $u=8$ (or $-7$). Then $b=8-2=6$."
+ },
+ {
+  "sourceId": "8b303194-30e6-40d6-9476-44c85b587bba",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "For a function $f(x)=\\sqrt{x^{3}+ax^{2}+bx+c}$, $f(8)=0$ and $f(0)=20$. Find the value of $8a+b$.",
+  "correctValue": "-114",
+  "explanation": "$f(0)=20\\Rightarrow c=400$. $f(8)=0\\Rightarrow512+64a+8b+400=0\\Rightarrow8a+b=-114$."
+ },
+ {
+  "sourceId": "28c17537-54f0-4f85-a132-0c11cce12543",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "If $x=\\sqrt[2n]{5x^{n}+36}$. What is the value of $x^{n}$.",
+  "correctValue": "9",
+  "explanation": "$x^{2n}=5x^n+36$; with $t=x^n$: $t^2-5t-36=0$, $t=9$ or $-4$. Since $x\\ge0$ as an even root, $t=9$."
+ },
+ {
+  "sourceId": "f941994f-d2fd-445a-962c-e4d688d89d80",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The function $f$ is defined by $f(x)=a^{x}+b$, where $a$ and $b$ are constants. In the $xy$-plane, the graph of $y=f(x)$ has an $x$-intercept at $(4,0)$ and a $y$-intercept at $(0,-80)$. What is the value of $a+b$?",
+  "correctValue": "-78",
+  "explanation": "$1+b=-80\\Rightarrow b=-81$; $a^4-81=0\\Rightarrow a=3$. $a+b=-78$."
+ },
+ {
+  "sourceId": "5cf201d6-e5cf-45ce-8f58-9656ea846cdc",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The function $q$ is defined by $q(x)=a|x-5|^{2}-61|x-5|+b$, where $a$ and $b$ are constants, and $a>b>61$. If $q(405)=h$ and $q(-395)=k$, where $h$ and $k$ are constants, what is the value of $5(-405)^{h-k}+395(5)^{k-h}$?",
+  "correctValue": "400",
+  "explanation": "$|405-5|=|-395-5|=400$, so $h=k$. The expression is $5(1)+395(1)=400$."
+ },
+ {
+  "sourceId": "9b9cd841-a883-46e7-8713-1c1d22e0e2a1",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "The given expression can be rewritten as $ax^{2}+bx+c$, where $a$, $b$, and $c$ are constants. What is the value of $a+b+c$?",
+  "equations": [
+   "-3(2x-1)^{2}+(3x+2)^{2}"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "text": "-22"
+   },
+   {
+    "id": "B",
+    "text": "1"
+   },
+   {
+    "id": "C",
+    "text": "22"
+   },
+   {
+    "id": "D",
+    "text": "28"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$-3(4x^2-4x+1)+(9x^2+12x+4)=-3x^2+24x+1$; $a+b+c=22$ (also the value at $x=1$: $-3+25=22$)."
+ },
+ {
+  "sourceId": "d5466d29-ac2c-4e60-b277-d365e8f1731e",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "A solution to the given system of equations is $(x,y)$. What is one possible value of $x-1$?",
+  "equations": [
+   "\\begin{cases} y=x-1 \\\\ y=19(x-1)^2-20 \\end{cases}"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "-\\dfrac{20}{19}"
+   },
+   {
+    "id": "B",
+    "tex": "-1"
+   },
+   {
+    "id": "C",
+    "tex": "-\\dfrac{1}{19}"
+   },
+   {
+    "id": "D",
+    "tex": "2"
+   }
+  ],
+  "correct": "B",
+  "explanation": "With $u=x-1$: $u=19u^2-20\\Rightarrow(19u-20)(u+1)=0$, so $u=-1$ or $\\dfrac{20}{19}$. Only $-1$ is listed."
+ },
+ {
+  "sourceId": "82db1038-f2dd-446f-8ece-b0ae6367ab65",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Algebra",
+  "prompt": "A veterinarian recommends that each day a certain cat should eat $18$ calories per pound of the cat's weight, plus an additional $9$ calories. Which equation represents this situation, where $c$ is the total number of calories the veterinarian recommends the cat should eat each day if the cat's weight is $x$ pounds?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "c=18x"
+   },
+   {
+    "id": "B",
+    "tex": "c=9x+18"
+   },
+   {
+    "id": "C",
+    "tex": "c=18x+9"
+   },
+   {
+    "id": "D",
+    "tex": "c=27x"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$c=18x+9$."
+ },
+ {
+  "sourceId": "1ae4a491-0903-4694-ad51-c3081105be74",
+  "type": "mcq",
+  "difficulty": "Easy",
+  "domain": "Algebra",
+  "prompt": "A certain truck can tow a trailer if the combined weight of the trailer and the packages it contains is no more than $6{,}000$ pounds. What is the maximum number of packages the truck can tow in a trailer with a weight of $800$ pounds if each package weighs $125$ pounds?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "40"
+   },
+   {
+    "id": "B",
+    "text": "41"
+   },
+   {
+    "id": "C",
+    "text": "42"
+   },
+   {
+    "id": "D",
+    "text": "48"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$800+125n\\le6000\\Rightarrow n\\le41.6$, so at most $41$."
+ },
+ {
+  "sourceId": "9d34f30c-8321-4c16-9216-5fcb80ea6e16",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "A beekeeper's initial observation of the population of a certain bee colony was $900$ bees. The beekeeper set a goal to increase the population to $2{,}400$ bees. The beekeeper uses a model that predicts the population of this bee colony begins at $900$ and increases by $100$ bees per week in the first three weeks after the initial observation, and then increases by $160$ bees per week until the beekeeper's goal is reached. According to this model, at the end of week $w$ after the initial observation, where $w>3$, which of the following functions gives the predicted number of bees still needed to reach the beekeeper's goal?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "p(w)=2{,}400-160w"
+   },
+   {
+    "id": "B",
+    "tex": "p(w)=1{,}680-160w"
+   },
+   {
+    "id": "C",
+    "tex": "p(w)=2{,}100+160w"
+   },
+   {
+    "id": "D",
+    "tex": "p(w)=-300+160w"
+   }
+  ],
+  "correct": "B",
+  "explanation": "Population $=900+300+160(w-3)=720+160w$. Needed $=2400-(720+160w)=1680-160w$."
+ },
+ {
+  "sourceId": "24516f66-642a-43f3-a0da-3b7ed31122cc",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "A square map has a side length of $48$ inches, and $1$ inch on the map represents an actual distance of $15$ miles. A smaller version of the same map is printed as a square with the side length $60$% shorter than the side length of the previous map. On the smaller map, which of the following is closest to the actual distance, in miles, represented by $1$ inch?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "6.00"
+   },
+   {
+    "id": "B",
+    "text": "37.50"
+   },
+   {
+    "id": "C",
+    "text": "25.00"
+   },
+   {
+    "id": "D",
+    "text": "9.00"
+   }
+  ],
+  "correct": "B",
+  "explanation": "Actual side $=48\\cdot15=720$ miles. New side $=0.4\\cdot48=19.2$ in. $720\\div19.2=37.5$ miles per inch."
+ },
+ {
+  "sourceId": "60ce4bf4-54a4-4982-bae8-c24f09a8abea",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "A plumbing company charges its customers $\\char36$85 for the first hour of a plumbing service call and $\\char36$55 for each additional hour, plus the cost of plumbing parts. Which equation represents the total cost $y$, in dollars, for an $x$-hour plumbing service call where the cost of parts was $\\char36$$z$ and $x\\ge1$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "y=55x+z"
+   },
+   {
+    "id": "B",
+    "tex": "y=85x+z"
+   },
+   {
+    "id": "C",
+    "tex": "y=55x+z+30"
+   },
+   {
+    "id": "D",
+    "tex": "y=85x+55z+30"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$y=85+55(x-1)+z=55x+z+30$."
+ },
+ {
+  "sourceId": "dd7dbede-b5ce-4866-bcac-acd479d8e381",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "In the given system of equations, $m$ and $b$ are negative constants. In the $xy$-plane, the graphs of the equations in the given system intersect at the point $(-6,y)$, where $y<0$. Which expression represents the value of $b$?",
+  "equations": [
+   "\\begin{cases} x^2+y^2=100 \\\\ y=mx+\\dfrac{b}{2} \\end{cases}"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "12m-16"
+   },
+   {
+    "id": "B",
+    "tex": "-12m+16"
+   },
+   {
+    "id": "C",
+    "tex": "6m-8"
+   },
+   {
+    "id": "D",
+    "tex": "-6m+8"
+   }
+  ],
+  "correct": "A",
+  "explanation": "$36+y^2=100\\Rightarrow y=-8$. $-8=-6m+\\dfrac b2\\Rightarrow b=12m-16$."
+ },
+ {
+  "sourceId": "fe98d31a-2e89-45e7-80c1-b349e749c819",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "The frequency table summarizes the age, in years, of each of the 50 coins in Vivek's original collection.\n\nAge (years) | Frequency\n15 | 8\n20 | 6\n25 | 5\n30 | 12\n35 | 5\n40 | 6\n45 | 8\nTotal | 50\n\nVivek will add a 95-year-old coin to his original collection, creating a new collection of 51 coins. Which statement correctly compares the mean ages and median ages of Vivek's original and new collections?",
+  "choices": [
+   {
+    "id": "A",
+    "text": "The mean age for the new collection is greater than the mean age for the original collection, and the median age for the new collection is greater than the median age for the original collection."
+   },
+   {
+    "id": "B",
+    "text": "The mean age for the new collection is greater than the mean age for the original collection, but the median age is the same for the original and new collections."
+   },
+   {
+    "id": "C",
+    "text": "The mean age for the new collection is less than the mean age for the original collection, and the median age for the new collection is less than the median age for the original collection."
+   },
+   {
+    "id": "D",
+    "text": "The median age for the new collection is greater than the median age for the original collection, but the mean age is the same for the original and new collections."
+   }
+  ],
+  "correct": "B",
+  "explanation": "Original mean $=1500/50=30$, median $=30$ (25th and 26th values). New mean $=1595/51\\approx31.3>30$; median is the 26th value, still $30$."
+ },
+ {
+  "sourceId": "d20b54a6-b862-416b-830f-a0b95979509d",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Problem-Solving and Data Analysis",
+  "prompt": "The table summarizes the distribution of age and assigned group for $120$ participants in a study.\n | $0$–$9$ years | $10$–$19$ years | $20+$ years | Total\nGroup A | $8$ | $18$ | $14$ | $40$\nGroup B | $6$ | $12$ | $22$ | $40$\nGroup C | $26$ | $10$ | $4$ | $40$\nTotal | $40$ | $40$ | $40$ | $120$\nOne of these participants will be selected at random. What is the probability of selecting a participant from group A, given that the participant is at least $10$ years of age?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "\\frac{1}{3}"
+   },
+   {
+    "id": "B",
+    "tex": "\\frac{2}{5}"
+   },
+   {
+    "id": "C",
+    "tex": "\\frac{9}{20}"
+   },
+   {
+    "id": "D",
+    "tex": "\\frac{4}{5}"
+   }
+  ],
+  "correct": "B",
+  "explanation": "At least 10: $40+40=80$. Group A among them: $18+14=32$. $\\dfrac{32}{80}=\\dfrac25$."
+ },
+ {
+  "sourceId": "b2bd5367-7cf0-4a12-8112-366235deb927",
+  "type": "mcq",
+  "difficulty": "Hard",
+  "domain": "Geometry and Trigonometry",
+  "prompt": "Point $F$ lies on a unit circle in the $xy$-plane and has coordinates $(1,0)$. Point $G$ is the center of the circle and has coordinates $(0,0)$. Point $H$ also lies on the circle and has coordinates $(-1,y)$, where $y$ is a constant. Which of the following could be the positive measure of angle $FGH$, in radians?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "\\frac{31\\pi}{2}"
+   },
+   {
+    "id": "B",
+    "tex": "\\frac{33\\pi}{2}"
+   },
+   {
+    "id": "C",
+    "tex": "30\\pi"
+   },
+   {
+    "id": "D",
+    "tex": "31\\pi"
+   }
+  ],
+  "correct": "D",
+  "explanation": "$H=(-1,0)$, so the angle is $\\pi+2\\pi k$ (odd multiples of $\\pi$). $31\\pi$ qualifies."
+ },
+ {
+  "sourceId": "fe2e8cb4-239e-484a-b008-18f058b28a46",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "A researcher observes a sample of a nuclide. An exponential model estimates that the mass, in grams, of the sample decreases by $18$% every $31.4$ minutes. Which of the following equations could represent this model, where $M$ is the estimated mass, in grams, of the sample $t$ minutes after the researcher began observing the sample?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "M=100(0.18)^{1+31.4t}"
+   },
+   {
+    "id": "B",
+    "tex": "M=100(0.18)^{\\frac{t}{31.4}}"
+   },
+   {
+    "id": "C",
+    "tex": "M=100(0.82)^{\\frac{t}{31.4}}"
+   },
+   {
+    "id": "D",
+    "tex": "M=100(0.82)^{t+31.4}"
+   }
+  ],
+  "correct": "C",
+  "explanation": "Multiply by $0.82$ every $31.4$ minutes: $M=100(0.82)^{t/31.4}$."
+ },
+ {
+  "sourceId": "bc725b0e-778c-4d0f-97e6-d4672d31d306",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Advanced Math",
+  "prompt": "Which expression is a factor of $25p^{15} - 64p^{13}$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "25p^{2} + 64"
+   },
+   {
+    "id": "B",
+    "tex": "5p + 8"
+   },
+   {
+    "id": "C",
+    "tex": "8p - 5"
+   },
+   {
+    "id": "D",
+    "tex": "-39p^{28}"
+   }
+  ],
+  "correct": "B",
+  "explanation": "$25p^{15}-64p^{13}=p^{13}(5p-8)(5p+8)$."
+ },
+ {
+  "sourceId": "4690a70d-d14e-4702-b084-087ca12ae8fb",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "A computer repair specialist charges $\\char36$210 for the first three hours of repair plus an hourly fee for each additional hour. The total cost for 6 hours of repair is $\\char36$330. Which function $f$ gives the total cost, in dollars, for $x$ hours of repair, where $x \\ge 3$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "f(x) = 55x"
+   },
+   {
+    "id": "B",
+    "tex": "f(x) = 40x + 210"
+   },
+   {
+    "id": "C",
+    "tex": "f(x) = 40x + 90"
+   },
+   {
+    "id": "D",
+    "tex": "f(x) = 55x + 210"
+   }
+  ],
+  "correct": "C",
+  "explanation": "3 extra hours cost $330-210=120$, so $40$ per hour: $f(x)=210+40(x-3)=40x+90$."
+ },
+ {
+  "sourceId": "6656d110-f784-4bd1-9097-83692156785d",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "The function $h$ is defined by $h(x) = -\\sqrt{x^{2} + bx + c}$, where $b$ and $c$ are constants. In the $xy$-plane, the graph of $y = h(x)$ contains the points $(2, 0)$ and $\\left(0, -\\sqrt{418}\\right)$. If $h(m) = 0$, what is the greatest possible value of $m$?",
+  "correctValue": "209",
+  "explanation": "$c=418$ and $4+2b+418=0\\Rightarrow b=-211$. $x^2-211x+418=(x-2)(x-209)$. Greatest root: $209$."
+ },
+ {
+  "sourceId": "b1c06b19-3b9d-45b8-89e9-8599c29e39e3",
+  "type": "gridin",
+  "difficulty": "Hard",
+  "domain": "Advanced Math",
+  "prompt": "Function $f$ is defined by $f(x)=-a^{x}+b$, where $a$ and $b$ are constants. In the $xy$-plane, the graph of $y=f(x)-12$ has a $y$-intercept at $\\left(0,-\\frac{28}{3}\\right)$. The product of $a$ and $b$ is $55$. What is the value of $a$ ?",
+  "correctValue": "15",
+  "explanation": "At $x=0$: $-1+b-12=-\\dfrac{28}{3}\\Rightarrow b=\\dfrac{11}{3}$. $ab=55\\Rightarrow a=15$."
+ },
+ {
+  "sourceId": "8c3d6c76-eeeb-452a-8a0f-ee4e2e1ba2d8",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "For the linear function $f$, $f(-4)=-9$, and the slope of the graph of $y=f(x)$ in the $xy$-plane is 2. Which equation defines $f$?",
+  "choices": [
+   {
+    "id": "A",
+    "tex": "f(x)=2x-9"
+   },
+   {
+    "id": "B",
+    "tex": "f(x)=2x+1"
+   },
+   {
+    "id": "C",
+    "tex": "f(x)=2x-1"
+   },
+   {
+    "id": "D",
+    "tex": "f(x)=2x-17"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$f(x)=2x+b$; $-9=-8+b\\Rightarrow b=-1$."
+ },
+ {
+  "sourceId": "623ad6d7-67be-4984-be2d-0ce249131990",
+  "type": "mcq",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "The given equation relates the resistance $R$, in ohms, of a wire to its length $L$, in meters, and its cross-sectional area $A$, in square meters. Which equation correctly expresses the length, in meters, of the wire in terms of its resistance, in ohms, and its cross-sectional area, in square meters?",
+  "equations": [
+   "R=0.52\\left(\\frac{L}{A}\\right)"
+  ],
+  "choices": [
+   {
+    "id": "A",
+    "tex": "L=\\frac{R-A}{0.52}"
+   },
+   {
+    "id": "B",
+    "tex": "L=\\frac{R+A}{0.52}"
+   },
+   {
+    "id": "C",
+    "tex": "L=\\frac{AR}{0.52}"
+   },
+   {
+    "id": "D",
+    "tex": "L=\\frac{0.52R}{A}"
+   }
+  ],
+  "correct": "C",
+  "explanation": "$R=0.52\\dfrac{L}{A}\\Rightarrow L=\\dfrac{AR}{0.52}$."
+ },
+ {
+  "sourceId": "67780e4e-c132-4dd5-8b4f-380315d309cc",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "If $x+2y=19$ and $5x-9y=-38$, what is the value of $y$?",
+  "correctValue": "7",
+  "explanation": "$x=19-2y$: $95-10y-9y=-38\\Rightarrow19y=133$, $y=7$."
+ },
+ {
+  "sourceId": "4ac4b17a-f8e4-42a0-a2fa-4c878c43246b",
+  "type": "gridin",
+  "difficulty": "Medium",
+  "domain": "Algebra",
+  "prompt": "Line $k$ contains the points $(-2,-50)$, $(v,0)$, and $(6,70)$. What is the value of $v$?",
+  "correctValue": "4/3",
+  "explanation": "Slope $=\\dfrac{70-(-50)}{6-(-2)}=15$; $y=15x-20$. At $y=0$: $v=\\dfrac43$."
+ }
+]
