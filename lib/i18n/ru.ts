@@ -305,6 +305,8 @@ export const ru: Record<string, string> = {
  "Kurslarimga o'tish": "Перейти к моим курсам",
  "Guruh kodini kiriting": "Введите код группы",
  "O'qituvchi Telegram guruhga yuborgan kodni kiriting (masalan: NOYABR-ABC123). Kod faqat bir marta kiritiladi.": "Введите код, который преподаватель отправил в Telegram-группу (например: NOYABR-ABC123). Код вводится только один раз.",
+ "Kodni botdan olish": "Получить код в боте",
+ "Telegram bot ochiladi va kod o'zi so'raladi. Guruh o'quvchisi bo'lsangiz — kod darhol beriladi.": "Откроется Telegram-бот и сам запросит код. Если вы ученик группы, код выдаётся сразу.",
  "Tekshirilmoqda…": "Проверка…",
  "Tasdiqlash": "Подтвердить",
  "Hozircha yopish": "Закрыть пока",

@@ -5,13 +5,22 @@ import { useT } from '@/components/i18n-provider'
 import { HelpModal } from '@/components/marketing/dashboard/help-modal'
 import { PlansModal } from '@/components/marketing/dashboard/plans-modal'
 import { Checkout } from '@/components/marketing/dashboard/checkout'
-import { X, Lock, LifeBuoy, Bell, KeyRound, CheckCircle2 } from 'lucide-react'
+import { X, Lock, LifeBuoy, Bell, KeyRound, CheckCircle2, Send } from 'lucide-react'
 
 /** Telegram channel / bot / contact for "Yordam" and "Kursga qo'shilish" (set NEXT_PUBLIC_HELP_URL). */
 export const HELP_URL = process.env.NEXT_PUBLIC_HELP_URL ?? ''
 
+/** The Telegram bot that hands out group codes (set NEXT_PUBLIC_BOT_USERNAME to change it). */
+const BOT_USERNAME = (process.env.NEXT_PUBLIC_BOT_USERNAME ?? 'sat_vazifa_bot').replace(/^@/, '')
+
+/** Deep link: opens the bot and starts the "give me the code for this group" flow right away. */
+export function botCodeLink(slug?: string | null) {
+  const safe = slug && /^[a-z0-9-]{1,24}$/.test(slug) ? `kod_${slug}` : 'kod'
+  return `https://t.me/${BOT_USERNAME}?start=${safe}`
+}
+
 type ModalKind = 'help' | 'locked' | 'paid' | 'notifications' | 'code' | 'plans'
-type Ctx = { toast: (m: string) => void; openModal: (k: ModalKind) => void }
+type Ctx = { toast: (m: string) => void; openModal: (k: ModalKind, groupSlug?: string | null) => void }
 
 const SdContext = createContext<Ctx>({ toast: () => {}, openModal: () => {} })
 export const useSd = () => useContext(SdContext)
@@ -64,12 +73,24 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
       setModal(null)
     }, 170)
   }, [])
-  const openModal = useCallback((m: ModalKind | null) => {
+  const [code, setCode] = useState('')
+  const [codeBusy, setCodeBusy] = useState(false)
+  const [codeError, setCodeError] = useState<string | null>(null)
+  const [joined, setJoined] = useState<string | null>(null)
+  // Which group's lock the student tapped — the bot link then asks for exactly that group's code.
+  const [codeSlug, setCodeSlug] = useState<string | null>(null)
+  const openModal = useCallback((m: ModalKind | null, groupSlug?: string | null) => {
     if (closeTimer.current) {
       clearTimeout(closeTimer.current)
       closeTimer.current = null
     }
     setClosing(false)
+    if (m === 'code') {
+      setCode('')
+      setCodeError(null)
+      setJoined(null)
+      setCodeSlug(groupSlug ?? null)
+    }
     setModal(m)
   }, [])
   // Background must not scroll while a modal is up.
@@ -96,11 +117,6 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [modal, closeModal])
 
-  const [code, setCode] = useState('')
-  const [codeBusy, setCodeBusy] = useState(false)
-  const [codeError, setCodeError] = useState<string | null>(null)
-  const [joined, setJoined] = useState<string | null>(null)
-
   async function redeem() {
     if (!code.trim() || codeBusy) return
     setCodeBusy(true)
@@ -124,10 +140,7 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
   const m = modal ? MODALS[modal] : null
   function act() {
     if (modal === 'locked') {
-      setCode('')
-      setCodeError(null)
-      setJoined(null)
-      setModal('code')
+      openModal('code', codeSlug)
       return
     }
     if (modal === 'paid') {
@@ -186,6 +199,11 @@ export function SdUiProvider({ children }: { children: React.ReactNode }) {
                   <button className="sd-primary" onClick={redeem} disabled={codeBusy || !code.trim()}>
                     {codeBusy ? t('Tekshirilmoqda…') : t('Tasdiqlash')}
                   </button>
+                  <div className="sd-or">{t('yoki')}</div>
+                  <a className="sd-bot-btn" href={botCodeLink(codeSlug)} target="_blank" rel="noreferrer">
+                    <Send size={16} /> {t('Kodni botdan olish')}
+                  </a>
+                  <p className="sd-bot-hint">{t("Telegram bot ochiladi va kod o'zi so'raladi. Guruh o'quvchisi bo'lsangiz — kod darhol beriladi.")}</p>
                 </>
               )
             ) : (

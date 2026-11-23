@@ -52,7 +52,7 @@ export default function CourseTasksPage() {
 
   function pick(c: Course) {
     if (!unlocked(c)) {
-      openModal('locked')
+      openModal('code', c.slug)
       return
     }
     setOpen(c.name)
