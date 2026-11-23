@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Check, ChevronDown, Copy, Loader2, RefreshCw, Search, Users } from 'lucide-react'
 import { BotModel, ago, dateTime, type BotAnalyticsData, type BotAttempt } from '@/lib/bot-analytics'
+import { fetchAnalytics, readCachedAnalytics } from '@/lib/bot-analytics-client'
 
 /**
  * Admin «Nazorat»: pick a group → every student in it, when they last sent a mock and which one,
@@ -54,12 +55,16 @@ export function MonitorPanel() {
   function load() {
     setLoading(true)
     setErr(null)
-    fetch('/api/admin/bot-analytics', { cache: 'no-store' })
-      .then(async (r) => {
-        const d = await r.json()
-        if (!r.ok) throw new Error(d.error ?? 'Xatolik')
-        setData(d.missing ? null : d)
-        if (d.missing) setErr('Bot jadvallari Supabase’da topilmadi.')
+    if (!data) {
+      const cached = readCachedAnalytics()
+      if (cached) setData(cached)
+    }
+    fetchAnalytics()
+      .then((r) => {
+        if (r.missing) {
+          setData(null)
+          setErr('Bot jadvallari Supabase’da topilmadi.')
+        } else setData(r.data)
       })
       .catch((e) => setErr(e instanceof Error ? e.message : 'Server bilan bog‘lanib bo‘lmadi.'))
       .finally(() => setLoading(false))

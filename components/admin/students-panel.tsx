@@ -8,6 +8,8 @@ import {
   Check,
   ChevronRight,
   ExternalLink,
+  Archive,
+  ArchiveRestore,
   Loader2,
   RefreshCw,
   Search,
@@ -29,6 +31,8 @@ import {
   type MockStats,
 } from '@/lib/bot-analytics'
 import { ReviewBasketBar, WrongList } from '@/components/admin/wrong-list'
+import { LinksHome } from '@/components/admin/tg-links-panel'
+import { fetchAnalytics, postJson, readCachedAnalytics } from '@/lib/bot-analytics-client'
 
 /**
  * Admin "O'quvchilar tahlili": the Telegram bot's results in one place.
@@ -36,7 +40,7 @@ import { ReviewBasketBar, WrongList } from '@/components/admin/wrong-list'
  * Data comes from Supabase (the bot pushes there every 5 minutes) — the bot's own server is never queried.
  */
 
-type Home = 'groups' | 'tests' | 'hard' | 'students'
+type Home = 'groups' | 'tests' | 'hard' | 'students' | 'links'
 type View =
   | { k: 'home'; tab: Home }
   | { k: 'group'; chat: number }
@@ -48,6 +52,7 @@ const HOME_TABS: [Home, string][] = [
   ['tests', 'Barcha testlar'],
   ['hard', "Ko'p xato qilinadigan savollar"],
   ['students', "Barcha o'quvchilar"],
+  ['links', 'Sayt ↔ Telegram'],
 ]
 
 export function StudentsPanel({ headers }: { headers?: Record<string, string> } = {}) {
@@ -60,12 +65,15 @@ export function StudentsPanel({ headers }: { headers?: Record<string, string> } 
   function load() {
     setLoading(true)
     setError(null)
-    fetch('/api/admin/bot-analytics', { headers, cache: 'no-store' })
-      .then(async (r) => {
-        const d = await r.json()
-        if (!r.ok) throw new Error(d.error ?? 'Xatolik')
-        if (d.missing) setMissing(true)
-        else setData(d)
+    // paint the previous answer straight away (sessionStorage), then replace it with the fresh one
+    if (!data) {
+      const cached = readCachedAnalytics()
+      if (cached) setData(cached)
+    }
+    fetchAnalytics(headers)
+      .then((r) => {
+        if (r.missing) setMissing(true)
+        else setData(r.data)
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Server bilan bog'lanib bo'lmadi."))
       .finally(() => setLoading(false))
@@ -159,11 +167,12 @@ export function StudentsPanel({ headers }: { headers?: Record<string, string> } 
         Ma&apos;lumot {dateTime(model.data.generatedAt)} holatida · bot natijalarni har 5 daqiqada yuboradi · vaqtlar Toshkent bo&apos;yicha
       </p>
 
-      {view.k === 'home' && view.tab === 'groups' && <GroupsHome model={model} open={open} />}
+      {view.k === 'home' && view.tab === 'groups' && <GroupsHome model={model} open={open} headers={headers} reload={load} />}
       {view.k === 'home' && view.tab === 'tests' && <TestsHome model={model} open={open} />}
       {view.k === 'home' && view.tab === 'hard' && <HardHome model={model} open={open} />}
       {view.k === 'home' && view.tab === 'students' && <StudentsHome model={model} open={open} />}
-      {view.k === 'group' && <GroupView key={view.chat} model={model} chat={view.chat} open={open} />}
+      {view.k === 'home' && view.tab === 'links' && <LinksHome headers={headers} reload={load} />}
+      {view.k === 'group' && <GroupView key={view.chat} model={model} chat={view.chat} open={open} headers={headers} reload={load} onArchived={() => back()} />}
       {view.k === 'mock' && <MockView key={`${view.code}|${view.chat}`} model={model} code={view.code} chat={view.chat} open={open} headers={headers} />}
       {view.k === 'student' && <StudentView key={`${view.tg}|${view.chat}`} model={model} tg={view.tg} chat={view.chat} open={open} />}
       <ReviewBasketBar canCreate={!headers} />
@@ -182,8 +191,22 @@ type Open = (v: View) => void
 
 /* ================================= HOME: groups ================================= */
 
-function GroupsHome({ model, open }: { model: BotModel; open: Open }) {
+function GroupsHome({ model, open, headers, reload }: { model: BotModel; open: Open; headers?: Record<string, string>; reload: () => void }) {
   const [showEmpty, setShowEmpty] = useState(false)
+  const [showArchive, setShowArchive] = useState(false)
+  const [busy, setBusy] = useState<number | null>(null)
+  async function setArchived(chatId: number, archived: boolean, title: string) {
+    if (archived && !confirm(`"${title}" arxivga olinsinmi?\nU tahlildan yo'qoladi va ma'lumotlari yuklanmaydi (hech narsa o'chmaydi, istalgan vaqt qaytarasiz).`)) return
+    setBusy(chatId)
+    try {
+      await postJson('/api/admin/bot-analytics/archive', { chatId, archived }, headers)
+      reload()
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Xatolik')
+    } finally {
+      setBusy(null)
+    }
+  }
   const all = useMemo(
     () => model.data.groups.map((g) => model.groupSummary(g.chatId)).sort((a, b) => (b.last ?? '').localeCompare(a.last ?? '') || b.members - a.members),
     [model],
@@ -202,14 +225,19 @@ function GroupsHome({ model, open }: { model: BotModel; open: Open }) {
         <Tile label="Natija yuborganlar" value={totalStudents} sub={`${model.data.attempts.length} ta natija`} />
         <Tile label="Shu hafta" value={week.length} sub={`${new Set(week.map((a) => a.tg)).size} ta o'quvchi yubordi`} />
       </div>
+      {(model.data.unlinked ?? 0) > 0 && (
+        <p className="rounded-xl bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-800">
+          {model.data.unlinked} ta o&apos;quvchining sayt akkaunti Telegram bilan bog&apos;lanmagan — saytda yechgan mocklari ularga hisoblanmaydi. «Sayt ↔ Telegram» bo&apos;limida bir bosishda bog&apos;lang.
+        </p>
+      )}
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {live.map((s) => (
+          <div key={s.group.chatId} className="relative">
           <button
-            key={s.group.chatId}
             type="button"
             onClick={() => open({ k: 'group', chat: s.group.chatId })}
-            className="group rounded-2xl border border-line bg-white p-4 text-left transition-colors hover:border-green"
+            className="group h-full w-full rounded-2xl border border-line bg-white p-4 text-left transition-colors hover:border-green"
           >
             <div className="mb-3 flex items-start gap-2">
               <div className="min-w-0 flex-1">
@@ -235,6 +263,16 @@ function GroupsHome({ model, open }: { model: BotModel; open: Open }) {
               O&apos;rtacha natija: <b className="text-ink">{s.avgPct == null ? '—' : `${Math.round(s.avgPct)}%`}</b> · {s.attempts} ta natija
             </div>
           </button>
+          <button
+            type="button"
+            disabled={busy === s.group.chatId}
+            onClick={() => setArchived(s.group.chatId, true, s.group.title)}
+            title="Guruh tugagan — arxivga olish"
+            className="absolute right-9 top-3 inline-flex items-center gap-1 rounded-lg border border-line bg-white px-2 py-1 text-[11px] font-bold text-ink-soft hover:border-ink-faint hover:text-ink disabled:opacity-40"
+          >
+            {busy === s.group.chatId ? <Loader2 size={12} className="animate-spin" /> : <Archive size={12} />} Arxiv
+          </button>
+          </div>
         ))}
       </div>
 
@@ -255,6 +293,32 @@ function GroupsHome({ model, open }: { model: BotModel; open: Open }) {
           )}
         </div>
       )}
+
+      {(model.data.archived?.length ?? 0) > 0 && (
+        <div className="text-[12px] text-ink-faint">
+          <button type="button" className="font-bold underline-offset-2 hover:underline" onClick={() => setShowArchive((x) => !x)}>
+            Arxivdagi guruhlar ({model.data.archived!.length}) {showArchive ? '▲' : '▼'}
+          </button>
+          {showArchive && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {model.data.archived!.map((g) => (
+                <span key={g.chatId} className="inline-flex items-center gap-2 rounded-lg border border-line px-2.5 py-1">
+                  {g.title}
+                  <button
+                    type="button"
+                    disabled={busy === g.chatId}
+                    onClick={() => setArchived(g.chatId, false, g.title)}
+                    className="inline-flex items-center gap-1 font-bold text-green-deep hover:underline disabled:opacity-40"
+                  >
+                    {busy === g.chatId ? <Loader2 size={12} className="animate-spin" /> : <ArchiveRestore size={12} />} Qaytarish
+                  </button>
+                </span>
+              ))}
+              <span className="w-full">Arxivdagi guruhlarning natijalari tahlilga yuklanmaydi — shuning uchun sahifa tez ochiladi.</span>
+            </div>
+          )}
+        </div>
+      )}
     </>
   )
 }
@@ -263,8 +327,35 @@ function GroupsHome({ model, open }: { model: BotModel; open: Open }) {
 
 type StudentSort = 'name' | 'done' | 'avg' | 'last'
 
-function GroupView({ model, chat, open }: { model: BotModel; chat: number; open: Open }) {
+function GroupView({
+  model,
+  chat,
+  open,
+  headers,
+  reload,
+  onArchived,
+}: {
+  model: BotModel
+  chat: number
+  open: Open
+  headers?: Record<string, string>
+  reload: () => void
+  onArchived: () => void
+}) {
   const s = useMemo(() => model.groupSummary(chat), [model, chat])
+  const [archiving, setArchiving] = useState(false)
+  async function archive() {
+    if (!confirm(`"${s.group.title}" arxivga olinsinmi?\nU tahlildan yo'qoladi va ma'lumotlari yuklanmaydi (hech narsa o'chmaydi, istalgan vaqt qaytarasiz).`)) return
+    setArchiving(true)
+    try {
+      await postJson('/api/admin/bot-analytics/archive', { chatId: chat, archived: true }, headers)
+      onArchived()
+      reload()
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Xatolik')
+      setArchiving(false)
+    }
+  }
   const [sort, setSort] = useState<StudentSort>('done')
   const [q, setQ] = useState('')
   const mocks = useMemo(
@@ -298,6 +389,9 @@ function GroupView({ model, chat, open }: { model: BotModel; chat: number; open:
             {s.group.slug ? `${s.group.slug.toUpperCase()} kursi guruhi · ` : ''}Telegram ID {s.group.chatId}
           </p>
         </div>
+        <button type="button" className="adm-btn !h-9" onClick={archive} disabled={archiving} title="Guruh tugagan bo'lsa — arxivga olish">
+          {archiving ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />} Arxivga olish
+        </button>
       </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Tile label="O'quvchilar" value={s.members} sub={`${s.active7} tasi shu hafta faol`} />
@@ -423,6 +517,47 @@ function GroupView({ model, chat, open }: { model: BotModel; chat: number; open:
         <HardList model={model} rows={hard} open={open} chat={chat} />
       </Card>
     </>
+  )
+}
+
+/** Who got question `no` wrong (first attempt per student), with the answer they gave when we have it. */
+function WrongPeople({
+  model,
+  m,
+  no,
+  answers,
+  open,
+  chat,
+}: {
+  model: BotModel
+  m: MockStats
+  no: number
+  answers: BotAnswersData | null
+  open: Open
+  chat: number | null
+}) {
+  const people = m.rows.filter((r) => r.attempt.w.includes(no))
+  if (!people.length) return <p className="mt-2 text-[12px] text-ink-faint">Bu savolda xato qilgan o&apos;quvchi yo&apos;q.</p>
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {people.map((r) => {
+        const given = (answers?.[r.attempt.id]?.[String(no)] ?? '').trim()
+        return (
+          <button
+            key={r.tg}
+            type="button"
+            onClick={() => open({ k: 'student', tg: r.tg, chat })}
+            title={r.attempt.web ? 'Saytda yechgan' : undefined}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50/60 px-2 py-1 text-[12px] font-bold text-ink hover:border-red-400"
+          >
+            {model.name(r.tg)}
+            {given && given !== '-' ? <span className="font-mono text-[11px] font-semibold text-red-600">{given}</span> : null}
+            {!given && answers && !r.attempt.web ? <span className="text-[10.5px] font-semibold text-ink-faint">bo&apos;sh</span> : null}
+            {r.attempt.web ? <span className="text-[10px] font-semibold text-ink-faint">sayt</span> : null}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -597,6 +732,8 @@ function MockView({ model, code, chat, open, headers }: { model: BotModel; code:
                       </>
                     ) : null}
                     {topWrong?.get(selQ.no)?.blank ? ` · ${topWrong.get(selQ.no)!.blank} kishi bo'sh qoldirgan` : ''}
+                    <div className="mt-2 text-[11.5px] font-bold text-ink-soft">Kim xato qilgan:</div>
+                    <WrongPeople model={model} m={m} no={selQ.no} answers={answers} open={open} chat={scope} />
                   </div>
                 )}
               </>
@@ -612,26 +749,35 @@ function MockView({ model, code, chat, open, headers }: { model: BotModel; code:
           <div className="space-y-1.5">
             {hardest.map((q) => {
               const tw = topWrong?.get(q.no)
+              const on = sel === q.no
               return (
-                <div key={q.no} className="grid grid-cols-[64px_minmax(0,1fr)] items-center gap-x-3 gap-y-0.5 text-[12.5px] sm:grid-cols-[72px_minmax(0,1fr)_minmax(0,300px)]">
-                  <span className="whitespace-nowrap font-extrabold text-ink">{q.no}-savol</span>
-                  <div className="flex items-center gap-2">
-                    <div className="h-3 flex-1 overflow-hidden rounded-full bg-bg-deep">
-                      <div className="h-full rounded-full" style={{ width: `${Math.max(2, q.wrongPct)}%`, background: 'var(--heat-strong, #d64545)' }} />
+                <div key={q.no}>
+                  <button
+                    type="button"
+                    onClick={() => setSel(on ? null : q.no)}
+                    title="Kim xato qilganini ko'rish"
+                    className="grid w-full grid-cols-[64px_minmax(0,1fr)] items-center gap-x-3 gap-y-0.5 rounded-lg text-left text-[12.5px] hover:bg-bg-deep sm:grid-cols-[72px_minmax(0,1fr)_minmax(0,300px)]"
+                  >
+                    <span className="whitespace-nowrap font-extrabold text-ink">{q.no}-savol</span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 flex-1 overflow-hidden rounded-full bg-bg-deep">
+                        <div className="h-full rounded-full" style={{ width: `${Math.max(2, q.wrongPct)}%`, background: 'var(--heat-strong, #d64545)' }} />
+                      </div>
+                      <span className="w-24 text-right tabular-nums text-ink-soft">
+                        <b className="text-ink">{Math.round(q.wrongPct)}%</b> ({q.wrong}/{q.n})
+                      </span>
                     </div>
-                    <span className="w-24 text-right tabular-nums text-ink-soft">
-                      <b className="text-ink">{Math.round(q.wrongPct)}%</b> ({q.wrong}/{q.n})
+                    <span className="col-start-2 truncate text-[11.5px] text-ink-faint sm:col-start-auto">
+                      to&apos;g&apos;ri: <b className="font-mono text-green-deep">{q.key || '—'}</b>
+                      {tw?.answer ? (
+                        <>
+                          {' '}
+                          · ko&apos;p belgilangan: <b className="font-mono text-red-600">{tw.answer}</b>
+                        </>
+                      ) : null}
                     </span>
-                  </div>
-                  <span className="col-start-2 truncate text-[11.5px] text-ink-faint sm:col-start-auto">
-                    to&apos;g&apos;ri: <b className="font-mono text-green-deep">{q.key || '—'}</b>
-                    {tw?.answer ? (
-                      <>
-                        {' '}
-                        · ko&apos;p belgilangan: <b className="font-mono text-red-600">{tw.answer}</b>
-                      </>
-                    ) : null}
-                  </span>
+                  </button>
+                  {on && <div className="mb-2 ml-1"><WrongPeople model={model} m={m} no={q.no} answers={answers} open={open} chat={scope} /></div>}
                 </div>
               )
             })}

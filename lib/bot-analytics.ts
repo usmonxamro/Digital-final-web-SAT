@@ -21,7 +21,7 @@ export type BotTest = {
   /** question number → correct answer */
   key: Record<string, string>
 }
-export type BotGroup = { chatId: number; title: string; slug: string | null; addedAt: string | null }
+export type BotGroup = { chatId: number; title: string; slug: string | null; addedAt: string | null; archived?: boolean }
 export type BotMember = { chatId: number; tg: number; n: string; u: string; at: string | null }
 export type BotAssignment = { code: string; chatId: number; at: string | null }
 /** One submission. c/t = correct/total, s = score text ("730 / 800" or "18/20"), w = wrong question numbers. */
@@ -35,6 +35,10 @@ export type BotAnalyticsData = {
   attempts: BotAttempt[]
   /** tg_id → name (n), username (u), name_set (s: the student typed his real name in the bot) */
   accounts: Record<string, { n: string; u: string; s: boolean }>
+  /** archived (finished) groups — their data is not loaded; shown only to restore them */
+  archived?: { chatId: number; title: string; archivedAt: string | null }[]
+  /** group members whose site account is not linked to their Telegram yet (their website results cannot be counted) */
+  unlinked?: number
 }
 /** attempt id → question number → the student's answer */
 export type BotAnswersData = Record<string, Record<string, string>>
