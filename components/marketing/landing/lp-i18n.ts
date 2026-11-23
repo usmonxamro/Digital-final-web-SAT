@@ -1,5 +1,6 @@
 import { translate, type Lang } from '@/lib/i18n'
 import { BOOKS_I18N } from '@/components/marketing/landing/lp-books'
+import { PARTNERS_I18N } from '@/components/marketing/landing/lp-partners'
 import { DARAJA_I18N } from '@/components/marketing/landing/lp-daraja'
 
 /** Landing-page texts. The Uzbek/English source text is the key (see LP_BODY). */
@@ -301,6 +302,8 @@ const EN: Record<string, string> = {
 // Texts of the books section: added without ever overriding an existing translation.
 for (const [k, v] of Object.entries(BOOKS_I18N.ru)) if (!(k in RU)) RU[k] = v
 for (const [k, v] of Object.entries(BOOKS_I18N.en)) if (!(k in EN)) EN[k] = v
+for (const [k, v] of Object.entries(PARTNERS_I18N.ru)) if (!(k in RU)) RU[k] = v
+for (const [k, v] of Object.entries(PARTNERS_I18N.en)) if (!(k in EN)) EN[k] = v
 for (const [k, v] of Object.entries(DARAJA_I18N.ru)) if (!(k in RU)) RU[k] = v
 for (const [k, v] of Object.entries(DARAJA_I18N.en)) if (!(k in EN)) EN[k] = v
 
