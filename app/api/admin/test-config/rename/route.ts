@@ -51,5 +51,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Nomini o'zgartirib bo'lmadi: ${error.message}` }, { status: 500 })
   }
   invalidateCounts()
-  return NextResponse.json({ ok: true, ...(data as object) })
+  // v119 runs the bot-name update inside the same transaction; an older function does not report `botTests`.
+  const botNote =
+    data && typeof data === 'object' && 'botTests' in data
+      ? undefined
+      : "Botdagi nom o'zgarmadi: supabase/v119_rename_mock_bot.sql ni SQL Editor'da ishga tushiring."
+  return NextResponse.json({ ok: true, ...(data as object), ...(botNote ? { botNote } : {}) })
 }
