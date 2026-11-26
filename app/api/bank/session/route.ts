@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifySession, SESSION_COOKIE } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { sectionByKey } from '@/lib/bank-meta'
+import { sectionByKey, NEW_BANK_BATCH } from '@/lib/bank-meta'
 import { bankAnswers, bankMeta } from '@/lib/bank-student'
 
 const shuffle = <T,>(a: T[]) => {
@@ -22,8 +22,9 @@ export async function GET(req: NextRequest) {
   const session = verifySession((await cookies()).get(SESSION_COOKIE)?.value)
   if (!session) return NextResponse.json({ error: 'Kirish talab qilinadi.' }, { status: 401 })
   const sp = req.nextUrl.searchParams
+  const onlyNew = sp.get('batch') === 'new'
   const section = sectionByKey(sp.get('section') ?? '')
-  if (!section) return NextResponse.json({ error: "Bo'lim topilmadi." }, { status: 404 })
+  if (!section && !onlyNew) return NextResponse.json({ error: "Bo'lim topilmadi." }, { status: 404 })
   const n = Math.min(30, Math.max(5, Number(sp.get('n')) || 10))
   const topic = sp.get('topic') || ''
   const diff = sp.get('difficulty') || ''
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
   const supabase = supabaseAdmin()
   const [meta, answers] = await Promise.all([bankMeta(supabase), bankAnswers(supabase, session.userId)])
   if (!meta) return NextResponse.json({ questions: [] })
-  const pool = meta.filter((r) => r.domain === section.domain && (!topic || r.topic_code === topic) && (!diff || r.difficulty === diff))
+  const pool = meta.filter((r) => (!section || r.domain === section.domain) && (!onlyNew || r.batch === NEW_BANK_BATCH) && (!topic || r.topic_code === topic) && (!diff || r.difficulty === diff))
   const unseen = shuffle(pool.filter((r) => !answers.has(r.id)))
   const wrong = shuffle(pool.filter((r) => answers.get(r.id) === false))
   const right = shuffle(pool.filter((r) => answers.get(r.id) === true))

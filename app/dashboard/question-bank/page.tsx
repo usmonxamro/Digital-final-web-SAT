@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, CheckCircle2, Crosshair, Layers, Target } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Crosshair, Download, Layers, Sparkles, Target } from 'lucide-react'
+import { BankSession } from '@/components/bank-session'
 import { SatSkeleton } from '@/components/sat-loader'
 import { useI18n } from '@/components/i18n-provider'
-import { BANK_SECTIONS } from '@/lib/bank-meta'
+import { BANK_SECTIONS, NEW_BANK_PDF } from '@/lib/bank-meta'
 import { Ring } from '@/components/marketing/dashboard/ring'
 import type { BankSectionStat } from '@/app/api/bank/overview/route'
 
@@ -13,18 +14,41 @@ import type { BankSectionStat } from '@/app/api/bank/overview/route'
 export default function QuestionBankPage() {
   const { t, lang } = useI18n()
   const [sections, setSections] = useState<BankSectionStat[] | null>(null)
+  const [fresh, setFresh] = useState({ total: 0, answered: 0 })
+  const [newSession, setNewSession] = useState(false)
 
-  useEffect(() => {
+  const load = () =>
     fetch('/api/bank/overview')
       .then((r) => r.json())
-      .then((d) => setSections(d.sections ?? []))
+      .then((d) => {
+        setSections(d.sections ?? [])
+        setFresh({ total: d.newCount ?? 0, answered: d.newAnswered ?? 0 })
+      })
       .catch(() => setSections([]))
+  useEffect(() => {
+    load()
   }, [])
 
   const total = sections?.reduce((s, x) => s + x.total, 0) ?? 0
   const answered = sections?.reduce((s, x) => s + x.answered, 0) ?? 0
   const correct = sections?.reduce((s, x) => s + x.correct, 0) ?? 0
   const topics = sections?.reduce((s, x) => s + x.topics.length, 0) ?? 0
+
+  if (newSession) {
+    return (
+      <div className="sd-qbx">
+        <BankSession
+          title={t('Yangi savollar')}
+          crumb={t("23-noyabr yangilanishi")}
+          params={{ batch: 'new', n: 10 }}
+          onExit={() => {
+            setNewSession(false)
+            load()
+          }}
+        />
+      </div>
+    )
+  }
 
   return (
     <>
@@ -34,6 +58,28 @@ export default function QuestionBankPage() {
           <h1>{t('Savollar banki')}</h1>
         </div>
       </div>
+
+      {fresh.total > 0 && (
+        <section className="sd-qbx-new">
+          <span className="sd-qbx-new-ico">
+            <Sparkles />
+          </span>
+          <div className="sd-qbx-new-text">
+            <b>{t('Yangi savollar — 23-noyabr yangilanishi')}</b>
+            <small>
+              {t('{n} ta yangi savol', { n: fresh.total })} · {t('{a} / {b} yechilgan', { a: fresh.answered, b: fresh.total })}
+            </small>
+          </div>
+          <div className="sd-qbx-new-actions">
+            <button className="sd-primary" onClick={() => setNewSession(true)}>
+              {t('Shu yerda yechish')} <ArrowRight />
+            </button>
+            <a className="sd-soft" href={NEW_BANK_PDF} download>
+              <Download /> {t('PDF yuklab olish')}
+            </a>
+          </div>
+        </section>
+      )}
 
       {sections === null && <SatSkeleton kind="cards" count={4} />}
       {sections && total === 0 && <div className="sd-panel sd-empty">{t('Savollar banki tez orada ochiladi.')}</div>}

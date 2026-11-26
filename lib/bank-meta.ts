@@ -40,3 +40,8 @@ const TOPICS: Record<string, Record<Lang, string>> = {
 
 /** Topic name in the student's language (falls back to the English name stored in the bank). */
 export const topicName = (code: string, fallback: string, lang: Lang) => TOPICS[code]?.[lang] ?? fallback
+
+/** The latest batch of questions added to the bank (College Board's 23 Nov 2026 update): marked with question_bank.batch. */
+export const NEW_BANK_BATCH = '2026-11-23'
+/** Printable PDF of that batch (questions only), served from /public/downloads. */
+export const NEW_BANK_PDF = '/downloads/sat-by-usmon-yangi-savollar-2026-11.pdf'

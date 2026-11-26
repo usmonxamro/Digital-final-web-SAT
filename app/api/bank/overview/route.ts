@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifySession, SESSION_COOKIE } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { BANK_SECTIONS } from '@/lib/bank-meta'
+import { BANK_SECTIONS, NEW_BANK_BATCH } from '@/lib/bank-meta'
 import { bankAnswers, bankMeta } from '@/lib/bank-student'
 
 export type BankTopicStat = { code: string; topic: string; total: number; answered: number; correct: number }
@@ -14,7 +14,10 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Kirish talab qilinadi.' }, { status: 401 })
   const supabase = supabaseAdmin()
   const [meta, answers] = await Promise.all([bankMeta(supabase), bankAnswers(supabase, session.userId)])
-  if (!meta) return NextResponse.json({ sections: [] })
+  if (!meta) return NextResponse.json({ sections: [], newCount: 0 })
+  const fresh = meta.filter((r) => r.batch === NEW_BANK_BATCH)
+  const newCount = fresh.length
+  const newAnswered = fresh.filter((r) => answers.has(r.id)).length
   const sections: BankSectionStat[] = BANK_SECTIONS.map((s) => {
     const topics = new Map<string, BankTopicStat>()
     let total = 0
@@ -38,5 +41,5 @@ export async function GET() {
     }
     return { key: s.key, total, answered, correct, topics: [...topics.values()] }
   })
-  return NextResponse.json({ sections })
+  return NextResponse.json({ sections, newCount, newAnswered })
 }

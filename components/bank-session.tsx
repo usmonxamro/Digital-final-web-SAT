@@ -38,7 +38,7 @@ export function BankSession({
   title,
   crumb,
 }: {
-  params: { section: string; topic?: string; difficulty?: string; n: number }
+  params: { section?: string; topic?: string; difficulty?: string; n: number; batch?: 'new' }
   onExit: () => void
   /** Topic name (or «Aralash mashq») and the section it belongs to — shown in the session header. */
   title?: string
@@ -62,7 +62,9 @@ export function BankSession({
     setPick('')
     setChecks({})
     setPicked({})
-    const sp = new URLSearchParams({ section: params.section, n: String(params.n) })
+    const sp = new URLSearchParams({ n: String(params.n) })
+    if (params.section) sp.set('section', params.section)
+    if (params.batch) sp.set('batch', params.batch)
     if (params.topic) sp.set('topic', params.topic)
     if (params.difficulty) sp.set('difficulty', params.difficulty)
     fetch(`/api/bank/session?${sp}`)
@@ -72,7 +74,7 @@ export function BankSession({
     return () => {
       off = true
     }
-  }, [params.section, params.topic, params.difficulty, params.n, run])
+  }, [params.section, params.topic, params.difficulty, params.n, params.batch, run])
 
   if (!qs) {
     return (

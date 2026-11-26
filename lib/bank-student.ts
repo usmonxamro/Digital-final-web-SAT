@@ -1,21 +1,24 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { fetchAll } from '@/lib/db-paginate'
 
-export type BankMeta = { id: string; domain: string; topic_code: string; topic: string; difficulty: string }
+export type BankMeta = { id: string; domain: string; topic_code: string; topic: string; difficulty: string; batch?: string | null }
 
 let cache: { at: number; rows: BankMeta[] } | null = null
 
 /** Verified questions only (needs_check = false), light columns; cached for 5 minutes per server instance. */
 export async function bankMeta(supabase: SupabaseClient): Promise<BankMeta[] | null> {
   if (cache && Date.now() - cache.at < 5 * 60_000) return cache.rows
-  const { data, error } = await fetchAll<BankMeta>((from, to) =>
-    supabase
-      .from('question_bank')
-      .select('id, domain, topic_code, topic, difficulty')
-      .eq('needs_check', false)
-      .order('id')
-      .range(from, to),
-  )
+  const load = (cols: string) =>
+    fetchAll<BankMeta>(
+      (from, to) =>
+        supabase.from('question_bank').select(cols).eq('needs_check', false).order('id').range(from, to) as unknown as PromiseLike<{
+          data: BankMeta[] | null
+          error: { message: string } | null
+        }>,
+    )
+  let { data, error } = await load('id, domain, topic_code, topic, difficulty, batch')
+  // `batch` comes from supabase/question_bank_batch.sql; until that is run the bank still works without it
+  if (error) ({ data, error } = await load('id, domain, topic_code, topic, difficulty'))
   if (error) return null
   cache = { at: Date.now(), rows: data }
   return data
