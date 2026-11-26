@@ -72,14 +72,7 @@ export async function GET() {
     fetchAll<{ plan: string | null; premium_until: string | null }>((from, to) =>
       supabase.from('users').select('plan, premium_until').order('created_at', { ascending: false }).range(from, to),
     ),
-    fetchAll<{ visitor_id: string; path: string; created_at: string }>((from, to) =>
-      supabase
-        .from('page_views')
-        .select('visitor_id, path, created_at')
-        .gte('created_at', iso(from30))
-        .order('id', { ascending: false })
-        .range(from, to),
-    ),
+    supabase.rpc('admin_visit_stats', { p_today: iso(today) }),
     supabase.from('users').select('id', { count: 'exact', head: true }),
     supabase.from('users').select('id', { count: 'exact', head: true }).gte('created_at', iso(today - 6 * DAY)),
     supabase.from('users').select('id', { count: 'exact', head: true }).gte('created_at', iso(from30)),
@@ -91,32 +84,28 @@ export async function GET() {
     ),
   ])
 
-  const rows = viewsRes.error ? [] : viewsRes.data
-  const days: DayPoint[] = []
-  const dayVisitors: Set<string>[] = []
-  for (let i = 0; i < 30; i++) {
-    const d = new Date(from30 + i * DAY + 5 * 3600_000) // shift into Tashkent date
-    days.push({ date: d.toISOString().slice(0, 10), views: 0, visitors: 0 })
-    dayVisitors.push(new Set())
-  }
-  const pages = new Map<string, number>()
-  const u7 = new Set<string>()
-  const u30 = new Set<string>()
-  let last7 = 0
-  for (const r of rows) {
-    const t = new Date(r.created_at as string).getTime()
-    const idx = Math.floor((t - from30) / DAY)
-    if (idx < 0 || idx >= 30) continue
-    days[idx].views++
-    dayVisitors[idx].add(r.visitor_id as string)
-    u30.add(r.visitor_id as string)
-    if (t >= today - 6 * DAY) {
-      last7++
-      u7.add(r.visitor_id as string)
-    }
-    pages.set(r.path as string, (pages.get(r.path as string) ?? 0) + 1)
-  }
-  days.forEach((d, i) => (d.visitors = dayVisitors[i].size))
+  // Visit numbers are computed inside Postgres (admin_visit_stats) — no page_views rows are downloaded.
+  const v = (viewsRes.error ? null : viewsRes.data) as {
+    daily: DayPoint[]
+    last7: number
+    unique7: number
+    last30: number
+    unique30: number
+    topPages: { path: string; views: number }[]
+  } | null
+  // If the SQL function is missing (migration not run) keep 30 empty days so the panel still renders.
+  const days: DayPoint[] =
+    v?.daily ??
+    Array.from({ length: 30 }, (_, i) => ({
+      date: new Date(from30 + i * DAY + 5 * 3600_000).toISOString().slice(0, 10),
+      views: 0,
+      visitors: 0,
+    }))
+  const last7 = v?.last7 ?? 0
+  const unique7 = v?.unique7 ?? 0
+  const last30 = v?.last30 ?? 0
+  const unique30 = v?.unique30 ?? 0
+  const todayPoint: DayPoint = days[days.length - 1]
 
   const plans = { pro: 0, trial: 0, free: 0 }
   for (const u of planRes.error ? [] : planRes.data) {
@@ -145,8 +134,6 @@ export async function GET() {
 
   // ---- funnel: visitors → registrations → started a mock → finished a mock ----
   const starts = startsRes.error ? [] : startsRes.data
-  const uToday = new Set<string>()
-  for (const r of rows) if (new Date(r.created_at as string).getTime() >= today) uToday.add(r.visitor_id as string)
   const period = (since: number, visitors: number, registrations: number): FunnelPeriod => {
     const st = starts.filter((r) => new Date(r.started_at).getTime() >= since)
     const co = atts.filter((r) => new Date(r.created_at).getTime() >= since)
@@ -160,24 +147,21 @@ export async function GET() {
     }
   }
   const funnel = {
-    today: period(today, uToday.size, usersToday.count ?? 0),
-    d7: period(today - 6 * DAY, u7.size, users7.count ?? 0),
-    d30: period(from30, u30.size, users30.count ?? 0),
+    today: period(today, todayPoint.visitors, usersToday.count ?? 0),
+    d7: period(today - 6 * DAY, unique7, users7.count ?? 0),
+    d30: period(from30, unique30, users30.count ?? 0),
   }
 
   const stats: SiteStats = {
     visits: {
-      today: days[29].views,
-      uniqueToday: days[29].visitors,
+      today: todayPoint.views,
+      uniqueToday: todayPoint.visitors,
       last7,
-      unique7: u7.size,
-      last30: rows.length,
-      unique30: u30.size,
+      unique7,
+      last30,
+      unique30,
       daily: days,
-      topPages: [...pages.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 8)
-        .map(([path, views]) => ({ path, views })),
+      topPages: v?.topPages ?? [],
     },
     users: { total: usersTotal.count ?? 0, new7: users7.count ?? 0, new30: users30.count ?? 0 },
     attempts: { total: attTotal.count ?? 0, last7: att7.count ?? 0 },

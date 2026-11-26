@@ -19,21 +19,9 @@ async function build(): Promise<Snapshot> {
   const supabase = supabaseAdmin()
   const { count } = await supabase.from('users').select('id', { count: 'exact', head: true })
   const best = new Map<string, number>()
-  const PAGE = 1000
-  for (let from = 0; from < 200_000; from += PAGE) {
-    const { data } = await supabase
-      .from('test_attempts')
-      .select('user_id, composite, subject')
-      .order('id', { ascending: true })
-      .range(from, from + PAGE - 1)
-    for (const r of data ?? []) {
-      const id = r.user_id as string
-      // Single-subject tests count on the 1600 scale (the other section = 200).
-      const c = (r.composite as number) + (r.subject === 'full' ? 0 : 200)
-      if (c > (best.get(id) ?? 0)) best.set(id, c)
-    }
-    if (!data || data.length < PAGE) break
-  }
+  // One row per student (best score on the 1600 scale), grouped inside Postgres — see platform_best_scores().
+  const { data } = await supabase.rpc('platform_best_scores')
+  for (const r of (data ?? []) as { user_id: string; best: number }[]) best.set(r.user_id, r.best)
   return { at: Date.now(), total: count ?? 0, best }
 }
 

@@ -38,6 +38,8 @@ export async function POST(req: NextRequest) {
       path,
       referrer: referrer && !referrer.includes(req.headers.get('host') ?? '\u0000') ? referrer : null,
     })
+    // Keep the table small: now and then drop views older than 90 days.
+    if (Math.random() < 0.005) await supabaseAdmin().rpc('purge_old_page_views')
   } catch {
     // stats are best-effort
   }
