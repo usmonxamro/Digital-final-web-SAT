@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'crypto'
-import { groupBySlug } from '@/lib/course-groups'
+import { courseGroups } from '@/lib/course-groups'
 
 /**
  * Codes are made by the Telegram bot WITHOUT calling the site: the bot and the
@@ -8,7 +8,7 @@ import { groupBySlug } from '@/lib/course-groups'
  *   NOV-1CZ3F9-3F9A1B7C2D
  *   │    │       └ first 10 hex chars of HMAC-SHA256(secret, "nov:<telegram id>")
  *   │    └ Telegram user id in base36
- *   └ group slug
+ *   └ group slug (any length / may contain dashes, e.g. SAT-MARCH-800-800: id + signature are the last two parts)
  *
  * The site checks the signature, then stores (group, telegram id, site user) so
  * one Telegram student can unlock one site account per group.
@@ -44,11 +44,16 @@ export function verifyCourseCode(raw: string): { slug: string; tgId: number } | 
     .toUpperCase()
     .replace(/[‐-―−_]/g, '-')
     .replace(/\s+/g, '')
-  const m = clean.match(/^([A-Z0-9]{2,8})-([0-9A-Z]{1,12})-([0-9A-Z]{10})$/)
+  // Slug may be longer than 8 chars and contain dashes (e.g. SAT-MARCH-800-800): the Telegram id part and the
+  // signature never contain a dash, so the LAST two dash-separated parts are always id + signature.
+  const m = clean.match(/^([A-Z0-9][A-Z0-9-]{1,23})-([0-9A-Z]{1,12})-([0-9A-Z]{10})$/)
   if (!m) return null
-  // Slug: letters only ("N0V" → "NOV"). Signature: hex only ("O" → "0", "I"/"L" → "1").
-  const slug = m[1].replace(/0/g, 'O').replace(/1/g, 'I').toLowerCase()
-  if (!groupBySlug(slug)) return null
+  // Slug: compared look-alike-insensitively (typed "N0V" or "8OO" still finds the real slug).
+  const norm = (x: string) => x.toUpperCase().replace(/O/g, '0').replace(/[IL]/g, '1')
+  const want = norm(m[1])
+  const group = courseGroups().find((g) => norm(g.slug) === want)
+  if (!group) return null
+  const slug = group.slug
   const sig = m[3].replace(/O/g, '0').replace(/[IL]/g, '1')
   if (!/^[0-9A-F]{10}$/.test(sig)) return null
   const b = Buffer.from(sig)
