@@ -20,7 +20,7 @@ import {
 import type { VocabSessionData } from '@/app/api/vocab/session/route'
 import '@/components/vocab/vocab.css'
 
-const BOT_URL = process.env.NEXT_PUBLIC_BOT_URL || 'https://t.me/SAT_surxon'
+const BOT_URL = process.env.NEXT_PUBLIC_BOT_URL || 'https://t.me/sat_vazifa_bot'
 
 type Phase = { name: 'hub' } | { name: 'quiz'; questions: QuizQuestion[]; label: string } | { name: 'result'; results: QuizResult[]; mistakes: QuizQuestion[]; saved: boolean | null }
 

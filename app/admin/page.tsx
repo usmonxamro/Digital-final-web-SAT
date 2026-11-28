@@ -53,6 +53,8 @@ import { AdminsPanel } from '@/components/admin/admins-panel'
 import { ModuleImportCard } from '@/components/admin/module-import-card'
 import { BookBankImport } from '@/components/admin/book-bank-import'
 import { BookBankBrowser } from '@/components/admin/book-bank-browser'
+import { BookTestBuilder } from '@/components/admin/book-test-builder'
+import { useBookBasket } from '@/components/admin/book-basket'
 import { ChoiceImageRow, uploadQuestionImage } from '@/components/admin/choice-image-slot'
 import { AnswerEntry, AnswerSheet, type AnswerSection } from '@/components/admin/answer-entry'
 import { PublishActions } from '@/components/admin/publish-actions'
@@ -1833,9 +1835,11 @@ function AdminPanel({ isOwner, onLock }: { isOwner: boolean; onLock: () => void 
 
 /** "Savol banki": the book (1925 questions: browse / edit / load) and the skill-drill import, in two views. */
 function BankTab() {
-  const [view, setView] = useState<'book' | 'import' | 'skill'>('book')
+  const [view, setView] = useState<'book' | 'test' | 'import' | 'skill'>('book')
+  const picked = useBookBasket()
   const tabs: { id: typeof view; label: string }[] = [
     { id: 'book', label: 'Kitob banki — ko‘rish / tahrirlash' },
+    { id: 'test', label: `Kitobdan test tuzish${picked.length ? ` (${picked.length})` : ''}` },
     { id: 'import', label: 'Kitob banki — yuklash' },
     { id: 'skill', label: 'Skill-drill import' },
   ]
@@ -1854,7 +1858,8 @@ function BankTab() {
         ))}
       </div>
       <div className="bg-white border border-line rounded-2xl p-5">
-        {view === 'book' && <BookBankBrowser />}
+        {view === 'book' && <BookBankBrowser onGoBuilder={() => setView('test')} />}
+        {view === 'test' && <BookTestBuilder onBrowse={() => setView('book')} />}
         {view === 'import' && <BookBankImport />}
         {view === 'skill' && <SkillBankImport />}
       </div>

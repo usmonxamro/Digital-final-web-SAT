@@ -51,7 +51,6 @@ const A4_W = 793.7
 /** Telegram channels advertised in the PDF. */
 const PDF_CHANNELS = [
   { handle: '@satbyusmon', url: 'https://t.me/satbyusmon' },
-  { handle: '@sat_surxon', url: 'https://t.me/sat_surxon' },
 ]
 
 /**

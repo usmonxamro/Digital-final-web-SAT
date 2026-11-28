@@ -6,12 +6,13 @@ import { isMissingColumn } from '@/lib/db-columns'
 import { invalidateCounts } from '@/lib/mock-catalog'
 import { familyOf } from '@/lib/twins'
 
-type Item = { questionId?: string; twinId?: string; module?: 1 | 2 }
+type Item = { questionId?: string; twinId?: string; bankId?: string; module?: 1 | 2 }
 
 /**
- * «Mock tuzish» → creates a NEW mock, saved as a DRAFT, from questions and/or twins in the exact order given.
+ * «Mock tuzish» → creates a NEW mock, saved as a DRAFT, from questions, twins and/or book-bank questions
+ * in the exact order given.
  *
- * Body: { title, layout: 'modules' | 'single', minutes?, items: [{ questionId | twinId, module }] }
+ * Body: { title, layout: 'modules' | 'single', minutes?, items: [{ questionId | twinId | bankId, module }] }
  *  (old form { title, questionIds } still works: two halves.)
  *
  * The rows are copied into the mock (the exam reads a mock's own rows) but every copy keeps its family
@@ -33,7 +34,12 @@ export async function POST(req: NextRequest) {
     const half = Math.ceil(ids.length / 2)
     items = ids.map((id, i) => ({ questionId: id, module: ids.length < 2 || i < half ? 1 : 2 }))
   }
-  items = items.filter((x) => (typeof x?.questionId === 'string' && x.questionId) || (typeof x?.twinId === 'string' && x.twinId))
+  items = items.filter(
+    (x) =>
+      (typeof x?.questionId === 'string' && x.questionId) ||
+      (typeof x?.twinId === 'string' && x.twinId) ||
+      (typeof x?.bankId === 'string' && x.bankId),
+  )
   if (!title) return NextResponse.json({ error: 'Mock nomini yozing.' }, { status: 400 })
   if (!items.length) return NextResponse.json({ error: 'Savollar tanlanmagan.' }, { status: 400 })
 
@@ -43,24 +49,61 @@ export async function POST(req: NextRequest) {
 
   const qIds = [...new Set(items.map((x) => x.questionId).filter(Boolean) as string[])]
   const tIds = [...new Set(items.map((x) => x.twinId).filter(Boolean) as string[])]
-  const [qRes, tRes] = await Promise.all([
+  const bIds = [...new Set(items.map((x) => x.bankId).filter(Boolean) as string[])]
+  const [qRes, tRes, bRes] = await Promise.all([
     qIds.length ? sb.from('questions').select('*').in('id', qIds) : Promise.resolve({ data: [], error: null }),
     tIds.length ? sb.from('question_twins').select('*').in('id', tIds) : Promise.resolve({ data: [], error: null }),
+    bIds.length ? sb.from('question_bank').select('*').in('id', bIds) : Promise.resolve({ data: [], error: null }),
   ])
   if (qRes.error) return NextResponse.json({ error: qRes.error.message }, { status: 500 })
   if (tRes.error) return NextResponse.json({ error: tRes.error.message }, { status: 500 })
+  if (bRes.error) return NextResponse.json({ error: bRes.error.message }, { status: 500 })
   const qById = new Map((qRes.data ?? []).map((r) => [r.id as string, r as Record<string, unknown>]))
   const tById = new Map((tRes.data ?? []).map((r) => [r.id as string, r as Record<string, unknown>]))
+  const bById = new Map((bRes.data ?? []).map((r) => [r.id as string, r as Record<string, unknown>]))
 
   const COPY = ['kind', 'type', 'difficulty', 'domain', 'passage', 'underline', 'prompt', 'equations', 'image', 'choices', 'correct', 'correct_value', 'explanation', 'layout']
   const resolved = items
     .map((it) => {
       if (it.twinId) {
         const t = tById.get(it.twinId)
-        return t ? { row: t, family: t.family_id as string, variant: Number(t.variant ?? 1), twinId: t.id as string, module: it.module } : null
+        return t
+          ? {
+              row: t,
+              family: t.family_id as string,
+              variant: Number(t.variant ?? 1),
+              twinId: t.id as string,
+              familySource: (t.source_table as string) === 'question_bank' ? 'question_bank' : null,
+              module: it.module,
+            }
+          : null
+      }
+      if (it.bankId) {
+        // A book-bank question: copied into the mock, but it keeps the book question as its family root,
+        // so mistakes on it land in the same family and its twins get reused.
+        const b = bById.get(it.bankId)
+        return b
+          ? {
+              row: { ...b, kind: 'math' } as Record<string, unknown>,
+              family: b.id as string,
+              variant: 0,
+              twinId: null,
+              familySource: 'question_bank',
+              module: it.module,
+            }
+          : null
       }
       const q = qById.get(it.questionId!)
-      return q ? { row: q, family: familyOf(q), variant: Number(q.variant ?? 0), twinId: (q.twin_id as string) ?? null, module: it.module } : null
+      return q
+        ? {
+            row: q,
+            family: familyOf(q),
+            variant: Number(q.variant ?? 0),
+            twinId: (q.twin_id as string) ?? null,
+            familySource: (q.family_source as string) ?? null,
+            module: it.module,
+          }
+        : null
     })
     .filter((x): x is NonNullable<typeof x> => !!x)
 
@@ -84,6 +127,7 @@ export async function POST(req: NextRequest) {
     row.family_id = r.family
     row.variant = r.variant
     row.twin_id = r.twinId
+    row.family_source = r.familySource
     return row
   })
 
@@ -107,12 +151,13 @@ export async function POST(req: NextRequest) {
   if (cfgErr) return NextResponse.json({ error: `Mock sozlamasini saqlab bo‘lmadi: ${cfgErr.message}` }, { status: 500 })
 
   let { error: insErr } = await sb.from('questions').insert(insert)
-  if (insErr && /family_id|variant|twin_id/.test(insErr.message)) {
-    // v112 SQL not run yet — copy without the family columns.
+  if (insErr && /family_id|variant|twin_id|family_source/.test(insErr.message)) {
+    // v112 / v121 SQL not run yet — copy without the family columns.
     for (const r of insert) {
       delete r.family_id
       delete r.variant
       delete r.twin_id
+      delete r.family_source
     }
     ;({ error: insErr } = await sb.from('questions').insert(insert))
   }

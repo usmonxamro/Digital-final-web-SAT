@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Pencil, Search, Trash2, X } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, CheckSquare, ChevronLeft, ChevronRight, ListChecks, Loader2, Pencil, Search, Square, Trash2, X } from 'lucide-react'
+import { bookBasket, useBookBasket, type BookPick } from '@/components/admin/book-basket'
 import { QuestionStimulus } from '@/components/question-stimulus'
 import { ChoiceContent } from '@/components/choice-content'
 import { RichText } from '@/components/rich-text'
@@ -66,6 +67,19 @@ function BankPreview({ row }: { row: BankRow }) {
 }
 
 const inp = 'w-full rounded-lg border border-line bg-white px-2.5 py-1.5 text-[13px] text-ink outline-none focus:border-green'
+
+/** Bank qatoridan «tanlangan savol» yozuvi (test tuzish uchun). */
+const toPick = (r: BankRow): Omit<BookPick, 'at'> => ({
+  id: r.id,
+  sourceId: r.source_id,
+  topic: r.topic,
+  topicCode: r.topic_code,
+  number: r.number,
+  difficulty: r.difficulty,
+  type: r.type,
+  hasImage: !!r.image,
+  preview: r.prompt.replace(/\s+/g, ' ').slice(0, 160),
+})
 
 function Editor({ row, onSaved, onCancel }: { row: BankRow; onSaved: (r: BankRow) => void; onCancel: () => void }) {
   const [d, setD] = useState({
@@ -202,8 +216,11 @@ function Editor({ row, onSaved, onCancel }: { row: BankRow; onSaved: (r: BankRow
   )
 }
 
-/** Admin: browse the book bank by section / topic / difficulty, find the «tekshirish kerak» ones, fix and approve them. */
-export function BookBankBrowser() {
+/**
+ * Admin: browse the book bank by section / topic / difficulty, find the «tekshirish kerak» ones, fix and approve them —
+ * and tick questions while paging through the book to collect them into a new test («Kitobdan test tuzish»).
+ */
+export function BookBankBrowser({ onGoBuilder }: { onGoBuilder?: () => void } = {}) {
   const [f, setF] = useState({ domain: '', topic: '', difficulty: '', needsCheck: false, q: '' })
   const [qDraft, setQDraft] = useState('')
   const [page, setPage] = useState(0)
@@ -214,6 +231,9 @@ export function BookBankBrowser() {
   const [err, setErr] = useState<string | null>(null)
   const [editing, setEditing] = useState<string | null>(null)
   const [open, setOpen] = useState<string | null>(null)
+  const picked = useBookBasket()
+  const pickedIds = useMemo(() => new Set(picked.map((x) => x.id)), [picked])
+  const pageAllPicked = !!rows?.length && rows.every((r) => pickedIds.has(r.id))
 
   const load = useCallback(async () => {
     setRows(null)
@@ -315,6 +335,14 @@ export function BookBankBrowser() {
             </button>
           )}
         </form>
+        <button
+          type="button"
+          disabled={!rows?.length}
+          onClick={() => (pageAllPicked ? bookBasket.remove(rows!.map((r) => r.id)) : bookBasket.add(rows!.map(toPick)))}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12.5px] font-bold text-ink-soft hover:text-ink disabled:opacity-40"
+        >
+          {pageAllPicked ? <Square size={14} /> : <CheckSquare size={14} />} Sahifani {pageAllPicked ? 'bekor qilish' : 'belgilash'}
+        </button>
         <span className="ml-auto text-[12px] text-ink-faint">{rows ? `${total} ta savol` : ''}</span>
       </div>
 
@@ -329,8 +357,22 @@ export function BookBankBrowser() {
         {rows?.map((r) => {
           const isOpen = open === r.id || editing === r.id
           return (
-            <div key={r.id} className={`rounded-xl border p-3 ${r.needs_check ? 'border-amber-300 bg-amber-50/50' : 'border-line bg-white'}`}>
+            <div
+              key={r.id}
+              className={`rounded-xl border p-3 ${
+                pickedIds.has(r.id) ? 'border-green bg-green-mist/40' : r.needs_check ? 'border-amber-300 bg-amber-50/50' : 'border-line bg-white'
+              }`}
+            >
               <div className="flex flex-wrap items-center gap-2 text-[11.5px] font-bold">
+                <label className="inline-flex cursor-pointer items-center" title="Testga qo‘shish uchun belgilang">
+                  <input
+                    type="checkbox"
+                    className="size-[15px] accent-green"
+                    checked={pickedIds.has(r.id)}
+                    onChange={() => bookBasket.toggle(toPick(r))}
+                    aria-label={`${r.topic} #${r.number} — testga qo‘shish`}
+                  />
+                </label>
                 <span className="rounded-full bg-bg-deep px-2 py-0.5 text-ink-soft">{r.topic_code} · {r.topic}</span>
                 <span className="uppercase text-ink-faint">{r.difficulty}</span>
                 <span className="text-ink-faint">{r.type === 'gridin' ? 'Yozma javob' : 'Test'}</span>
@@ -380,6 +422,28 @@ export function BookBankBrowser() {
         })}
         {rows && rows.length === 0 && !err && <p className="py-4 text-[13px] text-ink-faint">Bu filtr bo‘yicha savol topilmadi.</p>}
       </div>
+
+      {picked.length > 0 && (
+        <div className="sticky bottom-2 z-20 mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-green bg-white/95 px-3 py-2 shadow-lg backdrop-blur">
+          <ListChecks size={16} className="text-green" />
+          <b className="text-[13px] text-ink">{picked.length} ta savol tanlandi</b>
+          <span className="text-[12px] text-ink-faint">
+            {picked.filter((x) => x.type === 'gridin').length} yozma · {picked.filter((x) => x.hasImage).length} rasmli
+          </span>
+          {onGoBuilder && (
+            <button type="button" onClick={onGoBuilder} className="ml-auto rounded-lg bg-green px-3.5 py-1.5 text-[12.5px] font-bold text-white">
+              Test tuzishga o‘tish →
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => bookBasket.clear()}
+            className={`rounded-lg border border-line px-3 py-1.5 text-[12.5px] font-semibold text-ink-soft hover:text-ink ${onGoBuilder ? '' : 'ml-auto'}`}
+          >
+            Tanlovni tozalash
+          </button>
+        </div>
+      )}
 
       {rows && total > size && (
         <div className="mt-3 flex items-center justify-center gap-3 text-[13px]">

@@ -16,7 +16,7 @@ const JSON_LD = {
       description: "O'zbekistonda Digital SAT'ga tayyorlanish platformasi: SAT mock testlar, savollar banki, video tahlillar va Telegram kurslari.",
       founder: { '@type': 'Person', name: 'Usmon Xamroyev' },
       areaServed: { '@type': 'Country', name: 'Uzbekistan' },
-      sameAs: ['https://t.me/satbyusmon', 'https://t.me/SAT_surxon', 'https://t.me/Usmon_Xamroyev'],
+      sameAs: ['https://t.me/satbyusmon', 'https://t.me/Usmon_Xamroyev'],
       email: 'usmonxamro@gmail.com',
       knowsLanguage: ['uz', 'ru', 'en'],
     },
